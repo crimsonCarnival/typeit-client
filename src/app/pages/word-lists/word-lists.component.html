@@ -1,0 +1,80 @@
+<div class="lists-page">
+  <div class="head">
+    <div>
+      <a class="back" routerLink="/learn">&#8592; Learn</a>
+      <h1 class="title">Custom lists</h1>
+      <p class="subtitle">Practice your own words. Runs on custom lists are saved but not ranked.</p>
+    </div>
+    @if (lists() && editing() === null && lists()!.length < maxLists()) {
+      <button type="button" class="btn-primary" (click)="openNew()">New list</button>
+    }
+  </div>
+
+  @if (!auth.loading() && !auth.isAuthenticated()) {
+    <div class="state">
+      <p class="state-title">Lists are saved to your account</p>
+      <button type="button" class="btn-primary" (click)="auth.openAuthModal('register')">Create free account</button>
+    </div>
+  } @else {
+    @if (loadError()) {
+      <p class="error" role="alert">{{ loadError() }} <button type="button" class="link-btn" (click)="load()">Retry</button></p>
+    }
+
+    @if (editing() !== null) {
+      <form class="panel form" (submit)="save($event)">
+        <h2 class="form-title">{{ editing() ? 'Edit list' : 'New list' }}</h2>
+        @if (formError()) {
+          <p class="error" role="alert">{{ formError() }}</p>
+        }
+        <label class="field">
+          <span>Name</span>
+          <input type="text" maxlength="40" [value]="name()" (input)="onInput('name', $event)" placeholder="JavaScript keywords" required />
+        </label>
+        <label class="field">
+          <span>Words <small>separated by spaces or new lines, up to 500</small></span>
+          <textarea rows="6" [value]="words()" (input)="onInput('words', $event)" placeholder="const let await async return"></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn-ghost" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">{{ saving() ? 'Saving' : 'Save list' }}</button>
+        </div>
+      </form>
+    }
+
+    @if (lists() === null && !loadError()) {
+      <div class="state" aria-busy="true"><p>Loading your lists&#8230;</p></div>
+    } @else if (lists()?.length === 0 && editing() === null) {
+      <div class="state">
+        <p class="state-title">No lists yet</p>
+        <p>Make one from code keywords, names you type often, or words in another language.</p>
+        <button type="button" class="btn-primary" (click)="openNew()">New list</button>
+      </div>
+    } @else if (lists(); as all) {
+      <ul class="list-grid">
+        @for (l of all; track l.id) {
+          <li class="panel list-card">
+            <div class="list-head">
+              <h2 class="list-name">{{ l.name }}</h2>
+              <span class="muted">{{ l.words.length }} words</span>
+            </div>
+            <p class="list-preview">{{ l.words.slice(0, 12).join(' ') }}{{ l.words.length > 12 ? ' …' : '' }}</p>
+            <div class="list-actions">
+              <button type="button" class="btn-primary small" (click)="practice(l)">Practice</button>
+              <button type="button" class="btn-ghost small" (click)="openEdit(l)">Edit</button>
+              @if (confirmDelete() === l.id) {
+                <span class="confirm">
+                  Delete?
+                  <button type="button" class="btn-danger small" (click)="remove(l)">Yes</button>
+                  <button type="button" class="btn-ghost small" (click)="confirmDelete.set(null)">No</button>
+                </span>
+              } @else {
+                <button type="button" class="btn-ghost small" (click)="confirmDelete.set(l.id)">Delete</button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+      <p class="muted">{{ all.length }} of {{ maxLists() }} lists</p>
+    }
+  }
+</div>

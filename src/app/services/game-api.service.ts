@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Achievement, ApiResponse, DailyOverview, ErrorMap, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
+import { Achievement, ApiResponse, DailyOverview, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
 
 /**
  * Game HTTP service. Mirrors the React typeIt.api wrapper: every method
@@ -48,6 +48,26 @@ export class GameApiService {
 
   startDrill(target: string): Promise<ApiResponse<any>> {
     return this.call(this.http.post<ApiResponse<any>>(`${this.base}/game/drill`, { target }));
+  }
+
+  getLearn(): Promise<ApiResponse<LearnOverview>> {
+    return this.call(this.http.get<ApiResponse<LearnOverview>>(`${this.base}/learn`));
+  }
+
+  startPractice(kind: Exclude<PracticeKind, 'drill'>, id?: string): Promise<ApiResponse<any>> {
+    return this.call(this.http.post<ApiResponse<any>>(`${this.base}/learn/start`, { kind, id }));
+  }
+
+  createWordList(list: { name: string; words: string }): Promise<ApiResponse<WordList>> {
+    return this.call(this.http.post<ApiResponse<WordList>>(`${this.base}/learn/lists`, list));
+  }
+
+  updateWordList(id: string, list: { name: string; words: string }): Promise<ApiResponse<WordList>> {
+    return this.call(this.http.put<ApiResponse<WordList>>(`${this.base}/learn/lists/${encodeURIComponent(id)}`, list));
+  }
+
+  deleteWordList(id: string): Promise<ApiResponse<null>> {
+    return this.call(this.http.delete<ApiResponse<null>>(`${this.base}/learn/lists/${encodeURIComponent(id)}`));
   }
 
   getDaily(): Promise<ApiResponse<DailyOverview>> {

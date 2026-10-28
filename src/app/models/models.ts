@@ -76,8 +76,19 @@ export interface GameState {
   caretStyle: CaretStyle;
   /** 'YYYY-MM-DD' while playing that day's daily challenge, else null. */
   dailyDate: string | null;
-  /** Key or digraph being drilled (practice text, never ranked), else null. */
-  drillTarget: string | null;
+  /** Practice run in progress (drill, lesson, common words, list); never ranked. */
+  practice: PracticeState | null;
+  /** Target speed of the client-side pace bot, or null when not racing one. */
+  botWpm: number | null;
+}
+
+export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list';
+
+export interface PracticeState {
+  kind: PracticeKind;
+  id: string | null;
+  /** Shown in the game's practice banner. */
+  label: string;
 }
 
 export interface AfkEvent {
@@ -264,4 +275,31 @@ export interface ErrorMap {
   totalPresses: number;
   keys: ErrorMapKey[];
   digraphs: { pair: string; errors: number }[];
+}
+
+export interface Lesson {
+  id: string;
+  number: number;
+  title: string;
+  focus: string;
+  hint: string;
+  completed: boolean;
+  bestWpm: number;
+  bestAccuracy: number;
+}
+
+export interface WordList {
+  id: string;
+  name: string;
+  words: string[];
+  updatedAt?: string;
+}
+
+export interface LearnOverview {
+  lessons: Lesson[];
+  nextLessonId: string | null;
+  passAccuracy: number;
+  commonWords: { runs: number; bestWpm: number };
+  lists: WordList[];
+  maxLists: number;
 }

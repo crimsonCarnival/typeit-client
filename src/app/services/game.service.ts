@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { GameApiService } from './game-api.service';
 import { TextGeneratorService } from './text-generator.service';
-import { AfkEvent, ApiResponse, Character, GameState, PerformancePoint, Results } from '../models/models';
+import { AfkEvent, ApiResponse, Character, GameState, PerformancePoint, PracticeKind, Results } from '../models/models';
 import { ls } from '../utils/storage';
 
 const AFK_THRESHOLD_MS = 1600;
@@ -35,6 +35,16 @@ const loadAudioBuffer = async (audioContext: AudioContext, url: string): Promise
     return await audioContext.decodeAudioData(arrayBuffer);
   } catch {
     return null;
+  }
+};
+
+/** Fallback banner label when practice state comes from the server (e.g. after a reload). */
+const practiceLabel = (p: { kind: PracticeKind; id: string | null }): string => {
+  switch (p.kind) {
+    case 'drill': return `Drill · ${p.id === ' ' ? 'Space' : (p.id ?? '').toUpperCase()}`;
+    case 'lesson': return 'Lesson';
+    case 'common-words': return 'Common words';
+    case 'list': return 'Custom list';
   }
 };
 
@@ -73,7 +83,8 @@ const defaultState = (isAuthenticated: boolean): GameState => {
     loremMax: ls.int('loremMax', 60),
     caretStyle: (ls.get('caretStyle') as GameState['caretStyle']) || 'line',
     dailyDate: null,
-    drillTarget: null,
+    practice: null,
+    botWpm: null,
   };
 };
 
@@ -187,7 +198,7 @@ export class GameService {
       isTyping: false,
       isFinished: false,
       dailyDate: null,
-      drillTarget: null,
+      practice: null,
     }));
   }
 
@@ -232,7 +243,7 @@ export class GameService {
       punctuationEnabled: data.punctuationEnabled ?? prev.punctuationEnabled,
       numbersEnabled: data.numbersEnabled ?? prev.numbersEnabled,
       dailyDate: data.dailyDate ?? null,
-      drillTarget: null,
+      practice: data.practice ? { ...data.practice, label: practiceLabel(data.practice) } : null,
       isTyping: false,
       isFinished: false,
     }));
@@ -328,7 +339,8 @@ export class GameService {
     if (this.initialAuth === null) {
       this.initialAuth = isAuth;
       this.isAuthenticated = isAuth;
-      this.gameStateSignal.set(defaultState(isAuth));
+      // Keep a bot chosen on another page (e.g. Learn) before the game first initialised.
+      this.gameStateSignal.set({ ...defaultState(isAuth), botWpm: this.gameState().botWpm });
       this.init();
       return;
     }
@@ -1067,15 +1079,36 @@ export class GameService {
    * Loads a practice text focused on one key or digraph (from the error map).
    * Drill runs are saved but never ranked.
    */
-  async startDrill(target: string): Promise<ApiResponse<unknown>> {
-    const response = await this.gameApi.startDrill(target);
+  startDrill(target: string): Promise<ApiResponse<unknown>> {
+    return this.applyPractice(this.gameApi.startDrill(target));
+  }
+
+  /** Loads a lesson, the common-words drill or a custom list. Never ranked. */
+  startPractice(kind: Exclude<PracticeKind, 'drill'>, id?: string, label?: string): Promise<ApiResponse<unknown>> {
+    return this.applyPractice(this.gameApi.startPractice(kind, id), label);
+  }
+
+  private async applyPractice(request: Promise<ApiResponse<any>>, label?: string): Promise<ApiResponse<unknown>> {
+    const response = await request;
     if (response.success && response.data) {
       this.resetInternalState();
-      this.sessionId = (response.data as { sessionId: string }).sessionId;
+      this.sessionId = response.data.sessionId;
       this.applyServerText(response.data);
-      this.gameStateSignal.update(prev => ({ ...prev, drillTarget: target }));
+      if (label) {
+        this.gameStateSignal.update(prev => (prev.practice ? { ...prev, practice: { ...prev.practice, label } } : prev));
+      }
     }
     return response;
+  }
+
+  /** Milliseconds since the first keystroke of the current run (0 before it). */
+  getElapsedMs(): number {
+    return this.startTime ? Date.now() - this.startTime : 0;
+  }
+
+  /** Races a client-side pace bot on the next runs (null stops). Purely visual. */
+  setBot(wpm: number | null): void {
+    this.gameStateSignal.update(prev => ({ ...prev, botWpm: wpm }));
   }
 
   /** Exposes the text generator service so toolbar components can extend vocabulary. */

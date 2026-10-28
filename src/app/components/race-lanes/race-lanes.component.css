@@ -1,0 +1,105 @@
+.track {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px 26px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.track-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #85818a;
+}
+
+.lane {
+  --run: calc((100% - 56px) * var(--p));
+  position: relative;
+  height: 56px;
+}
+
+.lane-rail,
+.lane-fill {
+  position: absolute;
+  left: 0;
+  top: 23px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.lane-rail {
+  right: 56px;
+  background: #1c1c20;
+}
+
+.lane-fill {
+  width: var(--run);
+  background: var(--lane-color);
+  transition: width 0.15s linear;
+}
+
+.lane-puck {
+  position: absolute;
+  top: 8px;
+  left: calc(var(--run) - 20px);
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--color-bg);
+  border-radius: 50%;
+  background: var(--lane-color);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 20px;
+  transition: left 0.15s linear;
+}
+
+.lane-puck.me {
+  animation: lane-pulse 1.6s ease-out infinite;
+}
+
+.lane-finish {
+  position: absolute;
+  right: 0;
+  top: 4px;
+  width: 28px;
+  height: 48px;
+  border-radius: 4px;
+  background: repeating-conic-gradient(var(--color-text) 0 25%, var(--color-bg) 0 50%) 0 0 / 14px 14px;
+  animation: lane-flag 1.2s linear infinite;
+}
+
+@keyframes lane-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 79, 0.55); }
+  50% { box-shadow: 0 0 0 9px rgba(255, 59, 79, 0); }
+}
+
+@keyframes lane-flag {
+  from { background-position: 0 0; }
+  to { background-position: 28px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lane-puck.me,
+  .lane-finish {
+    animation: none;
+  }
+
+  .lane-fill,
+  .lane-puck {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .track {
+    padding: 16px;
+  }
+}

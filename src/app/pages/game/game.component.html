@@ -4,10 +4,10 @@
       <span class="daily-banner-tag">Daily challenge</span>
       <span>One scored attempt. Settings are locked; Esc abandons the run.</span>
     </div>
-  } @else if (gameState().drillTarget) {
+  } @else if (gameState().practice; as practice) {
     <div class="daily-banner" role="status">
-      <span class="daily-banner-tag">Drill &#183; {{ gameState().drillTarget === ' ' ? 'Space' : gameState().drillTarget!.toUpperCase() }}</span>
-      <span>Practice text built around your weak spot. Drill runs are saved but not ranked; Esc returns to normal tests.</span>
+      <span class="daily-banner-tag">{{ practice.label }}</span>
+      <span>Practice run: saved but not ranked. Esc returns to normal tests.</span>
     </div>
   }
 
@@ -98,6 +98,19 @@
       </div>
     </div>
   </div>
+
+  @if (botLanes(); as lanes) {
+    <div class="bot-race">
+      <div class="bot-race-head">
+        <span class="daily-banner-tag">Bot race &#183; {{ gameState().botWpm }} WPM</span>
+        @if (botOutcome(); as outcome) {
+          <span class="bot-race-outcome" role="status">{{ outcome }}</span>
+        }
+        <button type="button" class="bot-race-stop" (click)="game.setBot(null)">Stop racing</button>
+      </div>
+      <app-race-lanes [lanes]="lanes" />
+    </div>
+  }
 
   <div class="content-box">
     <app-typing-area

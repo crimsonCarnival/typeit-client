@@ -1,0 +1,134 @@
+<div class="learn">
+  <div>
+    <h1 class="title">Learn</h1>
+    <p class="subtitle">Pick a drill, or let the error map choose one for you.</p>
+  </div>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }} <button type="button" class="link-btn" (click)="load()">Retry</button></p>
+  }
+
+  @if (weakest(); as w) {
+    <section class="recommended" aria-label="Recommended">
+      <div class="recommended-main">
+        <span class="recommended-key" aria-hidden="true">{{ keyLabel(w.key) === 'Space' ? '␣' : keyLabel(w.key) }}</span>
+        <div class="recommended-text">
+          <span class="recommended-tag">Recommended for you</span>
+          <span>Your weakest key is {{ keyLabel(w.key) }} ({{ w.errorRate }}% errors). A short drill targets it.</span>
+        </div>
+      </div>
+      <div class="recommended-actions">
+        <a class="btn-outline" routerLink="/error-map">View error map</a>
+        <button type="button" class="btn-primary" [disabled]="busy() === 'drill'" (click)="drillWeakest()">Drill key {{ keyLabel(w.key) }}</button>
+      </div>
+    </section>
+  }
+
+  <div class="cards">
+    <article class="card">
+      <span class="card-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8"></path><path d="M18 8a2 2 0 0 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>
+      </span>
+      <h2 class="card-title">Finger placement</h2>
+      <p class="card-text">Learn home-row position and which finger owns which key.</p>
+      <div class="level" role="img" aria-label="Difficulty: Beginner"><span class="dots"><i class="on"></i><i></i><i></i></span>Beginner</div>
+      <div class="card-status">
+        @if (!auth.isAuthenticated()) {
+          12 lessons &#183; progress needs an account
+        } @else if (overview(); as o) {
+          @if (nextLesson(); as l) {
+            Lesson {{ l.number }} of 12 &#183; {{ lessonsDone() }} passed
+          } @else {
+            All 12 lessons passed
+          }
+        }
+      </div>
+      <button type="button" class="btn-primary card-btn" [disabled]="busy()?.startsWith('lesson')" (click)="startLesson()">
+        {{ lessonsDone() > 0 ? 'Continue' : 'Start' }}
+      </button>
+    </article>
+
+    <article class="card">
+      <span class="card-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>
+      </span>
+      <h2 class="card-title">Common words</h2>
+      <p class="card-text">Drill the 200 most frequent English words until they type themselves.</p>
+      <div class="level" role="img" aria-label="Difficulty: Beginner"><span class="dots"><i class="on"></i><i></i><i></i></span>Beginner</div>
+      <div class="card-status">
+        @if (overview()?.commonWords; as c) {
+          @if (c.runs > 0) {
+            {{ c.runs }} runs &#183; best {{ c.bestWpm }} WPM
+          } @else {
+            Not started
+          }
+        } @else {
+          Not started
+        }
+      </div>
+      <button type="button" class="btn-primary card-btn" [disabled]="busy() === 'common'" (click)="startCommonWords()">Start</button>
+    </article>
+
+    <article class="card">
+      <span class="card-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2"></rect><path d="M12 4v4M9 13h.01M15 13h.01M9 17h6"></path></svg>
+      </span>
+      <h2 class="card-title">Bot: {{ botWpm() }} WPM</h2>
+      <p class="card-text">Race a bot at a fixed pace and chase it down.</p>
+      <div class="level" role="img" aria-label="Difficulty: Intermediate"><span class="dots"><i class="on"></i><i class="on"></i><i></i></span>Intermediate</div>
+      <div class="card-status speeds" role="group" aria-label="Bot speed">
+        @for (s of botSpeeds; track s) {
+          <button type="button" class="chip" [class.active]="botWpm() === s" [attr.aria-pressed]="botWpm() === s" (click)="botWpm.set(s)">{{ s }}</button>
+        }
+      </div>
+      <button type="button" class="btn-primary card-btn" (click)="raceBot()">Race bot</button>
+    </article>
+
+    <article class="card">
+      <span class="card-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6M8 13h8M8 17h5"></path></svg>
+      </span>
+      <h2 class="card-title">Custom list</h2>
+      <p class="card-text">Practice your own words: code keywords, names, other languages.</p>
+      <div class="level" role="img" aria-label="Difficulty: Intermediate"><span class="dots"><i class="on"></i><i class="on"></i><i></i></span>Intermediate</div>
+      <div class="card-status">
+        @if (overview(); as o) {
+          {{ o.lists.length }} {{ o.lists.length === 1 ? 'list' : 'lists' }} saved
+        } @else {
+          Lists are saved to your account
+        }
+      </div>
+      <button type="button" class="btn-primary card-btn" (click)="openLists()">Choose list</button>
+    </article>
+  </div>
+
+  @if (overview(); as o) {
+    <section class="lessons" aria-labelledby="lessons-title">
+      <h2 id="lessons-title" class="section-title">Finger placement lessons</h2>
+      <p class="muted">Pass a lesson by finishing its text at {{ o.passAccuracy }}% accuracy or better.</p>
+      <ol class="lesson-list">
+        @for (l of o.lessons; track l.id) {
+          <li class="lesson" [class.next]="l.id === o.nextLessonId">
+            <span class="lesson-num">{{ l.number }}</span>
+            <div class="lesson-main">
+              <span class="lesson-title">{{ l.title }}</span>
+              <span class="lesson-hint">{{ l.hint }}</span>
+            </div>
+            <span class="lesson-status" [class.done]="l.completed">
+              @if (l.completed) {
+                Passed &#183; {{ l.bestWpm }} WPM
+              } @else if (l.bestWpm > 0) {
+                Best {{ l.bestAccuracy }}%
+              } @else {
+                &#8211;
+              }
+            </span>
+            <button type="button" class="chip" [disabled]="busy() === 'lesson:' + l.id" (click)="startLesson(l)">
+              {{ l.completed ? 'Replay' : 'Play' }}
+            </button>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+</div>
