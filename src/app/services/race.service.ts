@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { GameService } from './game.service';
-import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceInvite, RaceRatingEntry, RaceRoom } from '../models/models';
+import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceInvite, RaceRatingEntry, RaceRoom, RaceSettings } from '../models/models';
 import { ls } from '../utils/storage';
 
 const SOCKET_PATH = '/ws/race';
@@ -22,7 +22,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   'friend-offline': 'Your friend went offline.',
   'not-friends': 'You can only invite friends (people you follow who follow you back).',
   'invite-cooldown': 'Invite already sent. Give them a moment.',
-  'bad-settings': 'Pick a race length.',
+  'bad-settings': 'Those race settings are not allowed.',
+  'too-many-players': 'More players are in the room than that limit allows.',
   'too-many-attempts': 'Too many wrong codes. Wait a minute and try again.',
   'already-racing': "You're racing in that room.",
   'too-many-spectators': 'That race has as many spectators as it can take.',
@@ -209,8 +210,18 @@ export class RaceService {
     else this.error.set('Not connected to the race server yet.');
   }
 
-  create(name: string, wordCount: number, isPrivate: boolean, maxPlayers: number): void {
-    this.send({ type: 'create', name, wordCount, isPrivate, maxPlayers });
+  create(name: string, isPrivate: boolean, settings: RaceSettings): void {
+    this.send({ type: 'create', name, isPrivate, ...settings });
+  }
+
+  /** Host only; the server unreadies everyone since the rules changed. */
+  updateSettings(patch: Partial<RaceSettings>): void {
+    this.send({ type: 'settings', ...patch });
+  }
+
+  /** Shareable link that opens the lobby and joins this race. */
+  linkFor(code: string): string {
+    return `${location.origin}/race/${code}`;
   }
 
   /** Quick match: rated public races against players near your rating. */

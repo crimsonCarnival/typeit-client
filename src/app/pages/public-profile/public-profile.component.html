@@ -1,66 +1,61 @@
-<div class="account-page">
+<div class="profile-page">
   @if (loading()) {
-    <div class="page-loading">Loading&#8230;</div>
+    <div class="state" aria-busy="true">Loading&#8230;</div>
   } @else if (error() || !profile()) {
-    <div class="page-loading">{{ error() || 'User not found' }}</div>
+    <div class="state">{{ error() || 'User not found' }}</div>
   } @else {
-    <div class="profile-card">
-      <div class="profile-card-header">
+    <section class="identity" aria-label="Profile">
+      <div class="identity-band">
+        <span class="band-watermark" aria-hidden="true">{{ profile()?.stats?.bestWpm || 0 }} WPM</span>
+      </div>
+      <div class="identity-body">
         @if (profile()?.avatar) {
-          <img [src]="profile()?.avatar" [alt]="profile()?.username" class="profile-avatar" />
+          <img [src]="profile()?.avatar" [alt]="profile()?.displayName" class="avatar" />
         } @else {
-          <div class="profile-avatar-placeholder">
-            {{ (profile()?.displayName || profile()?.username || '?').charAt(0).toUpperCase() }}
-          </div>
+          <span class="avatar avatar-initial" aria-hidden="true">{{ (profile()?.displayName || profile()?.username || '?').charAt(0).toUpperCase() }}</span>
         }
-        <div class="profile-info">
-          <h2>{{ profile()?.displayName }}</h2>
-          <span class="profile-account">&#64;{{ profile()?.username }}</span>
-          @if (profile()?.bio) {
-            <p class="profile-bio">{{ profile()?.bio }}</p>
-          }
-          <span class="profile-joined">
+        <div class="identity-info">
+          <h1 class="name">{{ profile()?.displayName }}</h1>
+          <p class="meta">
+            <span class="handle">&#64;{{ profile()?.username }}</span>
             @if (joined()) {
-              Joined {{ joined() }}
+              <span>Joined {{ joined() }}</span>
             }
             @if (age()) {
-              &#8226; {{ age() }} on TypeIt
+              <span>{{ age() }} on TypeIt</span>
             }
-          </span>
+          </p>
+          @if (profile()?.bio) {
+            <p class="bio">{{ profile()?.bio }}</p>
+          }
         </div>
-
-        <div class="profile-actions">
+        <div class="identity-actions">
+          <button type="button" class="count-btn" (click)="modal.set('followers')">
+            <b>{{ profile()?.followersCount }}</b> followers
+          </button>
+          <button type="button" class="count-btn" (click)="modal.set('following')">
+            <b>{{ profile()?.followingCount }}</b> following
+          </button>
           @if (profile()?.isOwner) {
-            <a class="profile-btn" routerLink="/profile">This is you</a>
-            <a class="profile-btn profile-btn-secondary" routerLink="/profile">Edit profile</a>
+            <a class="btn btn-outline" routerLink="/profile">Edit profile</a>
           } @else if (isAuthenticated()) {
             <button
-              class="profile-btn"
-              [class.profile-btn-secondary]="profile()?.isFollowing"
+              type="button"
+              class="btn"
+              [class.btn-outline]="profile()?.isFollowing"
+              [class.btn-primary]="!profile()?.isFollowing"
               (click)="handleFollowToggle()"
               [disabled]="followingPending"
             >
-              {{
-                followingPending
-                  ? 'Working\u2026'
-                  : (profile()?.isFollowing ? 'Following' : 'Follow')
-              }}
+              {{ followingPending ? 'Working…' : (profile()?.isFollowing ? 'Following' : 'Follow') }}
             </button>
           }
+          <button type="button" class="btn btn-outline" (click)="copyLink()">{{ copied() ? 'Link copied' : 'Share' }}</button>
         </div>
       </div>
+    </section>
 
-      <div class="profile-counts">
-        <button (click)="modal.set('followers')">
-          <b>{{ profile()?.followersCount }}</b> Followers
-        </button>
-        <button (click)="modal.set('following')">
-          <b>{{ profile()?.followingCount }}</b> Following
-        </button>
-      </div>
-
-      <app-stats-sections [stats]="profile()?.stats ?? null" [overall]="publicStats()" />
-    </div>
+    <app-stats-sections [stats]="profile()?.stats ?? null" [overall]="publicStats()" />
   }
 
   @if (modal()) {

@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameApiService } from '../../services/game-api.service';
 import {
@@ -26,6 +26,8 @@ const AVATAR_COLORS = 8; // --color-avatar-1 .. --color-avatar-8
 export class RankingsComponent {
   readonly auth = inject(AuthService);
   private readonly gameApi = inject(GameApiService);
+  private readonly router = inject(Router);
+  private readonly params = inject(ActivatedRoute).snapshot.queryParamMap;
 
   readonly tabs: { id: Tab; label: string }[] = [
     { id: 'global', label: 'Global' },
@@ -52,11 +54,12 @@ export class RankingsComponent {
     { id: 'oceania', label: 'Oceania' },
   ];
 
-  readonly tab = signal<Tab>('global');
-  readonly mode = signal<GameMode>('words');
-  readonly time = signal(60);
-  readonly modifiers = signal<RankingModifiers>('punctuation');
-  readonly region = signal<RankingRegion>('all');
+  // The filters live in the URL (/ranks?board=monthly&time=30) so a view can be shared.
+  readonly tab = signal<Tab>(this.fromUrl('board', this.tabs.map((t) => t.id), 'global'));
+  readonly mode = signal<GameMode>(this.fromUrl('mode', this.modes.map((m) => m.id), 'words'));
+  readonly time = signal(Number(this.fromUrl('time', TIME_LIMITS.map(String), '60')));
+  readonly modifiers = signal<RankingModifiers>(this.fromUrl('mods', this.modifierOptions.map((m) => m.id), 'punctuation'));
+  readonly region = signal<RankingRegion>(this.fromUrl('region', this.regions.map((r) => r.id), 'all'));
 
   readonly data = signal<RankingsResponse | null>(null);
   readonly loading = signal(true);
@@ -79,7 +82,27 @@ export class RankingsComponent {
 
   private requestId = 0;
 
+  /** A query param's value if it is one of the allowed ones, else the default. */
+  private fromUrl<T extends string>(key: string, allowed: T[], fallback: T): T {
+    const value = this.params.get(key) as T | null;
+    return value && allowed.includes(value) ? value : fallback;
+  }
+
   constructor() {
+    effect(() => {
+      // Only non-default filters go in the URL, so the default view stays /ranks.
+      const tab = this.tab();
+      void this.router.navigate([], {
+        queryParams: {
+          board: tab !== 'global' ? tab : null,
+          mode: this.mode() !== 'words' ? this.mode() : null,
+          time: this.time() !== 60 ? this.time() : null,
+          mods: tab === 'modifiers' && this.modifiers() !== 'punctuation' ? this.modifiers() : null,
+          region: this.region() !== 'all' ? this.region() : null,
+        },
+        replaceUrl: true,
+      });
+    });
     effect(() => {
       // Re-fetch when the query changes, or when sign-in state changes
       // (the server only returns `me` for signed-in players).

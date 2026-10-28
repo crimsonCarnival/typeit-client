@@ -459,13 +459,24 @@ export interface RacePlayer {
   ranked: boolean | null;
 }
 
-export interface RaceRoom {
+export type RaceMode = 'words' | 'time';
+
+/** Host-chosen race rules; the server validates them against fixed lists. */
+export interface RaceSettings {
+  mode: RaceMode;
+  wordCount: number;
+  timeLimit: number;
+  maxPlayers: number;
+  countdownSec: number;
+  punctuation: boolean;
+  numbers: boolean;
+}
+
+export interface RaceRoom extends RaceSettings {
   code: string;
   name: string;
   hostId: string;
   isPrivate: boolean;
-  wordCount: number;
-  maxPlayers: number;
   /** Quick-match room: the result moves ratings. */
   rated: boolean;
   /** Number of people watching. */
@@ -517,7 +528,9 @@ export interface RaceInvite {
 export interface OpenRace {
   code: string;
   name: string;
+  mode: RaceMode;
   wordCount: number;
+  timeLimit: number;
   players: number;
   maxPlayers: number;
   /** Lobbies can be joined; races under way can be watched. */
