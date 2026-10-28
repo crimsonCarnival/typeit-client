@@ -171,3 +171,17 @@
     transition: none;
   }
 }
+
+.label-touch {
+  display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .label-pointer {
+    display: none;
+  }
+
+  .label-touch {
+    display: inline;
+  }
+}

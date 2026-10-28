@@ -45,8 +45,21 @@
       </p>
     </div>
   } @else {
+  <button
+    type="button"
+    class="settings-fold"
+    [attr.aria-expanded]="settingsOpen()"
+    aria-controls="game-toolbar"
+    (click)="settingsOpen.set(!settingsOpen())"
+  >
+    <span class="settings-fold-label">Settings</span>
+    <span class="settings-fold-summary">{{ settingsSummary() }}</span>
+    <svg aria-hidden="true" class="settings-fold-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+  </button>
   <div
+    id="game-toolbar"
     class="game-toolbar"
+    [class.folded]="!settingsOpen()"
     role="toolbar"
     aria-label="Test settings"
     [class.locked]="gameState().isTyping"

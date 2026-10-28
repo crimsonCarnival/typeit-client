@@ -68,6 +68,9 @@ export class GameComponent implements AfterViewInit {
   private readonly now = signal(Date.now());
   private urlApplied = false;
 
+  /** Phones keep the settings toolbar folded away so the text is on screen. */
+  readonly settingsOpen = signal(false);
+
   /**
    * The settings a plain run is configured with, as the /play query string
    * (/play?mode=words&words=25&time=60&punct=1). Races, the daily challenge,
@@ -334,6 +337,13 @@ export class GameComponent implements AfterViewInit {
   onFinishKey(): void {
     if (this.gameState().zen) this.game.finishRun();
   }
+
+  /** One-line summary of the current settings, shown on the phone's fold button. */
+  readonly settingsSummary = computed(() => {
+    const gs = this.gameState();
+    const mode = gs.gameMode === 'words' ? (gs.zen ? 'Words' : `${gs.wordCount} words`) : gs.gameMode === 'code' ? 'Code' : 'Phrases';
+    return gs.zen ? `${mode} · Zen` : `${mode} · ${gs.timeMax}s`;
+  });
 
   toggleZen(): void {
     this.game.setZen(!this.gameState().zen);
