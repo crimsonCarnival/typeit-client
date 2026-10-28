@@ -459,11 +459,13 @@ export interface RacePlayer {
   ranked: boolean | null;
 }
 
-export type RaceMode = 'words' | 'time';
+export type RaceMode = 'words' | 'time' | 'phrases';
 
 /** Host-chosen race rules; the server validates them against fixed lists. */
 export interface RaceSettings {
   mode: RaceMode;
+  /** Text category for the phrases mode. */
+  category: string;
   wordCount: number;
   timeLimit: number;
   maxPlayers: number;
@@ -529,6 +531,7 @@ export interface OpenRace {
   code: string;
   name: string;
   mode: RaceMode;
+  category: string;
   wordCount: number;
   timeLimit: number;
   players: number;

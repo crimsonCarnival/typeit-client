@@ -5,12 +5,25 @@
       <span>Mode</span>
       <div class="segmented">
         <button type="button" class="segmented-btn" [class.active]="settings().mode === 'words'" [attr.aria-pressed]="settings().mode === 'words'" (click)="change({ mode: 'words' })">Words</button>
+        <button type="button" class="segmented-btn" [class.active]="settings().mode === 'phrases'" [attr.aria-pressed]="settings().mode === 'phrases'" (click)="change({ mode: 'phrases' })">Phrases</button>
         <button type="button" class="segmented-btn" [class.active]="settings().mode === 'time'" [attr.aria-pressed]="settings().mode === 'time'" (click)="change({ mode: 'time' })">Timed</button>
       </div>
-      <span class="hint">{{ settings().mode === 'words' ? 'First across the line wins.' : 'Same clock for everyone; the highest WPM wins.' }}</span>
+      <span class="hint">{{ settings().mode === 'time' ? 'Same clock for everyone; the highest WPM wins.' : settings().mode === 'phrases' ? 'Everyone types the same passage; first across the line wins.' : 'First across the line wins.' }}</span>
     </div>
 
-    @if (settings().mode === 'words') {
+    @if (settings().mode === 'phrases') {
+      <div class="field" role="group" aria-label="Text category">
+        <span>Text</span>
+        <div class="chips">
+          @for (c of categories; track c.id) {
+            <button type="button" class="chip" [class.active]="settings().category === c.id" [attr.aria-pressed]="settings().category === c.id" (click)="change({ category: c.id })">{{ c.label }}</button>
+          }
+        </div>
+        @if (settings().category === 'gta') {
+          <span class="hint">Mature language.</span>
+        }
+      </div>
+    } @else if (settings().mode === 'words') {
       <div class="field" role="group" aria-label="Words">
         <span>Words</span>
         <div class="chips">
@@ -48,18 +61,20 @@
       </div>
     </div>
 
-    <div class="toggle-row">
-      <span id="punct-label">Punctuation</span>
-      <button type="button" role="switch" class="switch" [class.on]="settings().punctuation" [attr.aria-checked]="settings().punctuation" aria-labelledby="punct-label" (click)="change({ punctuation: !settings().punctuation })">
-        <span class="switch-knob"></span>
-      </button>
-    </div>
-    <div class="toggle-row">
-      <span id="nums-label">Numbers</span>
-      <button type="button" role="switch" class="switch" [class.on]="settings().numbers" [attr.aria-checked]="settings().numbers" aria-labelledby="nums-label" (click)="change({ numbers: !settings().numbers })">
-        <span class="switch-knob"></span>
-      </button>
-    </div>
+    @if (settings().mode !== 'phrases') {
+      <div class="toggle-row">
+        <span id="punct-label">Punctuation</span>
+        <button type="button" role="switch" class="switch" [class.on]="settings().punctuation" [attr.aria-checked]="settings().punctuation" aria-labelledby="punct-label" (click)="change({ punctuation: !settings().punctuation })">
+          <span class="switch-knob"></span>
+        </button>
+      </div>
+      <div class="toggle-row">
+        <span id="nums-label">Numbers</span>
+        <button type="button" role="switch" class="switch" [class.on]="settings().numbers" [attr.aria-checked]="settings().numbers" aria-labelledby="nums-label" (click)="change({ numbers: !settings().numbers })">
+          <span class="switch-knob"></span>
+        </button>
+      </div>
+    }
   </fieldset>
 </ng-template>
 
@@ -198,7 +213,7 @@
         <div class="waiting-head">
           <h2 id="waiting-title" class="section-title">{{ room()?.state === 'finished' ? 'Results' : 'Waiting room' }}</h2>
           @if (room(); as r) {
-            <span class="hint">{{ r.players.length }} of {{ r.maxPlayers }} players &#183; {{ lengthLabel(r) }}{{ r.punctuation ? ' · punctuation' : '' }}{{ r.numbers ? ' · numbers' : '' }}</span>
+            <span class="hint">{{ r.players.length }} of {{ r.maxPlayers }} players &#183; {{ lengthLabel(r) }}{{ r.mode !== 'phrases' && r.punctuation ? ' · punctuation' : '' }}{{ r.mode !== 'phrases' && r.numbers ? ' · numbers' : '' }}</span>
           }
         </div>
 

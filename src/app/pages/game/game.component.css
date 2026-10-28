@@ -496,13 +496,6 @@ app-shortcuts-footer.dimmed {
   font-style: italic;
 }
 
-.passage-tag {
-  margin-left: 0.5rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
 .zen-finish {
   padding: 8px 14px;
   border: 1px solid var(--color-accent);

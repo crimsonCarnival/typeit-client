@@ -12,8 +12,16 @@ const WORD_COUNTS = [10, 25, 50, 75, 100, 150, 200, 300, 400, 500];
 const TIME_LIMITS = [15, 30, 60, 120, 180, 300, 600];
 const PLAYER_LIMITS = [2, 3, 4, 6, 8];
 const COUNTDOWNS = [3, 5, 10, 15];
+// Phrases text categories.
+const CATEGORIES = [
+  { id: 'classics', label: 'Classics' },
+  { id: 'quotes', label: 'Quotes' },
+  { id: 'speeches', label: 'Speeches' },
+  { id: 'gta', label: 'GTA' },
+];
 const DEFAULT_SETTINGS: RaceSettings = {
   mode: 'words',
+  category: 'classics',
   wordCount: 25,
   timeLimit: 30,
   maxPlayers: 4,
@@ -29,9 +37,11 @@ const settingsFromQuery = (q: (key: string) => string | null): RaceSettings => {
     const n = Number(q(key));
     return allowed.includes(n) ? n : fallback;
   };
-  const mode: RaceMode = q('mode') === 'time' ? 'time' : 'words';
+  const mode: RaceMode = q('mode') === 'time' || q('mode') === 'phrases' ? (q('mode') as RaceMode) : 'words';
+  const category = CATEGORIES.find((c) => c.id === q('cat'))?.id ?? DEFAULT_SETTINGS.category;
   return {
     mode,
+    category,
     wordCount: pick('words', WORD_COUNTS, DEFAULT_SETTINGS.wordCount),
     timeLimit: pick('time', TIME_LIMITS, DEFAULT_SETTINGS.timeLimit),
     maxPlayers: pick('players', PLAYER_LIMITS, DEFAULT_SETTINGS.maxPlayers),
@@ -57,6 +67,7 @@ export class RaceLobbyComponent {
   readonly timeLimits = TIME_LIMITS;
   readonly playerLimits = PLAYER_LIMITS;
   readonly countdowns = COUNTDOWNS;
+  readonly categories = CATEGORIES;
   readonly leaderboard = signal<RaceRatingEntry[]>([]);
 
   private readonly query = this.route.snapshot.queryParamMap;
@@ -145,6 +156,7 @@ export class RaceLobbyComponent {
     const base = DEFAULT_SETTINGS;
     return {
       mode: d.mode !== base.mode ? d.mode : null,
+      cat: d.mode === 'phrases' && d.category !== base.category ? d.category : null,
       words: d.wordCount !== base.wordCount ? d.wordCount : null,
       time: d.timeLimit !== base.timeLimit ? d.timeLimit : null,
       players: d.maxPlayers !== base.maxPlayers ? d.maxPlayers : null,
@@ -223,7 +235,8 @@ export class RaceLobbyComponent {
   }
 
   /** "25 words" / "30s timed" for summaries. */
-  lengthLabel(s: Pick<RaceSettings, 'mode' | 'wordCount' | 'timeLimit'>): string {
+  lengthLabel(s: Pick<RaceSettings, 'mode' | 'category' | 'wordCount' | 'timeLimit'>): string {
+    if (s.mode === 'phrases') return `${this.categories.find((c) => c.id === s.category)?.label ?? 'Phrases'} phrase`;
     return s.mode === 'time' ? `${s.timeLimit}s timed` : `${s.wordCount} words`;
   }
 
