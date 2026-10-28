@@ -24,6 +24,27 @@
     </section>
   }
 
+  @if (overview()?.review; as r) {
+    @if (r.total > 0) {
+      <section class="recommended review" aria-label="Digraph review">
+        <div class="recommended-main">
+          <span class="recommended-key" aria-hidden="true">{{ r.duePairs[0] ?? '✓' }}</span>
+          <div class="recommended-text">
+            <span class="recommended-tag">Review &#183; {{ r.due }} due of {{ r.total }}</span>
+            @if (r.due > 0) {
+              <span>Letter pairs you missed come back until you type them cleanly: {{ r.duePairs.join(', ') }}.</span>
+            } @else {
+              <span>All caught up. Next review {{ nextReview(r.nextDueAt) }}.</span>
+            }
+          </div>
+        </div>
+        <div class="recommended-actions">
+          <button type="button" class="btn-primary" [disabled]="r.due === 0 || busy() === 'review'" (click)="startReview()">Review now</button>
+        </div>
+      </section>
+    }
+  }
+
   <div class="cards">
     <article class="card">
       <span class="card-icon" aria-hidden="true">

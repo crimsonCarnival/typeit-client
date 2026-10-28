@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameApiService } from '../../services/game-api.service';
 import { GameService } from '../../services/game.service';
-import { ErrorMap, ErrorMapKey } from '../../models/models';
+import { ErrorMap, ErrorMapKey, ErrorTrends } from '../../models/models';
 
 const KEY_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].map((row) => row.split(''));
 // Heat gradient stops, matching --color-heat-0..3 in styles.css.
@@ -72,6 +72,9 @@ export class ErrorMapComponent {
       const runs = this.runs();
       if (!this.auth.loading() && this.auth.isAuthenticated()) void this.load(runs);
     });
+    effect(() => {
+      if (!this.auth.loading() && this.auth.isAuthenticated()) void this.loadTrends();
+    });
   }
 
   async load(runs = this.runs()): Promise<void> {
@@ -119,6 +122,35 @@ export class ErrorMapComponent {
 
   keyLabel(key: string): string {
     return key === ' ' ? 'Space' : key.toUpperCase();
+  }
+
+  readonly trends = signal<ErrorTrends | null>(null);
+  private readonly maxTrendRate = computed(() =>
+    Math.max(1, ...(this.trends()?.weeks ?? []).map((w) => w.errorRate ?? 0))
+  );
+
+  async loadTrends(): Promise<void> {
+    const res = await this.gameApi.getErrorTrends(8);
+    if (res.success && res.data) this.trends.set(res.data);
+  }
+
+  trendHeight(rate: number | null): number {
+    return rate === null ? 0 : Math.max(4, Math.round((rate / this.maxTrendRate()) * 100));
+  }
+
+  /** "26 Oct" for a week's Monday. */
+  weekLabel(week: string): string {
+    const d = new Date(`${week}T00:00:00Z`);
+    return `${d.getUTCDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()]}`;
+  }
+
+  async practiceWeakKeys(): Promise<void> {
+    if (this.drilling()) return;
+    this.drilling.set(true);
+    const res = await this.game.startWeakKeys();
+    this.drilling.set(false);
+    if (res.success) void this.router.navigate(['/play']);
+    else this.error.set(res.error || 'Could not start the practice run');
   }
 
   async drill(target: string): Promise<void> {

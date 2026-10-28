@@ -587,7 +587,12 @@ export class GameService {
     return this.applyPractice(this.gameApi.startDrill(target));
   }
 
-  /** Loads a lesson, the common-words drill or a custom list. Never ranked. */
+  /** Practice weighted toward your weakest keys and digraphs. Never ranked. */
+  startWeakKeys(): Promise<ApiResponse<unknown>> {
+    return this.applyPractice(this.gameApi.startWeakKeys());
+  }
+
+  /** Loads a lesson, the common-words drill, a custom list or a digraph review. Never ranked. */
   startPractice(kind: Exclude<PracticeKind, 'drill'>, id?: string, label?: string): Promise<ApiResponse<unknown>> {
     return this.applyPractice(this.gameApi.startPractice(kind, id), label);
   }

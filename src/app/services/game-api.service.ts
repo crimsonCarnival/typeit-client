@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Achievement, ApiResponse, GhostTimeline, LiveStats, Replay, DailyOverview, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
+import { Achievement, ApiResponse, ErrorTrends, GhostTimeline, LiveStats, Replay, DailyOverview, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
 
 /**
  * Game HTTP service. Mirrors the React typeIt.api wrapper: every method
@@ -44,6 +44,15 @@ export class GameApiService {
 
   getErrorMap(runs: number): Promise<ApiResponse<ErrorMap>> {
     return this.call(this.http.get<ApiResponse<ErrorMap>>(`${this.base}/error-map`, { params: { runs: String(runs) } }));
+  }
+
+  getErrorTrends(weeks: number): Promise<ApiResponse<ErrorTrends>> {
+    return this.call(this.http.get<ApiResponse<ErrorTrends>>(`${this.base}/error-map/trends`, { params: { weeks: String(weeks) } }));
+  }
+
+  /** Practice run weighted toward the caller's weakest keys and digraphs. */
+  startWeakKeys(): Promise<ApiResponse<any>> {
+    return this.call(this.http.post<ApiResponse<any>>(`${this.base}/game/weak-keys`, {}));
   }
 
   startDrill(target: string): Promise<ApiResponse<any>> {

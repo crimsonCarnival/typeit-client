@@ -23,6 +23,8 @@ export const practiceLabel = (p: { kind: PracticeKind; id: string | null }): str
     case 'common-words': return 'Common words';
     case 'list': return 'Custom list';
     case 'ghost': return `Ghost race · ${p.id ?? 'daily'}`;
+    case 'weak-keys': return `Weak keys · ${(p.id ?? '').toUpperCase()}`;
+    case 'review': return `Digraph review · ${p.id ?? ''}`;
   }
 };
 

@@ -132,7 +132,7 @@ export interface GameState {
   rules: TypingRules;
 }
 
-export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list' | 'ghost';
+export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list' | 'ghost' | 'weak-keys' | 'review';
 
 export interface PracticeState {
   kind: PracticeKind;
@@ -368,7 +368,33 @@ export interface WordList {
   updatedAt?: string;
 }
 
+/** Spaced-repetition queue of missed digraphs. */
+export interface ReviewQueue {
+  total: number;
+  due: number;
+  duePairs: string[];
+  nextDueAt: string | null;
+}
+
+export interface ErrorTrendWeek {
+  /** Monday of the week (UTC), 'YYYY-MM-DD'. */
+  week: string;
+  runs: number;
+  presses: number;
+  errors: number;
+  errorRate: number | null;
+  wpm: number | null;
+  /** Error rate of each tracked key that week (null without presses). */
+  keys: Record<string, number | null>;
+}
+
+export interface ErrorTrends {
+  keys: string[];
+  weeks: ErrorTrendWeek[];
+}
+
 export interface LearnOverview {
+  review?: ReviewQueue;
   lessons: Lesson[];
   nextLessonId: string | null;
   passAccuracy: number;
