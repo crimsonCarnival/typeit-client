@@ -47,6 +47,34 @@
   color: #ccc;
 }
 
+/* Daily challenge: settings are fixed for the whole run */
+.theme-switch.daily-locked .controls-row {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.daily-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 59, 79, 0.45);
+  border-radius: var(--radius-md);
+  background: rgba(200, 16, 46, 0.14);
+  color: var(--color-text);
+  font-size: 15px;
+}
+
+.daily-banner-tag {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
 /* Locked state: disable clicks while typing */
 .theme-switch.locked .controls-row > *:not(.time-control-wrapper) {
   pointer-events: none;

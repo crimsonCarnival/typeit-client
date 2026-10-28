@@ -1,0 +1,140 @@
+<div class="daily">
+  @if (error()) {
+    <div class="state" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" class="btn-ghost" (click)="load()">Try again</button>
+    </div>
+  } @else if (!data()) {
+    <div class="state" aria-busy="true"><p>Loading today's challenge&#8230;</p></div>
+  } @else if (data(); as d) {
+    <section class="hero" aria-label="Today's challenge">
+      <span class="hero-watermark" aria-hidden="true">{{ dayNumber(d.date) }}</span>
+
+      <div class="hero-main">
+        <span class="hero-date">
+          {{ longDate(d.date) }} &#183; Resets in <span class="hero-countdown">{{ countdown() }}</span>
+        </span>
+        <h1 class="hero-title">One test.<br />Everyone.<br />Today.</h1>
+
+        <div class="hero-settings">
+          <div class="setting"><span class="setting-value">{{ d.settings.wordCount }}</span><span class="setting-label">Words</span></div>
+          <div class="setting"><span class="setting-value">{{ d.settings.timeMax }}s</span><span class="setting-label">Time limit</span></div>
+          <div class="setting"><span class="setting-value">{{ modifierLabel() }}</span><span class="setting-label">Modifier</span></div>
+          <div class="setting"><span class="setting-value">{{ d.settings.gameMode }}</span><span class="setting-label">Mode</span></div>
+        </div>
+      </div>
+
+      <div class="hero-action">
+        @switch (status()) {
+          @case ('guest') {
+            <button type="button" class="start-btn" (click)="start()">Log in to play</button>
+            <span class="hero-meta">Guests can watch the leaders; playing needs an account.</span>
+          }
+          @case ('not-played') {
+            <button type="button" class="start-btn" [disabled]="starting()" (click)="start()">
+              {{ starting() ? 'Starting' : 'Start' }}
+              <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            </button>
+            <span class="hero-meta">
+              Press <kbd>Enter</kbd> &#183; One attempt, no retries
+            </span>
+          }
+          @case ('in-progress') {
+            <div class="hero-result">
+              <span class="hero-result-title">Attempt used</span>
+              <span class="hero-meta">You started today's run but didn't finish it. Come back tomorrow.</span>
+            </div>
+          }
+          @case ('finished') {
+            <div class="hero-result">
+              <span class="hero-result-title">Your run: {{ d.me?.wpm }} WPM</span>
+              <span class="hero-meta">
+                @if (d.me?.ranked) {
+                  {{ d.me?.accuracy }}% accuracy &#183; #{{ d.me?.rank }} today
+                } @else {
+                  This run didn't pass verification, so it isn't on today's board.
+                }
+              </span>
+            </div>
+          }
+        }
+        @if (startError()) {
+          <span class="hero-error" role="alert">{{ startError() }}</span>
+        }
+        <span class="hero-meta">
+          {{ d.playersToday.toLocaleString() }} players today
+          @if (d.leaders.length) {
+            &#183; top {{ d.leaders[0].wpm }} WPM
+          }
+        </span>
+      </div>
+    </section>
+
+    <section aria-labelledby="past-title">
+      <div class="section-head">
+        <h2 id="past-title" class="section-title">Past week winners</h2>
+        <a routerLink="/ranks">Full rankings &#8594;</a>
+      </div>
+      <div class="strip">
+        @for (p of pastDaysChronological(); track p.date) {
+          <div class="day-card">
+            <span class="day-card-date">{{ dayLabel(p.date) }}</span>
+            @if (p.winner) {
+              <div class="day-card-body">
+                <span class="day-card-label">Winner</span>
+                <span class="day-card-name">{{ p.winner.displayName }}</span>
+                <span class="day-card-wpm">{{ p.winner.wpm }} <small>WPM</small></span>
+              </div>
+            } @else {
+              <div class="day-card-body">
+                <span class="day-card-label">No ranked runs</span>
+              </div>
+            }
+            @if (auth.isAuthenticated()) {
+              <span class="day-card-you" [class.played]="p.myWpm !== null">
+                You: {{ p.myWpm !== null ? p.myWpm + ' WPM' : '–' }}
+              </span>
+            }
+          </div>
+        }
+        <div class="day-card day-card-today">
+          <span class="day-card-date">Today</span>
+          @if (d.leaders[0]; as leader) {
+            <div class="day-card-body">
+              <span class="day-card-label">Leading</span>
+              <span class="day-card-name">{{ leader.displayName }}</span>
+              <span class="day-card-wpm">{{ leader.wpm }} <small>WPM</small></span>
+            </div>
+          } @else {
+            <div class="day-card-body">
+              <span class="day-card-label">No ranked runs yet</span>
+            </div>
+          }
+          @if (auth.isAuthenticated()) {
+            <span class="day-card-you" [class.played]="d.me?.wpm !== null && d.me?.wpm !== undefined">
+              You: {{ d.me?.status === 'finished' ? d.me?.wpm + ' WPM' : d.me?.status === 'in-progress' ? 'unfinished' : 'not played' }}
+            </span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="leaders-title" class="leaders">
+      <h2 id="leaders-title" class="section-title">Today's leaders</h2>
+      @if (d.leaders.length === 0) {
+        <p class="leaders-empty">Nobody has a verified run today yet.</p>
+      } @else {
+        <ol class="leaders-list">
+          @for (l of d.leaders; track l.userId) {
+            <li class="leader" [class.leader-me]="auth.user()?.id === l.userId">
+              <span class="leader-rank" [class.rank-1]="l.rank === 1" [class.rank-2]="l.rank === 2" [class.rank-3]="l.rank === 3">{{ l.rank }}</span>
+              <a class="leader-name" [routerLink]="['/user', l.userId]">{{ l.displayName }}</a>
+              <span class="leader-acc">{{ l.accuracy.toFixed(1) }}%</span>
+              <span class="leader-wpm">{{ l.wpm }}</span>
+            </li>
+          }
+        </ol>
+      }
+    </section>
+  }
+</div>

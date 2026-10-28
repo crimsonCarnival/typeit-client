@@ -74,6 +74,8 @@ export interface GameState {
   loremMin: number;
   loremMax: number;
   caretStyle: CaretStyle;
+  /** 'YYYY-MM-DD' while playing that day's daily challenge, else null. */
+  dailyDate: string | null;
 }
 
 export interface AfkEvent {
@@ -190,4 +192,42 @@ export interface RankingsResponse {
   me: RankingEntry | null;
   totalPlayers: number;
   updatedAt: string;
+}
+
+export interface DailySettings {
+  gameMode: GameMode;
+  wordCount: number;
+  timeMax: number;
+  punctuationEnabled: boolean;
+  numbersEnabled: boolean;
+}
+
+export interface DailyLeader {
+  rank: number;
+  userId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  wpm: number;
+  accuracy: number;
+}
+
+export interface DailyOverview {
+  date: string;
+  resetsAt: string;
+  settings: DailySettings;
+  playersToday: number;
+  leaders: DailyLeader[];
+  me: {
+    status: 'not-played' | 'in-progress' | 'finished';
+    wpm: number | null;
+    accuracy: number | null;
+    ranked: boolean;
+    rank: number | null;
+  } | null;
+  pastDays: {
+    date: string;
+    winner: { userId: string; username: string; displayName: string; avatar: string; wpm: number } | null;
+    myWpm: number | null;
+  }[];
 }

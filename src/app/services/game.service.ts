@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { GameApiService } from './game-api.service';
 import { TextGeneratorService } from './text-generator.service';
-import { AfkEvent, Character, GameState, PerformancePoint, Results } from '../models/models';
+import { AfkEvent, ApiResponse, Character, GameState, PerformancePoint, Results } from '../models/models';
 import { ls } from '../utils/storage';
 
 const AFK_THRESHOLD_MS = 1600;
@@ -72,6 +72,7 @@ const defaultState = (isAuthenticated: boolean): GameState => {
     loremMin: ls.int('loremMin', 20),
     loremMax: ls.int('loremMax', 60),
     caretStyle: (ls.get('caretStyle') as GameState['caretStyle']) || 'line',
+    dailyDate: null,
   };
 };
 
@@ -184,6 +185,7 @@ export class GameService {
       lastCpm: 0,
       isTyping: false,
       isFinished: false,
+      dailyDate: null,
     }));
   }
 
@@ -227,6 +229,7 @@ export class GameService {
       timeLeft: data.timeMax ?? prev.timeMax,
       punctuationEnabled: data.punctuationEnabled ?? prev.punctuationEnabled,
       numbersEnabled: data.numbersEnabled ?? prev.numbersEnabled,
+      dailyDate: data.dailyDate ?? null,
       isTyping: false,
       isFinished: false,
     }));
@@ -1025,8 +1028,6 @@ export class GameService {
     const text = this.gameState().text;
     if (!text) return;
     this.resetInternalState();
-    this.keystrokes = [];
-    this.lastLoggedKeyTime = null;
     this.characters.set(textToCharacters(text));
     this.gameStateSignal.update(prev => ({
       ...prev,
@@ -1043,6 +1044,20 @@ export class GameService {
       lastCpm: 0,
       timeLeft: prev.timeMax,
     }));
+  }
+
+  /**
+   * Starts today's daily challenge: the server uses up the player's attempt
+   * and switches their session to the daily text, which is applied here.
+   */
+  async startDaily(): Promise<ApiResponse<unknown>> {
+    const response = await this.gameApi.startDaily();
+    if (response.success && response.data) {
+      this.resetInternalState();
+      this.sessionId = (response.data as { sessionId: string }).sessionId;
+      this.applyServerText(response.data);
+    }
+    return response;
   }
 
   /** Exposes the text generator service so toolbar components can extend vocabulary. */

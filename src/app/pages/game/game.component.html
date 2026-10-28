@@ -1,5 +1,12 @@
 <div class="wrapper" (click)="handleWrapperClick($event)">
-  <div class="theme-switch" [class.locked]="gameState().isTyping">
+  @if (gameState().dailyDate) {
+    <div class="daily-banner" role="status">
+      <span class="daily-banner-tag">Daily challenge</span>
+      <span>One scored attempt. Settings are locked; Esc abandons the run.</span>
+    </div>
+  }
+
+  <div class="theme-switch" [class.locked]="gameState().isTyping" [class.daily-locked]="!!gameState().dailyDate">
     <div class="toggle-container">
       <div class="controls-row">
         <app-sound-toggle
