@@ -6,7 +6,7 @@
   flex-wrap: wrap;
   padding: 14px 40px;
   border-bottom: 1px solid var(--color-border-subtle);
-  background: rgba(10, 10, 11, 0.7);
+  background: var(--color-header);
 }
 
 .app-header.focus {
@@ -17,7 +17,7 @@
 /* visibility (not display) keeps the header's height, so the text below
    doesn't shift when a run starts; hidden links also leave the tab order. */
 .app-header.focus .app-nav,
-.app-header.focus app-user-menu {
+.app-header.focus .app-header-right {
   visibility: hidden;
 }
 
@@ -79,6 +79,29 @@
 .app-nav {
   display: flex;
   gap: 4px;
+}
+
+.app-header-right {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-search {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--color-text-subtle);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.app-search:hover,
+.app-search.active {
+  color: var(--color-text);
+  background: var(--color-surface-raised);
 }
 
 .app-nav-link {

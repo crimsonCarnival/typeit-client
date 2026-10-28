@@ -1,0 +1,142 @@
+.replay {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 56px;
+  line-height: 1;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: var(--color-text-subtle);
+}
+
+.subtitle a {
+  color: var(--color-text);
+}
+
+.final {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+}
+
+.final dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-subtle);
+}
+
+.final dd {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.live {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.live small {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+
+.live-clock {
+  color: var(--color-accent);
+  min-width: 4ch;
+}
+
+.replay-text {
+  padding: 24px 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-card);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ctl {
+  padding: 8px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ctl.primary,
+.ctl.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.scrub {
+  flex: 1 1 240px;
+  accent-color: var(--color-accent);
+}
+
+.speeds {
+  display: flex;
+  gap: 6px;
+}
+
+.hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--color-text-subtle);
+}
+
+.state {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--color-text-subtle);
+}
+
+.state-title {
+  color: var(--color-text);
+  font-size: 20px;
+}
+
+.btn {
+  color: var(--color-accent);
+}
+
+@media (max-width: 600px) {
+  .title {
+    font-size: 40px;
+  }
+
+  .final {
+    gap: 16px;
+  }
+}

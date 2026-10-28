@@ -3,12 +3,13 @@ import { Component, DestroyRef, computed, effect, inject, signal } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { RaceService } from '../../services/race.service';
-import { RaceFriend, RaceMode, RacePlayer, RaceSettings } from '../../models/models';
+import { RaceFriend, RaceMode, RacePlayer, RaceRatingEntry, RaceSettings } from '../../models/models';
+import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
 
 // These mirror the server's lists in config/race.js; the server is the one
 // that enforces them.
-const WORD_COUNTS = [10, 25, 50, 75, 100];
-const TIME_LIMITS = [15, 30, 60, 120];
+const WORD_COUNTS = [10, 25, 50, 75, 100, 150, 200, 300, 400, 500];
+const TIME_LIMITS = [15, 30, 60, 120, 180, 300, 600];
 const PLAYER_LIMITS = [2, 3, 4, 6, 8];
 const COUNTDOWNS = [3, 5, 10, 15];
 const DEFAULT_SETTINGS: RaceSettings = {
@@ -42,7 +43,7 @@ const settingsFromQuery = (q: (key: string) => string | null): RaceSettings => {
 
 @Component({
   selector: 'app-race-lobby',
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, RaceChatComponent],
   templateUrl: './race-lobby.component.html',
   styleUrl: './race-lobby.component.css',
 })
@@ -56,6 +57,7 @@ export class RaceLobbyComponent {
   readonly timeLimits = TIME_LIMITS;
   readonly playerLimits = PLAYER_LIMITS;
   readonly countdowns = COUNTDOWNS;
+  readonly leaderboard = signal<RaceRatingEntry[]>([]);
 
   private readonly query = this.route.snapshot.queryParamMap;
   /** Invite code from a /race/:code link. */
@@ -79,7 +81,7 @@ export class RaceLobbyComponent {
   /** Settings shown in the form: the room's while in one, else the draft. */
   readonly settings = computed<RaceSettings>(() => this.room() ?? this.draft());
   /** Who may edit them: anyone creating, only the host once in a room. */
-  readonly canEdit = computed(() => (this.room() ? this.race.isHost() && this.inLobby() : true));
+  readonly canEdit = computed(() => (this.room() ? this.race.isHost() && this.inLobby() && !this.room()!.rated : true));
 
   readonly startsIn = computed(() => {
     const room = this.room();
@@ -124,6 +126,8 @@ export class RaceLobbyComponent {
         void this.router.navigate(['/race'], { queryParams: this.draftQuery(), replaceUrl: true });
       }
     });
+
+    void this.race.loadLeaderboard().then((entries) => this.leaderboard.set(entries));
 
     const tick = setInterval(() => this.now.set(Date.now()), 250);
     const refresh = setInterval(() => {
@@ -187,6 +191,18 @@ export class RaceLobbyComponent {
     } catch {
       // Clipboard can be blocked; the code is on screen to copy by hand.
     }
+  }
+
+  /** Signed rating change for a player after a rated race, e.g. "+12". */
+  ratingChange(userId: string): string | null {
+    const d = this.room()?.ratingChanges?.[userId];
+    return d === undefined ? null : d >= 0 ? `+${d}` : String(d);
+  }
+
+  /** A lane's progress through the text, for spectators. */
+  progress(p: RacePlayer): number {
+    const len = this.room()?.text?.length ?? 0;
+    return len ? Math.min(100, (p.index / len) * 100) : 0;
   }
 
   invite(friend: RaceFriend): void {

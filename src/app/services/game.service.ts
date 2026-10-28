@@ -1,192 +1,114 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { GameApiService } from './game-api.service';
 import { TextGeneratorService } from './text-generator.service';
-import { AfkEvent, ApiResponse, Character, GameState, PerformancePoint, PracticeKind, Results } from '../models/models';
+import { ApiResponse, Character, GameState, PerformancePoint, PracticeKind, Results, RunGhost, TypingRules } from '../models/models';
 import { ls } from '../utils/storage';
+import { GameAudioService, GameSound } from './game/game-audio.service';
+import { SettingsService } from './settings.service';
+import { KeystrokeLog, inputKeys } from './game/keystroke-log';
+import { defaultState, practiceLabel } from './game/game-state';
+import { DEFAULT_RULES, KeyOutcome, TypingEngine } from './game/typing-engine';
+import { PROGRESS_INTERVAL_MS, RACE_PROGRESS_INTERVAL_MS, RunSyncService } from './game/run-sync.service';
 
-const AFK_THRESHOLD_MS = 1600;
-const HEARTBEAT_INTERVAL_S = 5;
-const BACKSPACE_THRESHOLD = 3;
-// Matches the server's MAX_KEYSTROKES; a longer log is cut off (and the run left unranked).
-const MAX_KEYSTROKES = 8000;
-const BACKSPACE = '';
+const CLOCK_TICK_MS = 250;
+// Zen runs: the longest text and limit the server allows; no timer shown.
+const ZEN_WORDS = 500;
+const ZEN_SECONDS = 600;
 
-const KEY_SOUND_URL = 'https://res.cloudinary.com/dzjid2tos/video/upload/v1770240117/typewriter-single-key_wbesmp.mp3';
-const TIME_UP_SOUND_URL = 'https://res.cloudinary.com/dzjid2tos/video/upload/v1770240117/typewriter-bell_xrpggk.mp3';
-const ERROR_SOUND_URL = 'https://res.cloudinary.com/dzjid2tos/video/upload/v1770240116/error-sound_kpstvo.mp3';
-
-/**
- * Creates the character array from a text string. Characters before
- * `typedPrefix` (e.g. a resumed session) are marked as already typed.
- */
-const textToCharacters = (text: string, typedPrefix = ''): Character[] => {
-  if (!text) return [];
-  const prefixLength = typedPrefix ? typedPrefix.length : 0;
-  return text.split('').map((char, index) => ({
-    char,
-    status: index < prefixLength ? 'correct' : '',
-  }));
-};
-
-const loadAudioBuffer = async (audioContext: AudioContext, url: string): Promise<AudioBuffer | null> => {
-  try {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    return await audioContext.decodeAudioData(arrayBuffer);
-  } catch {
-    return null;
-  }
-};
-
-/** Fallback banner label when practice state comes from the server (e.g. after a reload). */
-const practiceLabel = (p: { kind: PracticeKind; id: string | null }): string => {
-  switch (p.kind) {
-    case 'drill': return `Drill · ${p.id === ' ' ? 'Space' : (p.id ?? '').toUpperCase()}`;
-    case 'lesson': return 'Lesson';
-    case 'common-words': return 'Common words';
-    case 'list': return 'Custom list';
-  }
-};
-
-const defaultState = (isAuthenticated: boolean): GameState => {
-  const initialGameMode: GameState['gameMode'] = isAuthenticated
-    ? (ls.get('gameMode') as GameState['gameMode']) || 'phrases'
-    : 'words';
-  const initialTimeMax = ls.int('timeMax', 120);
-  return {
-    currentText: '',
-    text: '',
-    currentIndex: 0,
-    mistakes: 0,
-    successes: 0,
-    accuracy: 0,
-    score: 0,
-    completionPercentage: 0,
-    isTyping: false,
-    isFinished: false,
-    timeMax: initialTimeMax,
-    timeLeft: initialTimeMax,
-    gameMode: initialGameMode,
-    wordCount: ls.int('wordCount', 50),
-    isMuted: ls.bool('soundMuted'),
-    punctuationEnabled: isAuthenticated ? ls.bool('punctuationEnabled') : false,
-    numbersEnabled: isAuthenticated ? ls.bool('numbersEnabled') : false,
-    lastWpm: 0,
-    lastCpm: 0,
-    totalWords: 0,
-    textSource: isAuthenticated
-      ? (ls.get('textSource') as GameState['textSource']) || 'default'
-      : 'default',
-    generatorUnit: (ls.get('generatorUnit') as GameState['generatorUnit']) || 'sentence',
-    generatorCount: ls.int('generatorCount', 3),
-    loremMin: ls.int('loremMin', 20),
-    loremMax: ls.int('loremMax', 60),
-    caretStyle: (ls.get('caretStyle') as GameState['caretStyle']) || 'line',
-    dailyDate: null,
-    practice: null,
-    botWpm: null,
-    race: null,
-  };
+const SOUND_FOR: Partial<Record<KeyOutcome, GameSound>> = {
+  correct: 'key',
+  skip: 'key',
+  wrong: 'error',
+  rejected: 'error',
+  blocked: 'error',
 };
 
 /**
- * Typing game state service. Port of the React useTypingGame hook: server
- * logic (session, scoring) lives on the server, while audio and live UI
- * state stay client-side for responsiveness.
+ * Typing game state. The server is the source of truth for every number:
+ * this service applies the run's input rules for instant feedback
+ * (TypingEngine), streams the keys (RunSyncService) and shows what the
+ * server computes, live and at the end.
  */
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private readonly gameApi = inject(GameApiService);
   private readonly textGenerator = inject(TextGeneratorService);
+  private readonly audio = inject(GameAudioService);
+  private readonly sync = inject(RunSyncService);
+  private readonly settings = inject(SettingsService);
 
   private readonly gameStateSignal = signal<GameState>(defaultState(false));
   readonly gameState = this.gameStateSignal.asReadonly();
   readonly characters = signal<Character[]>([]);
   readonly results = signal<Results | null>(null);
   readonly performance = signal<PerformancePoint[]>([]);
+  /** A recorded run raced as a ghost cursor (your PB or a daily winner), or null. */
+  readonly ghost = signal<RunGhost | null>(null);
+
+  /** Why the last run has no results (e.g. the server couldn't be reached). */
+  readonly scoreError = signal<string | null>(null);
 
   /** True while a guest-finished game is being migrated to the authenticated account. */
   private readonly migrationPending = signal(false);
   readonly isMigrating = this.migrationPending.asReadonly();
 
-  // Mutable accumulators (the "refs" in the React hook).
+  /** Server session id (guest runs need it on every request). */
   private sessionId: string | null = null;
   private isAuthenticated = false;
   private initialAuth: boolean | null = null;
-  private timer: ReturnType<typeof setInterval> | null = null;
-  private snapshotInterval: ReturnType<typeof setInterval> | null = null;
+  private clock: ReturnType<typeof setInterval> | null = null;
+  private progressTimer: ReturnType<typeof setInterval> | null = null;
   private startTime: number | null = null;
-  private audioContext: AudioContext | null = null;
-  private keySoundBuffer: AudioBuffer | null = null;
-  private timeUpSoundBuffer: AudioBuffer | null = null;
-  private errorSoundBuffer: AudioBuffer | null = null;
   private starting = false;
   private ending = false;
-  private lastKeystrokeTime: number | null = null;
-  private afkTime = 0;
-  private afkCount = 0;
-  private afkEvents: AfkEvent[] = [];
-  private currentText = '';
-  private lastSnapshotTime = 0;
-  private successes = 0;
-  private mistakes = 0;
-  private currentIndex = 0;
-  private rawKeystrokes = 0;
-  private backspaceCount = 0;
-  private lastSnapshotBackspaces = 0;
-  private lastTypedChar: string | null = null;
-  private consecutiveKeyCount = 0;
-  private penaltyTime = 0;
-  private penaltyPoints = 0;
-  private pendingGuestFinish: Record<string, any> | null = null;
-  /**
-   * Keystroke log sent with the end payload as [gapMs, char] pairs
-   * ('' = backspace). The server replays it against the text to derive
-   * per-key errors and to check the run's integrity.
-   */
-  private keystrokes: [number, string][] = [];
-  private lastLoggedKeyTime: number | null = null;
+  private engine = new TypingEngine('');
+  private readonly log = new KeystrokeLog();
+  /** Time limit of the run on screen (the server's; zen runs differ from the setting). */
+  private runLimitSec: number | null = null;
+  /** Guest run finished before signing in: saved to the account on sign-in. */
+  private guestFinishedId: string | null = null;
 
-  constructor() {
-    this.initAudio();
-  }
-
-  private initAudio(): void {
-    this.audioContext = new AudioContext();
-    void Promise.all([
-      loadAudioBuffer(this.audioContext, KEY_SOUND_URL),
-      loadAudioBuffer(this.audioContext, TIME_UP_SOUND_URL),
-      loadAudioBuffer(this.audioContext, ERROR_SOUND_URL),
-    ]).then(([key, timeUp, error]) => {
-      this.keySoundBuffer = key;
-      this.timeUpSoundBuffer = timeUp;
-      this.errorSoundBuffer = error;
-    });
-  }
-
-  private playSound(buffer: AudioBuffer | null): void {
+  /** Current test settings in the shape the game endpoints take. */
+  private settingsPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
     const gs = this.gameState();
-    if (!gs.isMuted && buffer && this.audioContext) {
-      if (this.audioContext.state === 'suspended') {
-        void this.audioContext.resume();
-      }
-      const source = this.audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(this.audioContext.destination);
-      source.start(0);
-    }
+    return {
+      gameMode: gs.gameMode,
+      wordCount: gs.zen && gs.gameMode === 'words' ? ZEN_WORDS : gs.wordCount,
+      timeMax: gs.zen ? ZEN_SECONDS : gs.timeMax,
+      punctuationEnabled: gs.punctuationEnabled,
+      numbersEnabled: gs.numbersEnabled,
+      textCategory: gs.textCategory,
+      language: gs.language,
+      codeLanguage: gs.codeLanguage,
+      rules: { difficulty: gs.rules.difficulty, stopOnError: gs.rules.stopOnError, spaceSkips: gs.rules.spaceSkips },
+      ...overrides,
+    };
   }
 
-  /**
-   * Applies server-provided fresh text (no resume).
-   */
+  private playSound(sound: GameSound): void {
+    this.audio.play(sound, this.gameState().isMuted, this.settings.settings().soundPack);
+  }
+
+  private rulesFrom(data: any): TypingRules {
+    return data?.rules ? { ...DEFAULT_RULES, ...data.rules } : this.gameState().rules;
+  }
+
+  /** Applies server-provided fresh text (no resume). */
   private applyNewText(data: any): void {
-    this.characters.set(textToCharacters(data.text));
-    this.currentText = '';
+    this.resetInternalState();
+    // A daily ghost belongs to that day's text only.
+    if (this.ghost()?.kind === 'daily') this.ghost.set(null);
+    if (data.sessionId) this.sessionId = data.sessionId;
+    this.runLimitSec = data.timeMax ?? null;
+    const rules = this.rulesFrom(data);
+    this.engine = new TypingEngine(data.text || '', rules);
+    this.characters.set(this.engine.characters());
     this.gameStateSignal.update(prev => ({
       ...prev,
       text: data.text,
       totalWords: data.totalWords,
+      passage: data.passage ?? null,
+      rules,
       currentText: '',
       currentIndex: 0,
       mistakes: 0,
@@ -196,7 +118,7 @@ export class GameService {
       completionPercentage: 0,
       lastWpm: 0,
       lastCpm: 0,
-      timeLeft: prev.timeMax,
+      timeLeft: this.runLimitSec ?? prev.timeMax,
       isTyping: false,
       isFinished: false,
       dailyDate: null,
@@ -206,43 +128,44 @@ export class GameService {
   }
 
   /**
-   * Applies server session state, resuming typed progress when the server has it.
+   * Applies server session state. A run the server already holds keys for
+   * continues on the server's clock (its deadline may already have passed).
    */
   private applyServerText(data: any): void {
+    this.resetInternalState();
+    if (data.sessionId) this.sessionId = data.sessionId;
+    this.runLimitSec = data.timeMax ?? null;
+    // A zen run's long limit is not the player's time setting.
+    const zenRun = this.gameState().zen && !data.dailyDate && !data.practice && !data.raceCode;
     const text: string = data.text || '';
-    const resumeText: string = data.incomplete && typeof data.typedText === 'string'
-      ? data.typedText
-      : '';
-    const idx = resumeText.length;
+    const rules = this.rulesFrom(data);
+    const resumeText: string = data.incomplete && typeof data.typedText === 'string' ? data.typedText : '';
+    const keyCount: number = data.incomplete ? data.keyCount ?? 0 : 0;
 
-    let s = 0;
-    let m = 0;
-    for (let i = 0; i < idx; i++) {
-      if (text[i] !== undefined && text[i] === resumeText[i]) s++;
-      else m++;
-    }
-
-    this.currentText = resumeText;
-    this.currentIndex = idx;
-    this.successes = s;
-    this.mistakes = m;
-    this.rawKeystrokes = idx;
-
-    this.characters.set(textToCharacters(text, resumeText));
+    this.engine = new TypingEngine(text, rules, resumeText);
+    this.log.reset(keyCount);
+    this.characters.set(this.engine.characters());
     this.gameStateSignal.update(prev => ({
       ...prev,
       text,
       totalWords: data.totalWords ?? prev.totalWords,
-      currentText: resumeText,
-      currentIndex: idx,
-      mistakes: m,
-      successes: s,
-      accuracy: s + m > 0 ? (s / (s + m)) * 100 : 0,
-      completionPercentage: text.length ? (idx / text.length) * 100 : 0,
+      passage: data.passage ?? null,
+      textCategory: data.textCategory ?? prev.textCategory,
+      rules,
+      currentText: this.engine.value,
+      currentIndex: this.engine.position,
+      mistakes: 0,
+      successes: 0,
+      accuracy: 0,
+      lastWpm: 0,
+      lastCpm: 0,
+      completionPercentage: text.length ? (this.engine.position / text.length) * 100 : 0,
       gameMode: data.gameMode ?? prev.gameMode,
-      wordCount: data.wordCount ?? prev.wordCount,
-      timeMax: data.timeMax ?? prev.timeMax,
+      wordCount: zenRun ? prev.wordCount : data.wordCount ?? prev.wordCount,
+      timeMax: zenRun ? prev.timeMax : data.timeMax ?? prev.timeMax,
       timeLeft: data.timeMax ?? prev.timeMax,
+      language: data.language ?? prev.language,
+      codeLanguage: data.codeLanguage ?? prev.codeLanguage,
       punctuationEnabled: data.punctuationEnabled ?? prev.punctuationEnabled,
       numbersEnabled: data.numbersEnabled ?? prev.numbersEnabled,
       dailyDate: data.dailyDate ?? null,
@@ -253,13 +176,20 @@ export class GameService {
       isTyping: false,
       isFinished: false,
     }));
+
+    if (keyCount > 0 && data.startedAt && data.serverNow && !data.raceCode) {
+      this.startRun(Date.now() - (data.serverNow - data.startedAt));
+      void this.sync.flush().then(() => this.applyLive());
+    }
   }
 
-  /**
-   * Returns locally-generated text using txtgen (phrases mode, non-default source).
-   */
+  /** Locally generated text (phrases mode, generated or lorem source). */
   private generateLocalText(): { text: string; totalWords: number } {
     const gs = this.gameState();
+    if (gs.textSource === 'custom') {
+      const text = (ls.get('customText') ?? '').replace(/\s+/g, ' ').trim() || 'Paste your own text in the text source menu.';
+      return { text, totalWords: text.split(' ').length };
+    }
     if (gs.textSource === 'lorem') {
       return this.textGenerator.generateLorem(gs.loremMin, gs.loremMax);
     }
@@ -269,68 +199,33 @@ export class GameService {
     });
   }
 
-  /**
-   * Guest init: fetch fresh text without creating a server session.
-   * In phrases mode with a non-default source, generate locally instead.
-   */
+  /** Text the client brings itself (generated/lorem phrases), or null for server text. */
+  private clientTextPayload(): Record<string, unknown> {
+    const gs = this.gameState();
+    if (gs.gameMode !== 'phrases' || gs.textSource === 'default') return {};
+    const local = this.generateLocalText();
+    return { clientText: local.text, clientTotalWords: local.totalWords };
+  }
+
+  /** Guest init: a fresh guest run (held by the server in memory, scored there). */
   private async initGame(): Promise<void> {
     if (this.starting) return;
     this.starting = true;
     try {
-      const gs = this.gameState();
-      if (gs.gameMode === 'phrases' && gs.textSource !== 'default') {
-        this.applyNewText(this.generateLocalText());
-        return;
-      }
-      const response = await this.gameApi.resetGame({
-        gameMode: gs.gameMode,
-        wordCount: gs.wordCount,
-        timeMax: gs.timeMax,
-        punctuationEnabled: gs.punctuationEnabled,
-        numbersEnabled: gs.numbersEnabled,
-        noSession: true,
-      });
+      const response = await this.gameApi.resetGame({ ...this.settingsPayload(), ...this.clientTextPayload() });
       if (response.success) this.applyNewText(response.data);
-    } catch {
-      // Server unreachable; keep whatever text is already rendered.
     } finally {
       this.starting = false;
     }
   }
 
-  /**
-   * Authenticated init: get-or-create the server session (resumes in-progress games).
-   * When textSource !== 'default' in phrases mode, the client generates the text
-   * and passes it to the server so it creates the session with that content.
-   */
+  /** Authenticated init: get-or-create the server session (resumes in-progress games). */
   private async initSession(): Promise<void> {
     if (this.starting) return;
     this.starting = true;
     try {
-      const gs = this.gameState();
-      const clientText =
-        gs.gameMode === 'phrases' && gs.textSource !== 'default'
-          ? this.generateLocalText()
-          : null;
-
-      const response = await this.gameApi.startGame({
-        gameMode: gs.gameMode,
-        wordCount: gs.wordCount,
-        timeMax: gs.timeMax,
-        punctuationEnabled: gs.punctuationEnabled,
-        numbersEnabled: gs.numbersEnabled,
-        persist: true,
-        ...(clientText ? { clientText: clientText.text, clientTotalWords: clientText.totalWords } : {}),
-      });
-      if (response.success) {
-        const data = response.data;
-        this.sessionId = data.sessionId;
-        this.applyServerText(data);
-      }
-    } catch {
-      // Fall back to guest text so the UI still works.
-      this.starting = false;
-      await this.initGame();
+      const response = await this.gameApi.startGame({ ...this.settingsPayload(), persist: true, ...this.clientTextPayload() });
+      if (response.success) this.applyServerText(response.data);
     } finally {
       this.starting = false;
     }
@@ -339,7 +234,7 @@ export class GameService {
   /**
    * Drives (re)initialization whenever the auth state changes. The first call
    * applies the auth-dependent defaults; later transitions keep the current
-   * settings and only reset transient progress (mirrors the React hook).
+   * settings and only reset transient progress.
    */
   setAuthenticated(isAuth: boolean): void {
     if (this.initialAuth === null) {
@@ -367,79 +262,42 @@ export class GameService {
   }
 
   /**
-   * Carries a guest's work into the account on sign-up/sign-in. Two cases:
-   * - a finished guest game is re-persisted server-side as a result;
-   * - an in-progress guest game is adopted as the user's session so the
-   *   countdown and typed progress keep running uninterrupted.
+   * Carries a guest's work into the account on sign-up/sign-in: a finished
+   * guest run is saved as a result (the server re-scores it from its log);
+   * a run in progress becomes the player's session, keys and clock included.
    */
   private async adoptGuestGame(): Promise<void> {
     const gs = this.gameState();
 
-    if (this.pendingGuestFinish) {
-      const pending = this.pendingGuestFinish;
-      this.pendingGuestFinish = null;
+    if (this.guestFinishedId) {
+      const guestSessionId = this.guestFinishedId;
+      this.guestFinishedId = null;
       this.migrationPending.set(true);
       try {
-        const response = await this.gameApi.migrateGame(pending);
-        if (response.success && response.data?.results) {
-          const data = response.data.results;
-          this.results.set({
-            ...data,
-            afkTime: (((pending['endData']?.afkTime ?? 0) as number) / 1000).toFixed(2),
-            afkCount: pending['endData']?.afkPeriods ?? 0,
-          });
-          this.gameStateSignal.update(prev => ({
-            ...prev,
-            isTyping: false,
-            isFinished: true,
-            score: data.score,
-            lastWpm: data.wpm,
-            lastCpm: data.cpm,
-            accuracy: data.accuracy,
-            completionPercentage: data.completionPercentage,
-          }));
-        }
-      } catch {
-        // Keep the guest-computed results already on screen.
+        const response = await this.gameApi.migrateGame({ guestSessionId });
+        if (response.success && response.data?.results) this.showResults(response.data.results);
       } finally {
         this.migrationPending.set(false);
       }
       return;
     }
 
-    if (!gs.text) {
-      this.sessionId = null;
-      this.init();
-      return;
-    }
-
-    if (gs.isTyping) {
-      try {
-        const response = await this.gameApi.migrateGame({
-          text: gs.text,
-          typedText: this.currentText,
-          totalWords: gs.totalWords,
-          gameMode: gs.gameMode,
-          wordCount: gs.wordCount,
-          timeMax: gs.timeMax,
-          timeLeft: gs.timeLeft,
-          punctuationEnabled: gs.punctuationEnabled,
-          numbersEnabled: gs.numbersEnabled,
-          incomplete: true,
+    if (gs.isTyping && this.sessionId) {
+      const guestSessionId = this.sessionId;
+      await this.sync.flush();
+      const response = await this.gameApi.migrateGame({ guestSessionId });
+      if (response.success && response.data?.sessionId) {
+        this.sessionId = response.data.sessionId;
+        // Signed in now: the token identifies the run.
+        this.sync.begin(this.log, {
+          sessionId: null,
+          serverKeys: response.data.keyCount ?? 0,
+          elapsed: () => this.getElapsedMs(),
         });
-        if (response.success && response.data?.sessionId) {
-          this.sessionId = response.data.sessionId;
-          return;
-        }
-      } catch {
-        // Fall through to a fresh session.
+        return;
       }
-      this.sessionId = null;
-      this.init();
-      return;
     }
 
-    // Text loaded but nothing typed yet: start a fresh authenticated session.
     this.resetInternalState();
     this.sessionId = null;
     this.init();
@@ -453,576 +311,282 @@ export class GameService {
     }
   }
 
-  private stopTimer(): void {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
-    }
-    if (this.snapshotInterval) {
-      clearInterval(this.snapshotInterval);
-      this.snapshotInterval = null;
-    }
+  private stopTimers(): void {
+    if (this.clock) clearInterval(this.clock);
+    if (this.progressTimer) clearInterval(this.progressTimer);
+    this.clock = null;
+    this.progressTimer = null;
   }
 
-  /**
-   * Persists current progress to the server (authenticated only) so the
-   * session can be resumed after a reload or logout.
-   */
-  private async sendHeartbeat(): Promise<void> {
-    if (!this.isAuthenticated || !this.sessionId) return;
-    try {
-      const gs = this.gameState();
-      await this.gameApi.saveSessionState({
-        currentIndex: this.currentIndex,
-        typedText: this.currentText,
-        timeLeft: gs.timeLeft,
-        isTyping: gs.isTyping,
-        currentText: this.currentText,
-      });
-    } catch {
-      // Heartbeat failures are non-fatal.
-    }
+  /** Starts the run clock and key streaming. `startTime` is on the local clock. */
+  private startRun(startTime: number): void {
+    const race = this.gameState().race;
+    this.startTime = startTime;
+    this.gameStateSignal.update(prev => ({ ...prev, isTyping: true }));
+    this.sync.begin(this.log, {
+      sessionId: this.isAuthenticated ? null : this.sessionId,
+      serverKeys: this.log.total,
+      elapsed: () => this.getElapsedMs(),
+      leadMs: race ? () => Math.max(0, Date.now() - race.startAt) : undefined,
+    });
+
+    this.stopTimers();
+    this.clock = setInterval(() => this.tickClock(), CLOCK_TICK_MS);
+    this.progressTimer = setInterval(() => {
+      void this.sync.flush().then(() => this.applyLive());
+    }, race ? RACE_PROGRESS_INTERVAL_MS : PROGRESS_INTERVAL_MS);
+  }
+
+  /** Counts down to the server's deadline (time penalties move it earlier). */
+  private tickClock(): void {
+    if (!this.startTime) return;
+    const gs = this.gameState();
+    const deadline = this.sync.live()?.deadlineMs ?? (this.runLimitSec ?? gs.timeMax) * 1000;
+    const remaining = deadline - this.getElapsedMs();
+    const timeLeft = Math.max(0, Math.ceil(remaining / 1000));
+    if (timeLeft !== gs.timeLeft) this.gameStateSignal.update(prev => ({ ...prev, timeLeft }));
+    if (remaining <= 0) void this.handleEnd();
+  }
+
+  /** Copies the server's live numbers into the display state. */
+  private applyLive(): void {
+    const live = this.sync.live();
+    if (!live || this.gameState().isFinished) return;
+    this.gameStateSignal.update(prev => ({
+      ...prev,
+      lastWpm: live.wpm,
+      accuracy: live.accuracy,
+      mistakes: live.mistakes,
+    }));
+  }
+
+  private showResults(data: Results): void {
+    this.results.set(data);
+    this.performance.set(data.performance ?? []);
+    this.scoreError.set(null);
+    this.gameStateSignal.update(prev => ({
+      ...prev,
+      isTyping: false,
+      isFinished: true,
+      score: data.score,
+      lastWpm: data.wpm,
+      lastCpm: data.cpm,
+      accuracy: data.accuracy,
+      mistakes: data.mistakes,
+      completionPercentage: data.completionPercentage ?? prev.completionPercentage,
+    }));
   }
 
   private async handleEnd(): Promise<void> {
     if (this.ending) return;
     this.ending = true;
-    this.stopTimer();
-    if (this.timeUpSoundBuffer) {
-      this.playSound(this.timeUpSoundBuffer);
-    }
-
-    const gs = this.gameState();
-    const gameData = {
-      typedText: this.currentText,
-      startTime: this.startTime,
-      endTime: Date.now(),
-      afkTime: this.afkTime,
-      afkPeriods: this.afkCount,
-      performance: this.performance(),
-      penalty: this.penaltyPoints,
-      rawKeystrokes: this.rawKeystrokes,
-      gameMode: gs.gameMode,
-      wordCount: gs.wordCount,
-      timeMax: gs.timeMax,
-      text: gs.text,
-      totalWords: gs.totalWords,
-      keystrokes: this.keystrokes,
-    };
-
-    const markFinished = () => {
-      this.gameStateSignal.update(prev => ({ ...prev, isTyping: false, isFinished: true }));
-    };
+    this.stopTimers();
+    this.playSound('timeUp');
 
     try {
-      const response = await this.gameApi.endGame(gameData);
-      if (response.success) {
-        const data = response.data;
-        this.results.set({
-          ...data,
-          afkTime: (this.afkTime / 1000).toFixed(2),
-          afkCount: this.afkCount,
-        });
-        this.gameStateSignal.update(prev => ({
-          ...prev,
-          isTyping: false,
-          isFinished: true,
-          score: data.score,
-          lastWpm: data.wpm,
-          lastCpm: data.cpm,
-          accuracy: data.accuracy,
-          completionPercentage: data.completionPercentage,
-        }));
-
-        // Keep the raw snapshot of a finished guest game so it can be migrated
-        // into an account when the player signs up / signs in.
-        if (!this.isAuthenticated) {
-          this.pendingGuestFinish = {
-            text: gs.text,
-            totalWords: gs.totalWords,
-            typedText: this.currentText,
-            gameMode: gs.gameMode,
-            wordCount: gs.wordCount,
-            timeMax: gs.timeMax,
-            punctuationEnabled: gs.punctuationEnabled,
-            numbersEnabled: gs.numbersEnabled,
-            endData: {
-              startTime: this.startTime ?? Date.now(),
-              endTime: Date.now(),
-              afkTime: this.afkTime,
-              afkPeriods: this.afkCount,
-              performance: this.performance(),
-              penalty: this.penaltyPoints,
-              rawKeystrokes: this.rawKeystrokes,
-              keystrokes: this.keystrokes,
-            },
-          };
-        }
+      const { results, error } = await this.sync.finish(this.engine.value);
+      if (results) {
+        this.showResults(results);
+        if (!this.isAuthenticated) this.guestFinishedId = this.sessionId;
       } else {
-        // E.g. no active session: fall back to client-computed stats.
-        markFinished();
+        this.scoreError.set(error || 'This run could not be scored.');
+        this.gameStateSignal.update(prev => ({ ...prev, isTyping: false, isFinished: true }));
       }
-    } catch {
-      markFinished();
     } finally {
       this.ending = false;
     }
   }
 
-  private startTimer(): void {
-    if (this.timer) return;
-
-    this.timer = setInterval(() => {
-      if (!this.startTime) return;
-
-      const gs = this.gameState();
-      const elapsed = (Date.now() - this.startTime) / 1000;
-      const newTimeLeft = Math.max(0, Math.ceil(gs.timeMax - elapsed) - this.penaltyTime);
-
-      if (newTimeLeft <= 0) {
-        this.stopTimer();
-        void this.handleEnd();
-        this.gameStateSignal.update(prev => ({ ...prev, timeLeft: 0, isFinished: true, isTyping: false }));
-        return;
-      }
-
-      this.gameStateSignal.update(prev => ({ ...prev, timeLeft: newTimeLeft }));
-    }, 1000);
-
-    this.snapshotInterval = setInterval(() => {
-      if (!this.startTime) return;
-
-      // Float elapsed for accurate WPM math (avoids division by zero in first second).
-      const elapsed = Math.max((Date.now() - this.startTime) / 1000, 1);
-      // Integer elapsed for timestamps (x-axis labels) and AFK event filtering.
-      const elapsedSec = Math.round(elapsed);
-      const totalChars = this.successes + this.mistakes;
-
-      const correctChars = this.successes;
-      const rawChars = this.currentText.length;
-      
-      const accuracy = totalChars > 0 ? (this.successes / totalChars) * 100 : 100;
-      const cpm = elapsed > 0 ? Math.floor(correctChars * (60 / elapsed)) : 0;
-      const wpm = Math.floor(cpm / 5) || 0;
-      const rawWpm = elapsed > 0 ? Math.floor((rawChars / 5) * (60 / elapsed)) : 0;
-
-      // Collect all AFK events since the last snapshot.
-      const afkEventsForSnapshot = this.afkEvents.filter(
-        (e) => e.timestamp > this.lastSnapshotTime && e.timestamp <= elapsedSec
-      );
-      this.lastSnapshotTime = elapsedSec;
-
-      this.performance.update(prev => {
-        let highestWpm = wpm;
-        let consistency = 100;
-
-        if (prev.length > 0) {
-          highestWpm = Math.max(prev[prev.length - 1].highestWpm, wpm);
-
-          const rawWpms = [...prev.map(p => p.rawWpm), rawWpm];
-          const avgRawWpm = rawWpms.reduce((a, b) => a + b, 0) / rawWpms.length;
-
-          if (avgRawWpm > 0) {
-            const variance = rawWpms.reduce((a, b) => a + Math.pow(b - avgRawWpm, 2), 0) / rawWpms.length;
-            const stdDev = Math.sqrt(variance);
-            const cov = stdDev / avgRawWpm;
-            consistency = Math.max(0, Math.round((1 - cov) * 10000) / 100);
-          }
-        }
-
-        const backspacesDelta = this.backspaceCount - this.lastSnapshotBackspaces;
-        this.lastSnapshotBackspaces = this.backspaceCount;
-
-        return [...prev, {
-          timestamp: elapsedSec,
-          wpm,
-          rawWpm,
-          accuracy: parseFloat(accuracy.toFixed(2)),
-          currentIndex: this.currentIndex,
-          mistakes: this.mistakes,
-          highestWpm,
-          consistency,
-          backspaces: backspacesDelta,
-          afkPeriods: afkEventsForSnapshot,
-        }];
-      });
-      this.afkEvents = this.afkEvents.filter((e) => e.timestamp > elapsedSec);
-
-      if (elapsedSec > 0 && elapsedSec % HEARTBEAT_INTERVAL_S === 0) {
-        void this.sendHeartbeat();
-      }
-    }, 1000);
-  }
-
-  /**
-   * Handles a keystroke/value change from the typing input.
-   */
+  /** Handles a value change from the typing input. */
   handleTyping(value: string): void {
     try {
       const gs = this.gameState();
-      if (gs.timeMax <= 0 || gs.isFinished) return;
-
-      const newCurrentText = value;
-      const newIndex = newCurrentText.length;
-      const prevIndex = this.currentIndex;
-
-      const targetText = gs.text || '';
+      if (gs.timeMax <= 0 || gs.isFinished || !gs.text || this.ending) return;
 
       // Live race: nobody types before the shared start.
       if (gs.race && Date.now() < gs.race.startAt) {
-        this.gameStateSignal.update(prev => ({ ...prev, currentText: this.currentText }));
+        this.gameStateSignal.update(prev => ({ ...prev, currentText: this.engine.value }));
         return;
       }
 
-      // Start tracking on first keystroke. In a race the clock runs from the
-      // shared start for everyone, matching the server's timing.
-      if (!gs.isTyping && newIndex > 0) {
-        this.startTime = gs.race ? gs.race.startAt : Date.now();
-        this.gameStateSignal.update(prev => ({ ...prev, isTyping: true }));
-        this.startTimer();
-        this.lastKeystrokeTime = Date.now();
-        // Lets the server time the run on its own clock (needed to rank it).
-        // Fire-and-forget: a failed call only makes this run unranked.
-        if (this.isAuthenticated && this.sessionId && !gs.race) {
-          void this.gameApi.beginGame();
-        }
+      const keys = inputKeys(this.engine.value, value);
+      if (!keys.length) return;
+
+      const first = !gs.isTyping;
+      // In a race the clock runs from the shared start for everyone.
+      if (first) this.startRun(gs.race ? gs.race.startAt : Date.now());
+
+      this.log.push(keys);
+      let sound: GameSound | undefined;
+      for (const key of keys) {
+        const outcome = this.engine.apply(key);
+        sound = SOUND_FOR[outcome] === 'error' ? 'error' : sound ?? SOUND_FOR[outcome];
       }
+      if (sound) this.playSound(sound);
 
-      // AFK detection.
-      if (this.lastKeystrokeTime && newIndex > prevIndex) {
-        const now = Date.now();
-        const gap = now - this.lastKeystrokeTime;
-        if (gap > AFK_THRESHOLD_MS) {
-          this.afkTime += gap;
-          this.afkCount++;
-          this.afkEvents.push({
-            timestamp: Math.floor((now - this.startTime!) / 1000),
-            afkIndex: this.afkCount,
-          });
-        }
-        this.lastKeystrokeTime = now;
-      }
-
-      const currentChar = targetText[newIndex - 1];
-      const typedChar = newCurrentText[newIndex - 1];
-
-      const newCharacters = this.characters().map(c => ({ ...c }));
-      let newMistakes = this.mistakes;
-      let totalSuccesses = this.successes;
-
-      if (newIndex < prevIndex) {
-        // Backspace: track count for punishment but do NOT count as a typed mistake.
-        this.backspaceCount++;
-        if (newCharacters[newIndex]) {
-          newCharacters[newIndex] = { ...newCharacters[newIndex], status: '' };
-        }
-        if (this.backspaceCount >= BACKSPACE_THRESHOLD) {
-          this.applyPunishment();
-        }
-      } else if (newIndex > prevIndex) {
-        if (typedChar === this.lastTypedChar) {
-          this.consecutiveKeyCount++;
-        } else {
-          this.consecutiveKeyCount = 1;
-          this.lastTypedChar = typedChar;
-        }
-
-        // Spam prevention: block input and punish if the same key is pressed repeatedly
-        if (this.consecutiveKeyCount >= 5) {
-          this.applyPunishment();
-          if (this.errorSoundBuffer) {
-            this.playSound(this.errorSoundBuffer);
-          }
-          // Force input field to revert to prevent advancing
-          this.gameStateSignal.update(prev => ({ ...prev, currentText: this.currentText }));
-          return;
-        }
-
-        this.rawKeystrokes++;
-
-        if (currentChar === typedChar) {
-          if (newCharacters[newIndex - 1]) {
-            newCharacters[newIndex - 1] = { ...newCharacters[newIndex - 1], status: 'correct' };
-          }
-          totalSuccesses++;
-          if (this.keySoundBuffer) {
-            this.playSound(this.keySoundBuffer);
-          }
-        } else {
-          if (newCharacters[newIndex - 1]) {
-            newCharacters[newIndex - 1] = { ...newCharacters[newIndex - 1], status: 'incorrect' };
-          }
-          newMistakes++;
-          if (this.errorSoundBuffer) {
-            this.playSound(this.errorSoundBuffer);
-          }
-        }
-      }
-
-      // Calculate stats locally for the live display.
-      // Accuracy: only correct vs. incorrect typed characters — backspaces excluded.
-      const totalTyped = totalSuccesses + newMistakes;
-      const accuracy = totalTyped > 0 ? (totalSuccesses / totalTyped) * 100 : 0;
-      const elapsedSeconds = this.startTime
-        ? Math.max((Date.now() - this.startTime) / 1000, 1)
-        : 1;
-
-      const correctChars = totalSuccesses;
-
-      const cpm = Math.floor(correctChars * (60 / elapsedSeconds)) || 0;
-      const wpm = Math.floor(cpm / 5) || 0;
-      const completionPercentage = targetText.length > 0
-        ? (newIndex / targetText.length) * 100
-        : 0;
-
-      this.recordKeystrokes(this.currentText, newCurrentText);
-      this.characters.set(newCharacters);
-      this.currentText = newCurrentText;
-      this.successes = totalSuccesses;
-      this.mistakes = newMistakes;
-      this.currentIndex = newIndex;
-
+      const position = this.engine.position;
+      this.characters.set(this.engine.characters());
       this.gameStateSignal.update(prev => ({
         ...prev,
-        currentText: newCurrentText,
-        currentIndex: newIndex,
-        mistakes: newMistakes,
-        successes: totalSuccesses,
-        accuracy,
-        lastWpm: wpm,
-        lastCpm: cpm,
-        completionPercentage,
+        currentText: this.engine.value,
+        currentIndex: position,
+        completionPercentage: prev.text.length ? (position / prev.text.length) * 100 : 0,
       }));
 
-      if (completionPercentage >= 100) {
-        void this.handleEnd();
-      }
+      // The first batch starts the run on the server clock.
+      if (first) void this.sync.flush().then(() => this.applyLive());
+      if (this.engine.done) void this.handleEnd();
     } catch {
       // Input handling must never throw in a controlled input.
     }
   }
 
-  /**
-   * Appends the edit from `prev` to `next` to the keystroke log. A prefix diff
-   * covers single keys, word deletion (Ctrl+Backspace) and replacements alike.
-   */
-  private recordKeystrokes(prev: string, next: string): void {
-    let common = 0;
-    while (common < prev.length && common < next.length && prev[common] === next[common]) common++;
-
-    const now = Date.now();
-    let gap = this.lastLoggedKeyTime === null ? 0 : now - this.lastLoggedKeyTime;
-    this.lastLoggedKeyTime = now;
-
-    const push = (char: string) => {
-      if (this.keystrokes.length >= MAX_KEYSTROKES) return;
-      this.keystrokes.push([gap, char]);
-      gap = 0; // keys landing in the same input event share one timestamp
-    };
-    for (let i = prev.length; i > common; i--) push(BACKSPACE);
-    // Index by UTF-16 unit, not code point: the server expects 1-length chars.
-    for (let i = common; i < next.length; i++) push(next[i]);
-  }
-
-  /**
-   * Applies the backspace punishment immediately (no confirmation modal): dock
-   * 1 second of countdown and 1 score point.
-   */
-  private applyPunishment(): void {
-    this.penaltyTime++;
-    this.penaltyPoints++;
-    this.backspaceCount = 0;
-    this.lastKeystrokeTime = Date.now();
-    this.gameStateSignal.update(prev => ({
-      ...prev,
-      score: Math.max(0, prev.score - 1),
-      timeLeft: Math.max(0, prev.timeLeft - 1),
-    }));
-  }
-
-  /**
-   * Common reset of transient game state (progress, accumulators, results).
-   * The text itself is repopulated by the caller.
-   */
+  /** Common reset of transient run state. The text is repopulated by the caller. */
   private resetInternalState(): void {
-    this.stopTimer();
-
+    this.stopTimers();
+    this.sync.stop();
     this.startTime = null;
-    this.lastKeystrokeTime = null;
-    this.currentText = '';
-    this.afkTime = 0;
-    this.afkCount = 0;
-    this.afkEvents = [];
-    this.lastSnapshotTime = 0;
-    this.successes = 0;
-    this.mistakes = 0;
-    this.currentIndex = 0;
-    this.rawKeystrokes = 0;
     this.ending = false;
-
-    this.lastTypedChar = null;
-    this.consecutiveKeyCount = 0;
-    this.backspaceCount = 0;
-    this.penaltyTime = 0;
-    this.penaltyPoints = 0;
-    this.keystrokes = [];
-    this.lastLoggedKeyTime = null;
-
+    this.log.reset();
+    this.engine = new TypingEngine(this.gameState().text || '', this.gameState().rules);
     this.results.set(null);
     this.performance.set([]);
-    this.characters.set([]);
+    this.scoreError.set(null);
   }
 
   /**
-   * Applies a settings change that regenerates the text: authenticated users
-   * PATCH the session, guests fetch a fresh noSession text.
+   * Applies a settings change that regenerates the text: signed-in players
+   * PATCH their session, guests get a fresh guest run.
    */
   private async updateSettingsAndRefresh(payload: Record<string, unknown>): Promise<void> {
     this.resetInternalState();
-    try {
-      if (this.sessionId) {
-        const response = await this.gameApi.updateSettings(payload);
-        if (response.success) this.applyNewText(response.data);
-      } else if (this.isAuthenticated) {
-        await this.initSession();
-      } else {
-        const response = await this.gameApi.resetGame({ ...payload, noSession: true });
-        if (response.success) this.applyNewText(response.data);
-      }
-    } catch {
-      // Server unreachable; keep current text.
+    if (this.isAuthenticated && this.sessionId) {
+      const response = await this.gameApi.updateSettings(payload);
+      if (response.success) this.applyNewText(response.data);
+    } else if (this.isAuthenticated) {
+      await this.initSession();
+    } else {
+      const response = await this.gameApi.resetGame({ ...payload, ...this.clientTextPayload() });
+      if (response.success) this.applyNewText(response.data);
     }
   }
 
   async resetGame(overrideWordCount: number | null = null): Promise<void> {
     this.resetInternalState();
     const gs = this.gameState();
-    try {
-      if (this.sessionId) {
-        const clientText =
-          gs.gameMode === 'phrases' && gs.textSource !== 'default'
-            ? this.generateLocalText()
-            : null;
-
-        const response = await this.gameApi.resetGame({
-          gameMode: gs.gameMode,
-          wordCount: overrideWordCount || gs.wordCount,
-          timeMax: gs.timeMax,
-          punctuationEnabled: gs.punctuationEnabled,
-          numbersEnabled: gs.numbersEnabled,
-          ...(clientText ? { clientText: clientText.text, clientTotalWords: clientText.totalWords } : {}),
-        });
-        if (response.success) this.applyNewText(response.data);
-      } else if (this.isAuthenticated) {
-        await this.initSession();
-      } else {
-        await this.initGame();
-      }
-    } catch {
-      // Server unreachable; restore the previous text so the display isn't blank.
-      this.characters.set(textToCharacters(this.gameState().text, this.currentText));
+    if (this.isAuthenticated && !this.sessionId) {
+      await this.initSession();
+      return;
     }
+    const response = await this.gameApi.resetGame({
+      ...this.settingsPayload({ wordCount: overrideWordCount || gs.wordCount }),
+      ...this.clientTextPayload(),
+    });
+    if (response.success) this.applyNewText(response.data);
+    else this.characters.set(this.engine.characters());
   }
 
   async generateNewParagraph(): Promise<void> {
-    this.resetInternalState();
-    const gs = this.gameState();
-    try {
-      // Local-generation intercept for phrases mode with non-default source
-      if (gs.gameMode === 'phrases' && gs.textSource !== 'default') {
-        this.applyNewText(this.generateLocalText());
-        return;
-      }
-      if (this.sessionId) {
-        const response = await this.gameApi.refreshText({
-          gameMode: gs.gameMode,
-          wordCount: gs.wordCount,
-          timeMax: gs.timeMax,
-          punctuationEnabled: gs.punctuationEnabled,
-          numbersEnabled: gs.numbersEnabled,
-        });
-        if (response.success) this.applyNewText(response.data);
-      } else if (this.isAuthenticated) {
-        await this.initSession();
-      } else {
-        await this.initGame();
-      }
-    } catch {
-      // Server unreachable; restore the previous text so the display isn't blank.
-      this.characters.set(textToCharacters(this.gameState().text, this.currentText));
-    }
+    await this.resetGame();
   }
 
   setTimeMax(time: number): void {
     ls.set('timeMax', String(time));
     this.gameStateSignal.update(prev => ({ ...prev, timeMax: time, timeLeft: time }));
-    if (this.sessionId) {
+    if (this.isAuthenticated && this.sessionId) {
       void this.gameApi.updateSettings({ timeMax: time });
+    } else {
+      // Guest runs carry their limit: start a run with the new one.
+      void this.resetGame();
     }
   }
 
   setGameMode(mode: GameState['gameMode']): void {
     ls.set('gameMode', mode);
     this.gameStateSignal.update(prev => ({ ...prev, gameMode: mode }));
-    const gs = this.gameState();
-    void this.updateSettingsAndRefresh({
-      gameMode: mode,
-      wordCount: gs.wordCount,
-      timeMax: gs.timeMax,
-      punctuationEnabled: gs.punctuationEnabled,
-      numbersEnabled: gs.numbersEnabled,
-    });
+    void this.updateSettingsAndRefresh(this.settingsPayload());
   }
 
   setWordCount(count: number): void {
     ls.set('wordCount', String(count));
     this.gameStateSignal.update(prev => ({ ...prev, wordCount: count }));
-    const gs = this.gameState();
-    void this.updateSettingsAndRefresh({
-      gameMode: gs.gameMode,
-      wordCount: count,
-      timeMax: gs.timeMax,
-      punctuationEnabled: gs.punctuationEnabled,
-      numbersEnabled: gs.numbersEnabled,
-    });
+    void this.updateSettingsAndRefresh(this.settingsPayload({ wordCount: count }));
   }
 
   togglePunctuation(): void {
     const newEnabled = !this.gameState().punctuationEnabled;
     ls.set('punctuationEnabled', String(newEnabled));
     this.gameStateSignal.update(prev => ({ ...prev, punctuationEnabled: newEnabled }));
-    const gs = this.gameState();
-    void this.updateSettingsAndRefresh({
-      gameMode: gs.gameMode,
-      wordCount: gs.wordCount,
-      timeMax: gs.timeMax,
-      punctuationEnabled: newEnabled,
-      numbersEnabled: gs.numbersEnabled,
-    });
+    void this.updateSettingsAndRefresh(this.settingsPayload({ punctuationEnabled: newEnabled }));
   }
 
   toggleNumbers(): void {
     const newEnabled = !this.gameState().numbersEnabled;
     ls.set('numbersEnabled', String(newEnabled));
     this.gameStateSignal.update(prev => ({ ...prev, numbersEnabled: newEnabled }));
+    void this.updateSettingsAndRefresh(this.settingsPayload({ numbersEnabled: newEnabled }));
+  }
+
+  /**
+   * Applies settings that arrived from the account (on sign-in): caret and
+   * sound at once; changed typing rules start a new run under them.
+   */
+  applySyncedSettings(): void {
+    const s = this.settings.settings();
     const gs = this.gameState();
-    void this.updateSettingsAndRefresh({
-      gameMode: gs.gameMode,
-      wordCount: gs.wordCount,
-      timeMax: gs.timeMax,
-      punctuationEnabled: gs.punctuationEnabled,
-      numbersEnabled: newEnabled,
-    });
+    const rulesChanged = gs.rules.difficulty !== s.difficulty || gs.rules.stopOnError !== s.stopOnError || gs.rules.spaceSkips !== s.spaceSkips;
+    this.gameStateSignal.update(prev => ({
+      ...prev,
+      caretStyle: s.caretStyle,
+      isMuted: s.soundMuted,
+      rules: { ...prev.rules, difficulty: s.difficulty, stopOnError: s.stopOnError, spaceSkips: s.spaceSkips },
+    }));
+    if (rulesChanged && !gs.isTyping && !gs.isFinished && !gs.dailyDate && !gs.race && !gs.practice) {
+      void this.updateSettingsAndRefresh(this.settingsPayload());
+    }
+  }
+
+  /** Words mode language or code mode snippet language; starts a new run. */
+  setLanguage(patch: Partial<Pick<GameState, 'language' | 'codeLanguage'>>): void {
+    if (patch.language) ls.set('language', patch.language);
+    if (patch.codeLanguage) ls.set('codeLanguage', patch.codeLanguage);
+    this.gameStateSignal.update(prev => ({ ...prev, ...patch }));
+    void this.updateSettingsAndRefresh(this.settingsPayload());
+  }
+
+  /** Zen: a long untimed-feeling run you end yourself. */
+  setZen(zen: boolean): void {
+    ls.set('zen', String(zen));
+    this.gameStateSignal.update(prev => ({ ...prev, zen }));
+    void this.updateSettingsAndRefresh(this.settingsPayload());
+  }
+
+  /** Ends the run now (zen's Finish button); the server scores what was typed. */
+  finishRun(): void {
+    if (this.gameState().isTyping) void this.handleEnd();
+  }
+
+  /** Saves pasted text for the custom source and starts a run on it. */
+  setCustomText(text: string): void {
+    ls.set('customText', text);
+    this.setGeneratorConfig({ textSource: 'custom' });
+  }
+
+  /** Changes the typing rules (difficulty, stop on error, space skips); starts a new run. */
+  setRules(patch: Partial<Pick<TypingRules, 'difficulty' | 'stopOnError' | 'spaceSkips'>>): void {
+    this.settings.update(patch);
+    this.gameStateSignal.update(prev => ({ ...prev, rules: { ...prev.rules, ...patch } }));
+    void this.updateSettingsAndRefresh(this.settingsPayload());
   }
 
   setCaretStyle(style: GameState['caretStyle']): void {
-    ls.set('caretStyle', style);
+    this.settings.update({ caretStyle: style });
     this.gameStateSignal.update(s => ({ ...s, caretStyle: style }));
   }
 
   toggleMute(): void {
     const newMuted = !this.gameState().isMuted;
-    ls.set('soundMuted', String(newMuted));
+    this.settings.update({ soundMuted: newMuted });
     this.gameStateSignal.update(prev => ({ ...prev, isMuted: newMuted }));
   }
 
@@ -1032,45 +596,37 @@ export class GameService {
    */
   setGeneratorConfig(patch: Partial<{
     textSource: GameState['textSource'];
+    textCategory: GameState['textCategory'];
     generatorUnit: GameState['generatorUnit'];
     generatorCount: number;
     loremMin: number;
     loremMax: number;
   }>): void {
     if (patch.textSource !== undefined)     ls.set('textSource', patch.textSource);
+    if (patch.textCategory !== undefined)   ls.set('textCategory', patch.textCategory);
     if (patch.generatorUnit !== undefined)  ls.set('generatorUnit', patch.generatorUnit);
     if (patch.generatorCount !== undefined) ls.set('generatorCount', String(patch.generatorCount));
     if (patch.loremMin !== undefined)       ls.set('loremMin', String(patch.loremMin));
     if (patch.loremMax !== undefined)       ls.set('loremMax', String(patch.loremMax));
 
     this.gameStateSignal.update(prev => ({ ...prev, ...patch }));
-    this.resetInternalState();
     void this.resetGame();
   }
 
   /**
-   * Restarts the current text from the beginning without fetching new text.
-   * Bound to the Tab key shortcut.
+   * Restarts the current text from the beginning (nothing typed yet, so the
+   * server run has no keys). Bound to the Tab key shortcut.
    */
   restartSameText(): void {
-    if (this.gameState().isTyping || this.gameState().isFinished) return;
-    const text = this.gameState().text;
-    if (!text) return;
+    const gs = this.gameState();
+    if (gs.isTyping || gs.isFinished || !gs.text) return;
     this.resetInternalState();
-    this.characters.set(textToCharacters(text));
+    this.characters.set(this.engine.characters());
     this.gameStateSignal.update(prev => ({
       ...prev,
       currentText: '',
       currentIndex: 0,
-      mistakes: 0,
-      successes: 0,
-      accuracy: 0,
-      score: 0,
       completionPercentage: 0,
-      isTyping: false,
-      isFinished: false,
-      lastWpm: 0,
-      lastCpm: 0,
       timeLeft: prev.timeMax,
     }));
   }
@@ -1081,11 +637,7 @@ export class GameService {
    */
   async startDaily(): Promise<ApiResponse<unknown>> {
     const response = await this.gameApi.startDaily();
-    if (response.success && response.data) {
-      this.resetInternalState();
-      this.sessionId = (response.data as { sessionId: string }).sessionId;
-      this.applyServerText(response.data);
-    }
+    if (response.success && response.data) this.applyServerText(response.data);
     return response;
   }
 
@@ -1097,7 +649,12 @@ export class GameService {
     return this.applyPractice(this.gameApi.startDrill(target));
   }
 
-  /** Loads a lesson, the common-words drill or a custom list. Never ranked. */
+  /** Practice weighted toward your weakest keys and digraphs. Never ranked. */
+  startWeakKeys(): Promise<ApiResponse<unknown>> {
+    return this.applyPractice(this.gameApi.startWeakKeys());
+  }
+
+  /** Loads a lesson, the common-words drill, a custom list or a digraph review. Never ranked. */
   startPractice(kind: Exclude<PracticeKind, 'drill'>, id?: string, label?: string): Promise<ApiResponse<unknown>> {
     return this.applyPractice(this.gameApi.startPractice(kind, id), label);
   }
@@ -1105,8 +662,6 @@ export class GameService {
   private async applyPractice(request: Promise<ApiResponse<any>>, label?: string): Promise<ApiResponse<unknown>> {
     const response = await request;
     if (response.success && response.data) {
-      this.resetInternalState();
-      this.sessionId = response.data.sessionId;
       this.applyServerText(response.data);
       if (label) {
         this.gameStateSignal.update(prev => (prev.practice ? { ...prev, practice: { ...prev.practice, label } } : prev));
@@ -1123,10 +678,7 @@ export class GameService {
     this.resetInternalState();
     this.gameStateSignal.update(prev => ({ ...prev, race: { code, startAt }, botWpm: null }));
     const response = await this.gameApi.getGameState();
-    if (response.success && response.data) {
-      this.sessionId = response.data.sessionId;
-      this.applyServerText(response.data);
-    }
+    if (response.success && response.data) this.applyServerText(response.data);
   }
 
   /** Leaves race mode locally (the race socket handles the server side). */
@@ -1138,37 +690,51 @@ export class GameService {
   readonly lastBotOutcome = signal<string | null>(null);
 
   /**
-   * "Retry same" from the results page: the same text again. Signed-in
-   * players get a fresh server session with that text marked as client text,
-   * so the retry is saved but never ranked (the text is already known).
+   * "Retry same" from the results page: the same text again, as client
+   * text, so the retry is saved but never ranked (the text is already known).
    */
   async retrySame(): Promise<void> {
     const gs = this.gameState();
-    const text = gs.text;
-    if (!text) return;
+    if (!gs.text) return;
     this.resetInternalState();
-    if (this.isAuthenticated && this.sessionId) {
-      const response = await this.gameApi.resetGame({
-        gameMode: gs.gameMode,
-        wordCount: gs.wordCount,
-        timeMax: gs.timeMax,
-        punctuationEnabled: gs.punctuationEnabled,
-        numbersEnabled: gs.numbersEnabled,
-        clientText: text,
-        clientTotalWords: gs.totalWords,
-      });
-      if (response.success) {
-        this.applyNewText(response.data);
-        return;
-      }
-    }
-    // Guests (and a failed reset): restart locally on the same text.
-    this.applyNewText({ text, totalWords: gs.totalWords });
+    const response = await this.gameApi.resetGame({
+      ...this.settingsPayload(),
+      clientText: gs.text,
+      clientTotalWords: gs.totalWords,
+    });
+    if (response.success) this.applyNewText(response.data);
   }
 
-  /** Milliseconds since the first keystroke of the current run (0 before it). */
+  /** Milliseconds since the run started (0 before it). */
   getElapsedMs(): number {
     return this.startTime ? Date.now() - this.startTime : 0;
+  }
+
+  /**
+   * Races your best ranked run for the current mode and time limit. Resolves
+   * to an error message when there is no such run yet.
+   */
+  async racePb(): Promise<string | null> {
+    const gs = this.gameState();
+    const res = await this.gameApi.getPbGhost(gs.gameMode, gs.timeMax);
+    if (!res.success) return res.error || 'Could not load your best run';
+    if (!res.data) return `No verified ${gs.gameMode} run at ${gs.timeMax}s yet`;
+    this.ghost.set({ kind: 'pb', label: `PB · ${res.data.wpm} WPM`, wpm: res.data.wpm, timeline: res.data.timeline });
+    return null;
+  }
+
+  /** Practice run on a day's text against its winner's ghost. */
+  async raceDailyGhost(date?: string): Promise<ApiResponse<unknown>> {
+    const res = await this.gameApi.startDailyGhost(date);
+    if (res.success && res.data) {
+      this.applyServerText(res.data.state);
+      this.ghost.set({ kind: 'daily', ...res.data.ghost });
+    }
+    return res;
+  }
+
+  stopGhost(): void {
+    this.ghost.set(null);
   }
 
   /** Races a client-side pace bot on the next runs (null stops). Purely visual. */

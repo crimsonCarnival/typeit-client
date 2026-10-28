@@ -118,7 +118,7 @@
 .stepper-value {
   font-family: 'Kirsty Regular';
   font-size: 15px;
-  color: #f5f5f5;
+  color: var(--color-text);
   min-width: 22px;
   text-align: center;
 }
@@ -159,4 +159,82 @@
   color: #bc0517;
   border-color: rgba(188, 5, 23, 0.35);
   background: rgba(188, 5, 23, 0.06);
+}
+
+.custom-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.custom-dialog {
+  width: min(640px, 100%);
+  padding: 24px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 16px;
+  background: var(--color-surface-solid);
+  color: var(--color-text);
+}
+
+.custom-dialog h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: normal;
+}
+
+.custom-note {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--color-text-subtle);
+}
+
+.custom-area {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  resize: vertical;
+}
+
+.custom-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.custom-count {
+  margin-right: auto;
+  font-size: 13px;
+  color: var(--color-text-subtle);
+}
+
+.custom-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.custom-btn.primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.custom-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

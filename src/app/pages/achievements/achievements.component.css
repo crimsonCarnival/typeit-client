@@ -45,7 +45,7 @@
   gap: 8px;
   font-size: 15px;
   text-transform: capitalize;
-  color: #c9c5ce;
+  color: var(--color-text-muted);
 }
 
 .legend-swatch {
@@ -57,6 +57,7 @@
 .rarity-common { --rarity: var(--color-rarity-common); }
 .rarity-rare { --rarity: var(--color-rarity-rare); }
 .rarity-epic { --rarity: var(--color-rarity-epic); }
+.rarity-legendary { --rarity: var(--color-rarity-legendary); }
 
 .legend-swatch {
   background: var(--rarity);
@@ -108,7 +109,7 @@
 
 .btn-ghost {
   border: 1px solid #34343a;
-  background: #18181b;
+  background: var(--color-surface-solid);
   color: var(--color-text);
 }
 
@@ -158,7 +159,7 @@
 
 .category-count {
   font-size: 13px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .bar {
@@ -177,6 +178,7 @@
 .bar-fill-common { background: var(--color-rarity-common); }
 .bar-fill-rare { background: var(--color-rarity-rare); }
 .bar-fill-epic { background: var(--color-rarity-epic); }
+.bar-fill-legendary { background: var(--color-rarity-legendary); }
 
 /* Badges */
 
@@ -241,7 +243,7 @@
 }
 
 .badge.locked .badge-name {
-  color: #c9c5ce;
+  color: var(--color-text-muted);
 }
 
 .badge-rarity {
@@ -254,6 +256,7 @@
 .rarity-text-common { color: var(--color-rarity-common); }
 .rarity-text-rare { color: var(--color-rarity-rare); }
 .rarity-text-epic { color: var(--color-rarity-epic); }
+.rarity-text-legendary { color: var(--color-rarity-legendary); }
 
 .badge-desc {
   font-size: 15px;
@@ -291,7 +294,7 @@
 
 .foot {
   font-size: 15px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .foot a {
@@ -306,4 +309,26 @@
   .title {
     font-size: 44px;
   }
+}
+
+.tiers {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tier-pip {
+  width: 18px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border-strong);
+}
+
+.tier-pip.done {
+  background: var(--rarity);
+}
+
+.tier-label {
+  font-size: 12px;
+  color: var(--color-text-subtle);
 }

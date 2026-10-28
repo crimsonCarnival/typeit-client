@@ -19,6 +19,7 @@ export const normalizeUser = (raw: any): User | null => {
     role: raw.role,
     timezone: raw.timezone,
     stats: raw.stats,
+    settings: raw.settings ?? {},
     followersCount: Array.isArray(raw.followers)
       ? raw.followers.length
       : typeof raw.followersCount === 'number'

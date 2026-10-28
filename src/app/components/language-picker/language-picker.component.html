@@ -1,0 +1,21 @@
+@if (gameMode() === 'words') {
+  <div class="tb-section">
+    <span class="tb-label" aria-hidden="true">Language</span>
+    <div class="tb-buttons">
+      <select class="tb-input" aria-label="Words language" [disabled]="disabled()" (change)="onLanguage($event)" [title]="language() === 'english' ? 'English runs are ranked' : 'Other languages are practice: saved, not ranked'">
+        @for (l of languages; track l.id) {
+          <option [value]="l.id" [selected]="l.id === language()">{{ l.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+} @else if (gameMode() === 'code') {
+  <div class="tb-section">
+    <span class="tb-label" aria-hidden="true">Language</span>
+    <div class="tb-buttons" role="group" aria-label="Code language">
+      @for (l of codeLanguages; track l.id) {
+        <button type="button" class="tb-btn" [class.active]="codeLanguage() === l.id" [attr.aria-pressed]="codeLanguage() === l.id" [disabled]="disabled()" (click)="setCode(l.id)">{{ l.label }}</button>
+      }
+    </div>
+  </div>
+}

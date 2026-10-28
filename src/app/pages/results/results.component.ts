@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
 import { PerformanceChartComponent } from '../../components/performance-chart/performance-chart.component';
@@ -31,7 +31,7 @@ const SPEED_TIERS: { max: number; label: string }[] = [
  */
 @Component({
   selector: 'app-results',
-  imports: [PerformanceChartComponent],
+  imports: [PerformanceChartComponent, RouterLink],
   templateUrl: './results.component.html',
   styleUrl: './results.component.css',
   host: { '(document:keydown)': 'onKeydown($event)' },
@@ -60,12 +60,25 @@ export class ResultsComponent implements OnDestroy {
 
   readonly elapsed = computed(() => this.results()?.elapsedTime ?? this.gameState().timeMax - this.gameState().timeLeft);
   readonly mistakes = computed(() => this.results()?.mistakes ?? this.gameState().mistakes ?? 0);
-  readonly errorRate = computed(() => {
-    const secs = this.elapsed();
-    return secs > 0 ? (this.mistakes() / (secs / 60)).toFixed(1) : '0.0';
-  });
-  readonly afkSeconds = computed(() => Number(this.results()?.afkTime ?? 0).toFixed(2));
-  readonly afkCount = computed(() => this.results()?.afkCount ?? 0);
+  readonly errorRate = computed(() => (this.results()?.errorRate ?? 0).toFixed(1));
+  readonly afkSeconds = computed(() => (this.results()?.afkTime ?? 0).toFixed(2));
+  readonly afkCount = computed(() => this.results()?.afkPeriods ?? 0);
+  readonly scoreError = this.game.scoreError;
+
+  /** Words with mistakes or skipped, worst first (from the server's word breakdown). */
+  readonly troubleWords = computed(() =>
+    (this.results()?.wordStats ?? [])
+      .filter((w) => w.errors > 0 || w.skipped)
+      .sort((a, b) => b.errors - a.errors)
+      .slice(0, 12)
+  );
+  /** Slowest finished words (server-measured speed). */
+  readonly slowWords = computed(() =>
+    (this.results()?.wordStats ?? [])
+      .filter((w) => w.wpm !== null && !w.skipped && w.word.length > 1)
+      .sort((a, b) => (a.wpm ?? 0) - (b.wpm ?? 0))
+      .slice(0, 6)
+  );
 
   constructor() {
     // Nothing to show (direct visit, reload): back to the game.

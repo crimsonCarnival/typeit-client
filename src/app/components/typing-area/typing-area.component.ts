@@ -1,6 +1,30 @@
 import { Component, computed, DestroyRef, effect, ElementRef, inject, input, OnDestroy, output, signal, viewChild } from '@angular/core';
 import { Character, CaretStyle } from '../../models/models';
 
+/** An opponent's cursor (pace bot or another racer) drawn in the text. */
+export interface Ghost {
+  id: string;
+  /** Shown in the small tag above the cursor. */
+  label: string;
+  /** Characters typed so far: the cursor sits before this character. */
+  index: number;
+  /** CSS colour, e.g. 'var(--color-avatar-2)' */
+  color: string;
+}
+
+const INPUT_NEWLINE = '\uE000';
+const toInput = (text: string) => text.replace(/\n/g, INPUT_NEWLINE);
+// NFC: accented letters arrive as one character, as the server's text has them.
+const fromInput = (value: string) => value.split(INPUT_NEWLINE).join('\n').normalize('NFC');
+
+interface GhostMark {
+  left: number;
+  top: number;
+  height: number;
+  /** Ghosts sharing this character share one cursor and a row of tags. */
+  ghosts: { id: string; label: string; color: string }[];
+}
+
 @Component({
   selector: 'app-typing-area',
   templateUrl: './typing-area.component.html',
@@ -11,8 +35,11 @@ export class TypingAreaComponent {
   readonly characters = input<Character[]>([]);
   readonly currentText = input('');
   readonly caretStyle = input<CaretStyle>('line');
+  readonly ghosts = input<Ghost[]>([]);
 
   readonly typing = output<string>();
+  /** Shift+Enter: end the run now (zen). */
+  readonly finish = output<void>();
   readonly focusChange = output<boolean>();
 
   isFocused = false;
@@ -30,6 +57,14 @@ export class TypingAreaComponent {
   // Safety net: some async loads resolve after the view is already rendered,
   // so retry the layout computation until the rendered spans match the input.
   private readonly refreshKey = signal(0);
+
+  readonly ghostMarks = signal<GhostMark[]>([]);
+
+  /**
+   * The text in the hidden input. Inputs drop line breaks from their value,
+   * so a line break of code text is held there as a private-use character.
+   */
+  readonly inputValue = computed(() => toInput(this.currentText() ?? ''));
 
   readonly currentLine = computed(() => {
     const lines = this.lineOfIndex();
@@ -52,6 +87,54 @@ export class TypingAreaComponent {
       }
       this.layout(el);
     });
+
+    effect(() => {
+      const ghosts = this.ghosts();
+      this.refreshKey();
+      this.currentText();
+      const el = this.textDisplay()?.nativeElement;
+      if (!el || ghosts.length === 0) {
+        if (this.ghostMarks().length) this.ghostMarks.set([]);
+        return;
+      }
+      if (el.querySelectorAll('span').length !== this.characters().length) {
+        requestAnimationFrame(() => this.refreshKey.update(v => v + 1));
+        return;
+      }
+      this.placeGhosts(el, ghosts);
+    });
+  }
+
+  /**
+   * Positions each ghost at its character. Measured with bounding rects
+   * relative to the paragraph, so the paragraph's scrolling transform (which
+   * moves the spans and the ghosts together) cancels out.
+   */
+  private placeGhosts(el: HTMLElement, ghosts: Ghost[]): void {
+    const spans = Array.from(el.querySelectorAll('span')) as HTMLElement[];
+    if (spans.length === 0) {
+      this.ghostMarks.set([]);
+      return;
+    }
+    const origin = el.getBoundingClientRect();
+    const byIndex = new Map<number, GhostMark>();
+    for (const g of ghosts) {
+      const index = Math.max(0, Math.min(Math.floor(g.index), spans.length));
+      let mark = byIndex.get(index);
+      if (!mark) {
+        const atEnd = index === spans.length;
+        const rect = spans[atEnd ? index - 1 : index].getBoundingClientRect();
+        mark = {
+          left: (atEnd ? rect.right : rect.left) - origin.left,
+          top: rect.top - origin.top,
+          height: rect.height,
+          ghosts: [],
+        };
+        byIndex.set(index, mark);
+      }
+      mark.ghosts.push({ id: g.id, label: g.label, color: g.color });
+    }
+    this.ghostMarks.set([...byIndex.values()]);
   }
 
   private layout(el: HTMLElement): void {
@@ -161,17 +244,54 @@ export class TypingAreaComponent {
     this.focus();
   }
 
+  /** Text always goes in at the end, wherever the caret was left. */
+  onBeforeInput(event: Event): void {
+    const el = event.target as HTMLInputElement;
+    const end = el.value.length;
+    if (el.selectionStart !== end || el.selectionEnd !== end) el.setSelectionRange(end, end);
+  }
+
+  /** True while an IME or dead key is composing a character. */
+  private composing = false;
+
+  onCompositionStart(): void {
+    this.composing = true;
+  }
+
+  /** The composed character (e.g. ´ + u = ú) arrives as one key. */
+  onCompositionEnd(event: Event): void {
+    this.composing = false;
+    this.onInput(event);
+  }
+
   onInput(event: Event): void {
+    // Mid-composition values (a lone dead key) aren't keys yet.
+    if (this.composing || (event as InputEvent).isComposing) return;
     this.resetIdleTimer();
     const el = event.target as HTMLInputElement;
-    this.typing.emit(el.value);
+    this.typing.emit(fromInput(el.value));
     // When the parent rejects an edit (anti-spam guard, race not started yet)
     // the bound value doesn't change, so Angular never rewrites the input and
     // the rejected characters would linger. Re-sync after change detection.
     setTimeout(() => {
-      const accepted = typeof this.currentText() === 'string' ? this.currentText() : '';
+      const accepted = toInput(typeof this.currentText() === 'string' ? this.currentText() : '');
       if (el.value !== accepted) el.value = accepted;
+      // Typing always continues at the end of the text.
+      if (el.selectionStart !== accepted.length) el.setSelectionRange(accepted.length, accepted.length);
     });
+  }
+
+  /** Enter types a line break (code text); Shift+Enter finishes the run. */
+  onEnter(event: Event): void {
+    event.preventDefault();
+    if ((event as KeyboardEvent).shiftKey) {
+      this.finish.emit();
+      return;
+    }
+    // Only code text has line breaks to type.
+    if (!this.characters().some((c) => c.char === '\n')) return;
+    this.resetIdleTimer();
+    this.typing.emit((this.currentText() ?? '') + '\n');
   }
 
   private resetIdleTimer(): void {

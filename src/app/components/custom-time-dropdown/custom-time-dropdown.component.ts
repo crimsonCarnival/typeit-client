@@ -1,6 +1,7 @@
 import { Component, effect, ElementRef, input, output, signal, viewChild } from '@angular/core';
 
-const PRESET_TIMES = [30, 60, 90, 120];
+// 15s is a burst test: short enough to type flat out.
+const PRESET_TIMES = [15, 30, 60, 90, 120];
 
 @Component({
   selector: 'app-custom-time-dropdown',

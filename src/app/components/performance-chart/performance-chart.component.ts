@@ -109,11 +109,8 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
       return p.mistakes - prev;
     });
 
-    // Backspaces per interval.
-    const backspacesPerSecond = data.map((p, i) => {
-      const prev = i > 0 ? data[i - 1].backspaces : 0;
-      return (p.backspaces ?? 0) - prev;
-    });
+    // Backspaces per second (the server reports each second's count).
+    const backspacesPerSecond = data.map((p) => p.backspaces ?? 0);
 
     // Cumulative AFK event count map (O(n) pass).
     const cumulativeAfkMap = this.buildCumulativeAFKMap(data);

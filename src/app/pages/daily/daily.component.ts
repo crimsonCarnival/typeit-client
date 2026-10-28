@@ -94,6 +94,20 @@ export class DailyComponent {
     }
   }
 
+  readonly startingGhost = signal(false);
+  readonly ghostError = signal('');
+
+  /** Practice run on today's text against the leader's ghost (after your attempt). */
+  async raceGhost(): Promise<void> {
+    if (this.startingGhost()) return;
+    this.startingGhost.set(true);
+    this.ghostError.set('');
+    const res = await this.game.raceDailyGhost();
+    this.startingGhost.set(false);
+    if (res.success) void this.router.navigate(['/play']);
+    else this.ghostError.set(res.error || 'Could not start the ghost race');
+  }
+
   onEnter(event: Event): void {
     const target = event.target as HTMLElement | null;
     // Leave Enter alone in form fields and on focused buttons/links.

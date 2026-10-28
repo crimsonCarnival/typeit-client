@@ -80,6 +80,18 @@ export class LearnComponent {
     void this.run('common', () => this.game.startPractice('common-words', undefined, 'Common words'));
   }
 
+  startReview(): void {
+    if (!this.requireAccount()) return;
+    void this.run('review', () => this.game.startPractice('review', undefined));
+  }
+
+  /** "today", "tomorrow" or "in N days" for the next review. */
+  nextReview(at: string | null): string {
+    if (!at) return 'soon';
+    const days = Math.ceil((Date.parse(at) - Date.now()) / 86_400_000);
+    return days <= 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+  }
+
   drillWeakest(): void {
     const key = this.weakest()?.key;
     if (key === undefined) return;

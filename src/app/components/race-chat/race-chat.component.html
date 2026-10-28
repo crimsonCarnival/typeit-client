@@ -1,0 +1,29 @@
+<div class="chat" [class.compact]="compact()">
+  <ol #log class="chat-log" aria-live="polite" aria-label="Room chat">
+    @for (m of lines(); track m.at + m.from.userId) {
+      <li class="chat-line" [class.mine]="m.from.userId === race.myId()">
+        <span class="chat-name">{{ m.from.displayName }}</span>
+        @if (m.emote) {
+          <span class="chat-emote">{{ emoteLabel[m.emote] }}</span>
+        } @else {
+          <span class="chat-text">{{ m.text }}</span>
+        }
+      </li>
+    } @empty {
+      @if (!compact()) {
+        <li class="chat-empty">Say hi. Chat is only seen by people in this room.</li>
+      }
+    }
+  </ol>
+  <div class="chat-emotes" role="group" aria-label="Emotes">
+    @for (e of emotes; track e[0]) {
+      <button type="button" class="emote-btn" [attr.aria-label]="'Send ' + e[0]" (click)="race.emote(e[0])">{{ e[1] }}</button>
+    }
+  </div>
+  @if (!compact()) {
+    <form class="chat-form" (submit)="send($event, msg)">
+      <input #msg class="chat-input" type="text" maxlength="140" placeholder="Message the room" aria-label="Chat message" autocomplete="off" />
+      <button type="submit" class="chat-send">Send</button>
+    </form>
+  }
+</div>

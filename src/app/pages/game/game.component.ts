@@ -2,6 +2,7 @@ import { AfterViewInit, Component, DestroyRef, computed, effect, inject, signal,
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
+import { SettingsService } from '../../services/settings.service';
 import { SoundToggleComponent } from '../../components/sound-toggle/sound-toggle.component';
 import { RefreshButtonComponent } from '../../components/refresh-button/refresh-button.component';
 import { ModeDropdownComponent } from '../../components/mode-dropdown/mode-dropdown.component';
@@ -13,8 +14,12 @@ import { TypingAreaComponent } from '../../components/typing-area/typing-area.co
 import { TextSourceDropdownComponent } from '../../components/text-source-dropdown/text-source-dropdown.component';
 import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
-import { RaceLane, RaceLanesComponent } from '../../components/race-lanes/race-lanes.component';
+import { RulesPatch, RulesPickerComponent } from '../../components/rules-picker/rules-picker.component';
+import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
+import { LanguagePatch, LanguagePickerComponent } from '../../components/language-picker/language-picker.component';
+import { Ghost } from '../../components/typing-area/typing-area.component';
 import { botCharsAt } from '../../utils/pace-bot';
+import { ghostCharsAt } from '../../utils/ghost';
 import { RaceService } from '../../services/race.service';
 import { RacePlayer } from '../../models/models';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -35,7 +40,9 @@ const BOT_TICK_MS = 100;
     TypingAreaComponent,
     TextSourceDropdownComponent,
     CaretPickerComponent,
-    RaceLanesComponent,
+    RulesPickerComponent,
+    LanguagePickerComponent,
+    RaceChatComponent,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
@@ -43,6 +50,7 @@ const BOT_TICK_MS = 100;
 export class GameComponent implements AfterViewInit {
   readonly auth = inject(AuthService);
   readonly game = inject(GameService);
+  private readonly settings = inject(SettingsService);
 
   readonly gameState = this.game.gameState;
   readonly characters = this.game.characters;
@@ -83,21 +91,6 @@ export class GameComponent implements AfterViewInit {
     return race ? Math.max(0, Math.ceil((race.startAt - this.now()) / 1000)) : 0;
   });
 
-  /** Lanes for every racer; the player's own lane is red, others take avatar colours. */
-  readonly raceLanes = computed<RaceLane[] | null>(() => {
-    const room = this.race.room();
-    if (!this.gameState().race || !room?.text) return null;
-    const length = room.text.length;
-    return room.players.map((p, i) => ({
-      id: p.userId,
-      label: `${p.displayName}${p.finishedAt ? ', finished' : ''}`,
-      initial: p.displayName.charAt(0).toUpperCase(),
-      progress: p.index / length,
-      color: p.userId === this.race.myId() ? 'var(--color-primary)' : `var(--color-avatar-${(i % 7) + 2})`,
-      me: p.userId === this.race.myId(),
-    }));
-  });
-
   /** Racers by current position (finish order first, then progress). */
   readonly raceStandings = computed<RacePlayer[]>(() => {
     const players = [...(this.race.room()?.players ?? [])];
@@ -116,25 +109,76 @@ export class GameComponent implements AfterViewInit {
     return `${winner?.displayName ?? 'Someone'} won`;
   });
 
-  /** Run time the bot has raced so far; frozen when the run finishes. */
+  /** Run time the bot or ghost has raced so far; frozen when the run finishes. */
   private readonly botElapsedMs = signal(0);
 
-  private readonly botProgress = computed(() => {
+  readonly ghost = this.game.ghost;
+  /** What the run head shows (settings). */
+  readonly liveStats = computed(() => this.settings.settings().liveStats);
+  readonly ghostError = signal('');
+
+  /** Characters the recorded-run ghost has typed so far, on this text. */
+  private readonly ghostChars = computed(() => {
+    const g = this.ghost();
+    const length = this.gameState().text.length;
+    return g ? Math.min(length, ghostCharsAt(g.timeline, this.botElapsedMs())) : 0;
+  });
+
+  /** Characters the pace bot has typed so far (0 when no bot is racing). */
+  private readonly botChars = computed(() => {
     const gs = this.gameState();
     if (!gs.botWpm || !gs.text) return 0;
     // Same text and speed always replay the same bot run.
-    const chars = botCharsAt(this.botElapsedMs(), gs.botWpm, `${gs.botWpm}:${gs.text}`, gs.timeMax);
-    return Math.min(1, chars / gs.text.length);
+    return Math.min(gs.text.length, botCharsAt(this.botElapsedMs(), gs.botWpm, `${gs.botWpm}:${gs.text}`, gs.timeMax));
   });
 
-  readonly botLanes = computed<RaceLane[] | null>(() => {
-    const gs = this.gameState();
-    if (!gs.botWpm) return null;
-    return [
-      { id: 'you', label: 'You', initial: 'Y', progress: gs.completionPercentage / 100, color: 'var(--color-primary)', me: true },
-      { id: 'bot', label: `Bot at ${gs.botWpm} WPM`, initial: 'B', progress: this.botProgress(), color: 'var(--color-avatar-2)' },
-    ];
+  private readonly botProgress = computed(() => {
+    const length = this.gameState().text.length;
+    return length ? this.botChars() / length : 0;
   });
+
+  /**
+   * Ghost cursors drawn in the text: the pace bot, or every other racer in a
+   * live race. The player's own caret is the normal one, so a four-player
+   * race shows three ghosts.
+   */
+  readonly ghosts = computed<Ghost[]>(() => {
+    const gs = this.gameState();
+    if (gs.race) {
+      const room = this.race.room();
+      if (!room?.text) return [];
+      return room.players
+        .filter((p) => p.userId !== this.race.myId())
+        .map((p) => ({
+          id: p.userId,
+          label: p.displayName,
+          index: p.index,
+          color: `var(--color-avatar-${(room.players.indexOf(p) % 7) + 2})`,
+        }));
+    }
+    const ghosts: Ghost[] = [];
+    if (gs.botWpm) {
+      ghosts.push({ id: 'bot', label: `Bot · ${gs.botWpm} WPM`, index: this.botChars(), color: 'var(--color-avatar-2)' });
+    }
+    const g = this.ghost();
+    if (g) ghosts.push({ id: 'ghost', label: g.label, index: this.ghostChars(), color: 'var(--color-avatar-4)' });
+    return ghosts;
+  });
+
+  /** Outcome against the recorded-run ghost once the run is over. */
+  readonly ghostOutcome = computed(() => {
+    const gs = this.gameState();
+    const g = this.ghost();
+    if (!g || !gs.isFinished) return null;
+    const length = gs.text.length;
+    return gs.currentIndex >= Math.min(length, this.ghostChars()) ? `You beat ${g.kind === 'pb' ? 'your PB ghost' : 'the ghost'}.` : `The ghost won this one.`;
+  });
+
+  async racePb(): Promise<void> {
+    this.ghostError.set('');
+    const err = await this.game.racePb();
+    if (err) this.ghostError.set(err);
+  }
 
   /** Outcome once the run is over, or null while racing. */
   readonly botOutcome = computed(() => {
@@ -185,7 +229,7 @@ export class GameComponent implements AfterViewInit {
     const tick = setInterval(() => {
       this.now.set(Date.now());
       const gs = this.gameState();
-      if (!gs.botWpm || gs.isFinished) return;
+      if ((!gs.botWpm && !this.ghost()) || gs.isFinished) return;
       this.botElapsedMs.set(gs.isTyping ? this.game.getElapsedMs() : 0);
     }, BOT_TICK_MS);
 
@@ -194,16 +238,11 @@ export class GameComponent implements AfterViewInit {
       const gs = this.gameState();
       if (!gs.isFinished || gs.race) return;
       untracked(() => {
-        this.game.lastBotOutcome.set(this.botOutcome());
+        this.game.lastBotOutcome.set(this.botOutcome() ?? this.ghostOutcome());
         void this.router.navigate(['/results']);
       });
     });
 
-    // Report live progress to the race (throttled in RaceService).
-    effect(() => {
-      const gs = this.gameState();
-      if (gs.race && gs.isTyping) this.race.sendProgress(gs.currentIndex, gs.accuracy);
-    });
     inject(DestroyRef).onDestroy(() => clearInterval(tick));
   }
 
@@ -263,6 +302,13 @@ export class GameComponent implements AfterViewInit {
     this.game.clearRace();
   }
 
+  /** Same room, same players: back to its lobby to ready up again. */
+  rematch(): void {
+    this.race.rematch();
+    this.game.clearRace();
+    void this.router.navigate(['/race']);
+  }
+
   backToLobby(): void {
     this.leaveRace();
     void this.router.navigate(['/race']);
@@ -278,6 +324,30 @@ export class GameComponent implements AfterViewInit {
 
   handleSourceChange(patch: Parameters<GameService['setGeneratorConfig']>[0]): void {
     this.game.setGeneratorConfig(patch);
+  }
+
+  handleLanguageChange(patch: LanguagePatch): void {
+    this.game.setLanguage(patch);
+  }
+
+  /** Shift+Enter ends a zen run. */
+  onFinishKey(): void {
+    if (this.gameState().zen) this.game.finishRun();
+  }
+
+  toggleZen(): void {
+    this.game.setZen(!this.gameState().zen);
+  }
+
+  /** Zen runs show time spent instead of time left. */
+  readonly elapsedLabel = computed(() => {
+    this.now();
+    const t = Math.floor(this.game.getElapsedMs() / 1000);
+    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  });
+
+  handleRulesChange(patch: RulesPatch): void {
+    this.game.setRules(patch);
   }
 
   handleCaretChange(style: import('../../models/models').CaretStyle): void {

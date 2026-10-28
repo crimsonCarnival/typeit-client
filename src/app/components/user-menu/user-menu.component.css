@@ -50,7 +50,7 @@
   padding: 0 12px 0 4px;
   border: 1px solid #3a3a40;
   border-radius: 999px;
-  background: #18181b;
+  background: var(--color-surface-solid);
   color: var(--color-text);
   font-size: 16px;
   cursor: pointer;
@@ -162,7 +162,7 @@
   align-items: center;
   gap: 3px;
   padding: 10px;
-  background: #0e0e10;
+  background: var(--color-surface-solid);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }

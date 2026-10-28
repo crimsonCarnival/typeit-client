@@ -5,11 +5,10 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { GameService } from './game.service';
-import { ApiResponse, OpenRace, RaceFriend, RaceInvite, RaceRoom, RaceSettings } from '../models/models';
+import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceInvite, RaceRatingEntry, RaceRoom, RaceSettings } from '../models/models';
 import { ls } from '../utils/storage';
 
 const SOCKET_PATH = '/ws/race';
-const PROGRESS_INTERVAL_MS = 200;
 const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 15000;
 // Give up after this many failed attempts in a row; `retry()` starts over.
@@ -26,6 +25,23 @@ const ERROR_MESSAGES: Record<string, string> = {
   'bad-settings': 'Those race settings are not allowed.',
   'too-many-players': 'More players are in the room than that limit allows.',
   'too-many-attempts': 'Too many wrong codes. Wait a minute and try again.',
+  'already-racing': "You're racing in that room.",
+  'too-many-spectators': 'That race has as many spectators as it can take.',
+  'chat-cooldown': 'Slow down a little.',
+  'not-finished': 'The race is still on.',
+};
+
+// Chat lines kept on screen.
+const CHAT_HISTORY = 50;
+
+/** How each emote is shown. */
+export const EMOTES: Record<RaceEmote, string> = {
+  wave: '👋',
+  fire: '🔥',
+  laugh: '😂',
+  wow: '😮',
+  clap: '👏',
+  gg: 'GG',
 };
 
 /**
@@ -45,8 +61,6 @@ export class RaceService {
   private reconnectDelay = RECONNECT_BASE_MS;
   private failedAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private lastProgressAt = 0;
-  private pendingProgress: ReturnType<typeof setTimeout> | null = null;
   /** serverTime - localTime, from the latest server message. */
   private clockOffset = 0;
 
@@ -58,6 +72,11 @@ export class RaceService {
   readonly invite = signal<RaceInvite | null>(null);
   readonly error = signal('');
   readonly myId = signal<string | null>(null);
+  /** Quick-match queue state. */
+  readonly queue = signal<{ queued: boolean; size: number; rating: number | null }>({ queued: false, size: 0, rating: null });
+  /** True while watching a room rather than racing in it. */
+  readonly spectating = signal(false);
+  readonly chat = signal<RaceChatMessage[]>([]);
 
   readonly me = computed(() => this.room()?.players.find((p) => p.userId === this.myId()) ?? null);
   readonly isHost = computed(() => !!this.room() && this.room()!.hostId === this.myId());
@@ -71,7 +90,7 @@ export class RaceService {
     // When the server starts our race, load it into the game and open it.
     effect(() => {
       const room = this.room();
-      if (room?.state !== 'racing' || !room.startAt || room.code === this.startedCode) return;
+      if (room?.state !== 'racing' || !room.startAt || room.code === this.startedCode || this.spectating()) return;
       this.startedCode = room.code;
       void this.game.startRace(room.code, this.toLocal(room.startAt)).then(() => this.router.navigate(['/play']));
     });
@@ -156,11 +175,23 @@ export class RaceService {
         break;
       case 'room':
         this.clockOffset = msg.room.serverNow - Date.now();
+        if (this.room()?.code !== msg.room.code) this.chat.set([]);
+        // A rematch reuses the room code: let the next start load again.
+        if (msg.room.state === 'lobby' && this.startedCode === msg.room.code) this.startedCode = null;
+        this.spectating.set(!!msg.spectating);
         this.room.set(msg.room);
         this.error.set('');
         break;
       case 'left':
         this.room.set(null);
+        this.spectating.set(false);
+        this.chat.set([]);
+        break;
+      case 'queue':
+        this.queue.set({ queued: !!msg.queued, size: msg.size ?? 0, rating: msg.rating ?? this.queue().rating });
+        break;
+      case 'chat':
+        this.chat.update((lines) => [...lines, msg as RaceChatMessage].slice(-CHAT_HISTORY));
         break;
       case 'rooms':
         this.openRooms.set(msg.rooms);
@@ -193,6 +224,42 @@ export class RaceService {
     return `${location.origin}/race/${code}`;
   }
 
+  /** Quick match: rated public races against players near your rating. */
+  findMatch(): void {
+    this.send({ type: 'queue' });
+  }
+
+  cancelMatch(): void {
+    this.send({ type: 'unqueue' });
+  }
+
+  rematch(): void {
+    this.send({ type: 'rematch' });
+  }
+
+  spectate(code: string): void {
+    this.send({ type: 'spectate', code });
+  }
+
+  say(text: string): void {
+    if (text.trim()) this.send({ type: 'chat', text });
+  }
+
+  emote(emote: RaceEmote): void {
+    this.send({ type: 'emote', emote });
+  }
+
+  async loadLeaderboard(): Promise<RaceRatingEntry[]> {
+    try {
+      const res = await firstValueFrom(
+        this.http.get<ApiResponse<{ entries: RaceRatingEntry[] }>>(`${environment.apiUrl}/race/leaderboard`)
+      );
+      return res.data?.entries ?? [];
+    } catch {
+      return [];
+    }
+  }
+
   join(code: string): void {
     this.send({ type: 'join', code: code.trim() });
   }
@@ -200,6 +267,7 @@ export class RaceService {
   leave(): void {
     this.send({ type: 'leave' });
     this.room.set(null);
+    this.spectating.set(false);
   }
 
   setReady(ready: boolean): void {
@@ -226,19 +294,6 @@ export class RaceService {
     const invite = this.invite();
     this.invite.set(null);
     if (invite) this.join(invite.code);
-  }
-
-  /** Throttled: at most one progress message per PROGRESS_INTERVAL_MS. */
-  sendProgress(index: number, accuracy: number): void {
-    const flush = () => {
-      this.pendingProgress = null;
-      this.lastProgressAt = Date.now();
-      this.send({ type: 'progress', index, accuracy });
-    };
-    if (this.pendingProgress) clearTimeout(this.pendingProgress);
-    const wait = PROGRESS_INTERVAL_MS - (Date.now() - this.lastProgressAt);
-    if (wait <= 0) flush();
-    else this.pendingProgress = setTimeout(flush, wait);
   }
 
   async loadFriends(): Promise<RaceFriend[]> {

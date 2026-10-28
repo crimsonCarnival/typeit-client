@@ -10,6 +10,12 @@
             <span class="chip">Phrases</span>
           }
           <span class="chip">Limit {{ gameState().timeMax }}s</span>
+          @if (gameState().rules.difficulty === 'hardcore') {
+            <span class="chip chip-accent">Hardcore</span>
+          }
+          @if (gameState().rules.stopOnError !== 'off') {
+            <span class="chip">Stop on {{ gameState().rules.stopOnError }}</span>
+          }
           @if (gameState().dailyDate) {
             <span class="chip chip-accent">Daily</span>
           }
@@ -19,12 +25,19 @@
         </div>
       </div>
       <div class="actions">
+        @if (results()?.resultId; as rid) {
+          <a class="btn btn-outline" [routerLink]="['/replay', rid]">Watch replay</a>
+        }
         <button type="button" class="btn btn-outline" (click)="retry()">Retry same <kbd>Tab</kbd></button>
         <button type="button" class="btn btn-primary" (click)="next()">Next test <kbd class="on-red">Esc</kbd></button>
       </div>
     </div>
 
-    @if (!auth.isAuthenticated()) {
+    @if (scoreError(); as err) {
+      <div class="save-banner" role="alert">
+        <p>This run couldn't be scored: {{ err }}</p>
+      </div>
+    } @else if (!auth.isAuthenticated()) {
       <div class="save-banner" role="status">
         <p>
           <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8M7 3v5h8"></path></svg>
@@ -42,7 +55,7 @@
     }
 
     @if (botOutcome(); as outcome) {
-      <div class="save-banner neutral" role="status"><p>Bot race: {{ outcome }}</p></div>
+      <div class="save-banner neutral" role="status"><p>{{ outcome }}</p></div>
     }
 
     <div class="hero">
@@ -112,9 +125,37 @@
           <div class="detail"><dt>Errors</dt><dd class="bad">{{ mistakes() }}</dd></div>
           <div class="detail"><dt>Error rate <small>per minute</small></dt><dd>{{ errorRate() }}/min</dd></div>
           <div class="detail"><dt>Words</dt><dd>{{ results()?.totalWords ?? gameState().totalWords }}</dd></div>
+          <div class="detail"><dt>Backspaces</dt><dd>{{ results()?.backspaces ?? 0 }}</dd></div>
+          @if (results()?.penalty; as pen) {
+            @if (pen.points || pen.seconds) {
+              <div class="detail"><dt>Penalties</dt><dd class="bad">-{{ pen.points }} pts &#183; -{{ pen.seconds }}s</dd></div>
+            }
+          }
         </dl>
       </section>
     </div>
+
+    @if (troubleWords().length || slowWords().length) {
+      <section class="card words" aria-labelledby="words-title">
+        <h2 id="words-title" class="section-title">Words</h2>
+        @if (troubleWords().length) {
+          <p class="words-label">Mistakes</p>
+          <ul class="word-list">
+            @for (w of troubleWords(); track $index) {
+              <li class="word-chip bad">{{ w.word }} <small>{{ w.skipped ? 'skipped' : w.errors + (w.errors === 1 ? ' error' : ' errors') }}</small></li>
+            }
+          </ul>
+        }
+        @if (slowWords().length) {
+          <p class="words-label">Slowest</p>
+          <ul class="word-list">
+            @for (w of slowWords(); track $index) {
+              <li class="word-chip">{{ w.word }} <small>{{ w.wpm }} WPM</small></li>
+            }
+          </ul>
+        }
+      </section>
+    }
 
     <div class="time-row">
       <div class="card time-card"><span class="stat-label">Elapsed</span><span class="time-value">{{ elapsed() }}s</span></div>

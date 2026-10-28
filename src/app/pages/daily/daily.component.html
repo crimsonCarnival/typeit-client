@@ -46,8 +46,12 @@
             </div>
           }
           @case ('finished') {
+            @if (ghostError()) { <span class="hero-meta" role="alert">{{ ghostError() }}</span> }
             <div class="hero-result">
               <span class="hero-result-title">Your run: {{ d.me?.wpm }} WPM</span>
+              @if (d.leaders.length) {
+                <button type="button" class="ghost-btn" [disabled]="startingGhost()" (click)="raceGhost()">Race the leader's ghost</button>
+              }
               <span class="hero-meta">
                 @if (d.me?.ranked) {
                   {{ d.me?.accuracy }}% accuracy &#183; #{{ d.me?.rank }} today
@@ -130,7 +134,11 @@
               <span class="leader-rank" [class.rank-1]="l.rank === 1" [class.rank-2]="l.rank === 2" [class.rank-3]="l.rank === 3">{{ l.rank }}</span>
               <a class="leader-name" [routerLink]="['/user', l.userId]">{{ l.displayName }}</a>
               <span class="leader-acc">{{ l.accuracy.toFixed(1) }}%</span>
-              <span class="leader-wpm">{{ l.wpm }}</span>
+              @if (l.resultId && d.me?.status === 'finished') {
+                <a class="leader-wpm replay-link" [routerLink]="['/replay', l.resultId]" title="Watch replay">{{ l.wpm }}</a>
+              } @else {
+                <span class="leader-wpm">{{ l.wpm }}</span>
+              }
             </li>
           }
         </ol>

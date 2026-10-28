@@ -16,19 +16,32 @@
     <div class="run-head">
       <div class="run-stats">
         <div class="run-timer">
-          <span class="run-timer-value" role="timer">{{ timeLeftLabel() }}</span>
-          <span class="run-label">Left</span>
+          @if (gameState().zen && !gameState().dailyDate && !gameState().practice) {
+            <span class="run-timer-value" role="timer">{{ elapsedLabel() }}</span>
+            <span class="run-label">Zen</span>
+          } @else {
+            <span class="run-timer-value" role="timer">{{ timeLeftLabel() }}</span>
+            <span class="run-label">Left</span>
+          }
         </div>
-        <div class="run-stat"><span class="run-value">{{ gameState().lastWpm }}</span><span class="run-label">WPM</span></div>
-        <div class="run-stat"><span class="run-value">{{ accuracyLabel() }}%</span><span class="run-label">Acc</span></div>
-        <div class="run-stat">
-          <span class="run-value">{{ wordsDone() }}<span class="run-of">/{{ gameState().totalWords }}</span></span>
-          <span class="run-label">Words</span>
-        </div>
+        @if (liveStats() !== 'timer') {
+          <div class="run-stat"><span class="run-value">{{ gameState().lastWpm }}</span><span class="run-label">WPM</span></div>
+        }
+        @if (liveStats() === 'all') {
+          <div class="run-stat"><span class="run-value">{{ accuracyLabel() }}%</span><span class="run-label">Acc</span></div>
+          <div class="run-stat">
+            <span class="run-value">{{ wordsDone() }}<span class="run-of">/{{ gameState().totalWords }}</span></span>
+            <span class="run-label">Words</span>
+          </div>
+        }
       </div>
+      @if (gameState().zen && !gameState().dailyDate && !gameState().practice) {
+        <button type="button" class="zen-finish" (click)="game.finishRun()">Finish <kbd>Shift</kbd>+<kbd>Enter</kbd></button>
+      }
       <p class="run-settings">
-        @if (gameState().gameMode === 'words') { Words {{ gameState().wordCount }} } @else { Phrases }
-        &#183; Limit {{ gameState().timeMax }}s
+        @if (gameState().gameMode === 'words') { Words {{ gameState().zen ? '' : gameState().wordCount }} } @else if (gameState().gameMode === 'code') { Code } @else { Phrases }
+        @if (gameState().zen) { &#183; Zen } @else { &#183; Limit {{ gameState().timeMax }}s }
+        @if (gameState().rules.difficulty === 'hardcore') { &#183; Hardcore }
       </p>
     </div>
   } @else {
@@ -56,11 +69,20 @@
         (modeChange)="handleModeChange($event)"
       />
     }
+    @if (!gameState().zen) {
     <app-word-count-dropdown
       [wordCount]="gameState().wordCount"
       [gameMode]="gameState().gameMode"
       [isTyping]="gameState().isTyping"
       (wordCountChange)="handleWordCountChange($event)"
+    />
+    }
+    <app-language-picker
+      [gameMode]="gameState().gameMode"
+      [language]="gameState().language"
+      [codeLanguage]="gameState().codeLanguage"
+      [disabled]="gameState().isTyping"
+      (languageChange)="handleLanguageChange($event)"
     />
     @if (isAuthenticated()) {
       <app-word-mode-settings
@@ -74,6 +96,7 @@
       <app-text-source-dropdown
         [gameMode]="gameState().gameMode"
         [textSource]="gameState().textSource"
+        [textCategory]="gameState().textCategory"
         [generatorUnit]="gameState().generatorUnit"
         [generatorCount]="gameState().generatorCount"
         [loremMin]="gameState().loremMin"
@@ -81,6 +104,30 @@
         [disabled]="gameState().isTyping"
       />
     }
+    @if (!gameState().dailyDate && !gameState().race) {
+      <app-rules-picker
+        [rules]="gameState().rules"
+        [disabled]="gameState().isTyping"
+        (rulesChange)="handleRulesChange($event)"
+      />
+    }
+    @if (!gameState().dailyDate && !gameState().race) {
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Zen</span>
+        <div class="tb-buttons">
+          <button type="button" class="tb-btn" [class.active]="gameState().zen" [attr.aria-pressed]="gameState().zen" title="No clock pressure: a long text you finish when you like (not ranked)" [disabled]="gameState().isTyping" (click)="toggleZen()">Zen</button>
+        </div>
+      </div>
+    }
+    @if (isAuthenticated() && !gameState().dailyDate && !gameState().race && !ghost()) {
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Ghost</span>
+        <div class="tb-buttons">
+          <button type="button" class="tb-btn" title="Race your best verified run for this mode and time limit" [disabled]="gameState().isTyping" (click)="racePb()">Race my PB</button>
+        </div>
+      </div>
+    }
+    @if (!gameState().zen) {
     <app-custom-time-dropdown
       [timeMax]="gameState().timeMax"
       [timeLeft]="gameState().timeLeft"
@@ -88,6 +135,7 @@
       [disabled]="gameState().isFinished"
       (timeSelect)="handleTimeSelect($event)"
     />
+    }
     @if (!isAuthenticated()) {
       <button type="button" class="unlock-card" (click)="auth.openAuthModal('register')">
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
@@ -99,13 +147,22 @@
     }
   </div>
 
+  @if (ghostError()) {
+    <p class="status-line" role="status">{{ ghostError() }}</p>
+  }
   <p class="status-line">
     @if (gameState().gameMode === 'words') {
-      Words <b>{{ gameState().wordCount }}</b>
+      Words <b>{{ gameState().zen ? 'zen' : gameState().wordCount }}</b>
+    } @else if (gameState().gameMode === 'code') {
+      <b>Code</b>
     } @else {
       <b>Phrases</b>
     }
-    &#183; Limit <b>{{ gameState().timeMax }}s</b>
+    @if (gameState().zen) {
+      &#183; <b>Zen</b>, no limit
+    } @else {
+      &#183; Limit <b>{{ gameState().timeMax }}s</b>
+    }
     @if (personalBest(); as pb) {
       &#183; PB <b class="pb">{{ pb }} WPM</b>
     }
@@ -136,10 +193,6 @@
         }
       </div>
 
-      @if (raceLanes(); as lanes) {
-        <app-race-lanes [lanes]="lanes" />
-      }
-
       @if (raceStartsIn() > 0) {
         <div class="race-countdown" role="status" aria-live="assertive">Starts in {{ raceStartsIn() }}</div>
       }
@@ -148,15 +201,32 @@
         <div class="race-result" role="status">
           <span class="race-result-title">{{ raceWinnerLabel() }}</span>
           <span class="race-result-note">Only runs that pass verification can win.</span>
-          <button type="button" class="race-btn" (click)="backToLobby()">Back to race lobby</button>
+          @if (race.room()?.ratingChanges?.[race.myId() ?? '']; as change) {
+            <span class="race-result-note">Rating {{ change > 0 ? '+' : '' }}{{ change }}</span>
+          }
+          <div class="race-result-actions">
+            <button type="button" class="race-btn" (click)="rematch()">Rematch</button>
+            <button type="button" class="race-btn" (click)="backToLobby()">Back to race lobby</button>
+          </div>
         </div>
       } @else {
         <div class="race-foot">
+          <app-race-chat [compact]="true" />
           <span><kbd>Esc</kbd> Leave race</span>
         </div>
       }
     </div>
-  } @else if (botLanes(); as lanes) {
+  } @else if (ghost(); as g) {
+    <div class="bot-race">
+      <div class="bot-race-head">
+        <span class="daily-banner-tag">Ghost race &#183; {{ g.label }}</span>
+        @if (ghostOutcome(); as outcome) {
+          <span class="bot-race-outcome" role="status">{{ outcome }}</span>
+        }
+        <button type="button" class="bot-race-stop" (click)="game.stopGhost()">Stop racing</button>
+      </div>
+    </div>
+  } @else if (gameState().botWpm) {
     <div class="bot-race">
       <div class="bot-race-head">
         <span class="daily-banner-tag">Bot race &#183; {{ gameState().botWpm }} WPM</span>
@@ -165,7 +235,6 @@
         }
         <button type="button" class="bot-race-stop" (click)="game.setBot(null)">Stop racing</button>
       </div>
-      <app-race-lanes [lanes]="lanes" />
     </div>
   }
 
@@ -174,10 +243,19 @@
       [characters]="characters()"
       [currentText]="gameState().currentText"
       [caretStyle]="gameState().caretStyle"
+      [ghosts]="ghosts()"
       (typing)="game.handleTyping($event)"
+      (finish)="onFinishKey()"
       (focusChange)="isFocused = $event"
     />
   </div>
+
+  @if (gameState().passage; as passage) {
+    <p class="passage-credit">
+      &#8212; @if (passage.title) { <cite>{{ passage.title }}</cite>, }{{ passage.author }}
+      @if (passage.category === 'gta') { <span class="passage-tag">Casual &#183; not ranked</span> }
+    </p>
+  }
 
   <div
     class="progress-bar-container"

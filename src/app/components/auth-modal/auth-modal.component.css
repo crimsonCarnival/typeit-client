@@ -18,7 +18,7 @@
   max-width: 860px;
   display: flex;
   flex-wrap: wrap;
-  background: #121214;
+  background: var(--color-surface-solid);
   border: 1px solid #2e2e33;
   border-radius: 22px;
   overflow: hidden;
@@ -156,7 +156,7 @@
 }
 
 .auth-icon-btn:hover {
-  background: #232327;
+  background: var(--color-surface-raised);
   color: var(--color-text);
 }
 
@@ -189,7 +189,7 @@
 
 .auth-field label {
   font-size: 15px;
-  color: #cfcbd3;
+  color: var(--color-text-muted);
 }
 
 .auth-field input {
@@ -198,7 +198,7 @@
   padding: 0 16px;
   border: 1.5px solid #34343a;
   border-radius: var(--radius-sm);
-  background: #0c0c0e;
+  background: var(--color-input);
   color: var(--color-text);
   font-size: 17px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -237,7 +237,7 @@
   top: 50%;
   transform: translateY(-50%);
   font-size: 17px;
-  color: #85818a;
+  color: var(--color-text-subtle);
   pointer-events: none;
 }
 

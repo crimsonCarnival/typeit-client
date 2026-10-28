@@ -99,7 +99,7 @@
 
 .btn-ghost {
   border: 1px solid #34343a;
-  background: #18181b;
+  background: var(--color-surface-solid);
   color: var(--color-text);
 }
 
@@ -149,11 +149,11 @@
   flex-direction: column;
   gap: 8px;
   font-size: 15px;
-  color: #cfcbd3;
+  color: var(--color-text-muted);
 }
 
 .field small {
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .field input,
@@ -161,7 +161,7 @@
   padding: 12px 16px;
   border: 1.5px solid #34343a;
   border-radius: var(--radius-sm);
-  background: #0c0c0e;
+  background: var(--color-input);
   color: var(--color-text);
   font-size: 16px;
   resize: vertical;

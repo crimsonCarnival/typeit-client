@@ -1,7 +1,12 @@
 <div class="error-map">
-  <div>
-    <h1 class="title">Error map</h1>
-    <p class="subtitle">Where your fingers slip, key by key.</p>
+  <div class="page-head">
+    <div>
+      <h1 class="title">Error map</h1>
+      <p class="subtitle">Where your fingers slip, key by key.</p>
+    </div>
+    @if (hasData()) {
+      <button type="button" class="btn-primary" [disabled]="drilling()" (click)="practiceWeakKeys()">Practice my weak keys</button>
+    }
   </div>
 
   @if (!auth.loading() && !auth.isAuthenticated()) {
@@ -37,7 +42,7 @@
 
         @if (view() === 'keys') {
           <div class="keyboard">
-            @for (row of keyRows; track $index) {
+            @for (row of keyRows(); track $index) {
               <div class="key-row" [style.--row-indent.px]="$index * 26">
                 @for (k of row; track k) {
                   <button
@@ -168,5 +173,42 @@
         }
       </aside>
     </div>
+    @if (trends(); as t) {
+      <section class="panel trends" aria-labelledby="trends-title">
+        <div class="trends-head">
+          <h2 id="trends-title" class="section-label">Trend &#183; last {{ t.weeks.length }} weeks</h2>
+          <span class="muted">Error rate per week (bars) and average WPM</span>
+        </div>
+        <div class="trend-bars">
+          @for (w of t.weeks; track w.week) {
+            <div class="trend-col" [attr.title]="w.runs + ' runs'">
+              <span class="trend-wpm">{{ w.wpm ?? '' }}</span>
+              <div class="trend-bar-wrap">
+                <div class="trend-bar" [style.height.%]="trendHeight(w.errorRate)"></div>
+              </div>
+              <span class="trend-rate">{{ w.errorRate === null ? '–' : w.errorRate + '%' }}</span>
+              <span class="trend-week">{{ weekLabel(w.week) }}</span>
+            </div>
+          }
+        </div>
+        @if (t.keys.length) {
+          <table class="trend-keys">
+            <thead>
+              <tr><th scope="col">Key</th>@for (w of t.weeks; track w.week) {<th scope="col">{{ weekLabel(w.week) }}</th>}</tr>
+            </thead>
+            <tbody>
+              @for (k of t.keys; track k) {
+                <tr>
+                  <th scope="row">{{ keyLabel(k) }}</th>
+                  @for (w of t.weeks; track w.week) {
+                    <td>{{ w.keys[k] === null || w.keys[k] === undefined ? '–' : w.keys[k] + '%' }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+    }
   }
 </div>

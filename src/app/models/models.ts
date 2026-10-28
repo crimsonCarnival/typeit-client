@@ -23,8 +23,25 @@ export interface UserStats {
   byModifier?: Record<string, StatsBucket | undefined>;
 }
 
+/** Display and typing preferences, kept on the account (server config/settings.js). */
+export interface PlayerSettings {
+  theme: 'crimson' | 'ocean' | 'forest' | 'light';
+  typingFont: 'default' | 'mono' | 'serif';
+  fontSize: 's' | 'm' | 'l' | 'xl';
+  /** What the in-run head shows: everything, speed and timer, or the timer only. */
+  liveStats: 'all' | 'speed' | 'timer';
+  soundPack: 'typewriter' | 'click' | 'soft';
+  keyboardLayout: 'qwerty' | 'dvorak' | 'colemak';
+  caretStyle: CaretStyle;
+  difficulty: Difficulty;
+  stopOnError: StopOnError;
+  spaceSkips: boolean;
+  soundMuted: boolean;
+}
+
 export interface User {
   id: string;
+  settings?: Partial<PlayerSettings>;
   username: string;
   displayName: string;
   email?: string;
@@ -43,7 +60,51 @@ export interface Character {
   status: string;
 }
 
-export type GameMode = 'phrases' | 'words';
+export type GameMode = 'phrases' | 'words' | 'code';
+export type WordLanguage = 'english' | 'spanish' | 'french' | 'german' | 'portuguese' | 'italian';
+export type CodeLanguage = 'javascript' | 'python' | 'go' | 'rust' | 'sql' | 'bash';
+export type Difficulty = 'normal' | 'hardcore';
+export type StopOnError = 'off' | 'letter' | 'word';
+
+/** Typing rules of a run, as the server reports them (with the numbers the input rules need). */
+export interface TypingRules {
+  difficulty: Difficulty;
+  stopOnError: StopOnError;
+  spaceSkips: boolean;
+  spamRun: number;
+  backspaceEvery: number;
+  backspaceSeconds: number;
+  backspacePoints: number;
+}
+
+/** Server-computed numbers for the run in progress (POST /game/progress). */
+export interface LiveStats {
+  wpm: number;
+  rawWpm: number;
+  accuracy: number;
+  mistakes: number;
+  position: number;
+  completionPercentage: number;
+  penalty: { points: number; seconds: number };
+  /** When time runs out, in ms from the run's start (penalties included). */
+  deadlineMs: number;
+  timeLeft: number;
+}
+
+export interface WordStat {
+  word: string;
+  errors: number;
+  skipped: boolean;
+  ms: number;
+  wpm: number | null;
+}
+export type TextCategory = 'classics' | 'quotes' | 'speeches' | 'gta';
+
+export interface Passage {
+  category: TextCategory | 'code' | 'language';
+  title: string | null;
+  author: string;
+}
 export type CaretStyle = 'line' | 'block' | 'underline' | 'off';
 
 export interface GameState {
@@ -68,7 +129,17 @@ export interface GameState {
   lastCpm: number;
   totalWords: number;
   // Text source (phrases mode only)
-  textSource: 'default' | 'generated' | 'lorem';
+  textSource: 'default' | 'generated' | 'lorem' | 'custom';
+  /** Words mode language. */
+  language: WordLanguage;
+  /** Code mode snippet language. */
+  codeLanguage: CodeLanguage;
+  /** Zen: no time pressure; the run ends when you press Finish. */
+  zen: boolean;
+  /** Server passage pool used when textSource is 'default'. */
+  textCategory: TextCategory;
+  /** Where the current phrases text came from (attribution), or null. */
+  passage: Passage | null;
   generatorUnit: 'sentence' | 'paragraph' | 'article';
   generatorCount: number;
   loremMin: number;
@@ -82,9 +153,11 @@ export interface GameState {
   botWpm: number | null;
   /** Live race in progress: its code and the start time on the local clock. */
   race: { code: string; startAt: number } | null;
+  /** Typing rules of the current run. */
+  rules: TypingRules;
 }
 
-export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list';
+export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list' | 'ghost' | 'weak-keys' | 'review';
 
 export interface PracticeState {
   kind: PracticeKind;
@@ -107,6 +180,9 @@ export interface PerformancePoint {
   mistakes: number;
   highestWpm: number;
   consistency: number;
+  /** That second's raw speed (what consistency is computed from). */
+  burst?: number;
+  /** Backspaces pressed during that second. */
   backspaces: number;
   afkPeriods?: AfkEvent[];
 }
@@ -124,12 +200,22 @@ export interface Results {
   totalWords: number;
   elapsedTime: number;
   consistency: number;
-  afkTime?: string;
-  afkCount?: number;
+  completionPercentage?: number;
+  /** Wrong keys per minute. */
+  errorRate?: number;
+  /** Seconds away from the keyboard. */
+  afkTime?: number;
+  afkPeriods?: number;
+  backspaces?: number;
+  penalty?: { points: number; seconds: number };
+  performance?: PerformancePoint[];
+  wordStats?: WordStat[];
   /** Server integrity verdict (signed-in runs only). */
   ranked?: boolean;
   integrityFlags?: string[];
   newAchievements?: string[];
+  /** Saved result id (signed-in runs), for the replay. */
+  resultId?: string;
 }
 
 export interface Punishment {
@@ -148,6 +234,17 @@ export interface PublicProfile {
   followingCount: number;
   isFollowing: boolean;
   isOwner: boolean;
+}
+
+/** A player found by GET /users/search. */
+export interface PlayerSearchResult {
+  id: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  bestWpm: number;
+  gamesPlayed: number;
+  followersCount: number;
 }
 
 export interface FollowListUser {
@@ -197,6 +294,8 @@ export interface RankingQuery {
 
 export interface RankingEntry {
   rank: number;
+  /** The run behind the entry (for its replay). */
+  resultId?: string | null;
   userId: string;
   username: string;
   displayName: string;
@@ -223,6 +322,7 @@ export interface DailySettings {
 
 export interface DailyLeader {
   rank: number;
+  resultId?: string | null;
   userId: string;
   username: string;
   displayName: string;
@@ -251,11 +351,14 @@ export interface DailyOverview {
   }[];
 }
 
-export type AchievementCategory = 'speed' | 'accuracy' | 'habits' | 'racing';
-export type AchievementRarity = 'common' | 'rare' | 'epic';
+export type AchievementCategory = 'speed' | 'accuracy' | 'habits' | 'racing' | 'learning';
+export type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
 export interface Achievement {
   id: string;
+  /** Tiered badges share a family; tiers count from 1. */
+  family?: string;
+  tier?: number;
   name: string;
   description: string;
   category: AchievementCategory;
@@ -301,7 +404,33 @@ export interface WordList {
   updatedAt?: string;
 }
 
+/** Spaced-repetition queue of missed digraphs. */
+export interface ReviewQueue {
+  total: number;
+  due: number;
+  duePairs: string[];
+  nextDueAt: string | null;
+}
+
+export interface ErrorTrendWeek {
+  /** Monday of the week (UTC), 'YYYY-MM-DD'. */
+  week: string;
+  runs: number;
+  presses: number;
+  errors: number;
+  errorRate: number | null;
+  wpm: number | null;
+  /** Error rate of each tracked key that week (null without presses). */
+  keys: Record<string, number | null>;
+}
+
+export interface ErrorTrends {
+  keys: string[];
+  weeks: ErrorTrendWeek[];
+}
+
 export interface LearnOverview {
+  review?: ReviewQueue;
   lessons: Lesson[];
   nextLessonId: string | null;
   passAccuracy: number;
@@ -314,6 +443,8 @@ export type RaceState = 'lobby' | 'countdown' | 'racing' | 'finished';
 
 export interface RacePlayer {
   userId: string;
+  /** Quick-match rating when the player joined (null outside rated rooms). */
+  rating?: number | null;
   username: string;
   displayName: string;
   avatar: string;
@@ -346,12 +477,38 @@ export interface RaceRoom extends RaceSettings {
   name: string;
   hostId: string;
   isPrivate: boolean;
+  /** Quick-match room: the result moves ratings. */
+  rated: boolean;
+  /** Number of people watching. */
+  spectators: number;
   state: RaceState;
   startAt: number | null;
   serverNow: number;
   text: string | null;
   winnerId: string | null;
   players: RacePlayer[];
+  /** Rating change per userId once a rated race is over. */
+  ratingChanges: Record<string, number> | null;
+}
+
+export type RaceEmote = 'wave' | 'fire' | 'laugh' | 'wow' | 'clap' | 'gg';
+
+export interface RaceChatMessage {
+  from: { userId: string; displayName: string };
+  text?: string;
+  emote?: RaceEmote;
+  at: number;
+}
+
+export interface RaceRatingEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  rating: number;
+  races: number;
+  wins: number;
 }
 
 export interface RaceFriend {
@@ -374,6 +531,41 @@ export interface OpenRace {
   mode: RaceMode;
   wordCount: number;
   timeLimit: number;
-  maxPlayers: number;
   players: number;
+  maxPlayers: number;
+  /** Lobbies can be joined; races under way can be watched. */
+  state: RaceState;
+  rated: boolean;
+}
+
+/** Cursor positions over a run: [ms from the run's start, chars typed]. */
+export type GhostTimeline = [number, number][];
+
+/** A recorded run raced as a ghost cursor. */
+export interface RunGhost {
+  kind: 'pb' | 'daily';
+  label: string;
+  wpm: number;
+  timeline: GhostTimeline;
+}
+
+export interface Replay {
+  resultId: string;
+  player: { userId: string; username: string; displayName: string; avatar: string };
+  text: string;
+  keystrokes: [number, string][];
+  rules: Partial<TypingRules>;
+  leadMs: number;
+  timeMax: number;
+  gameMode: GameMode;
+  wordCount: number;
+  modifiers: string;
+  wpm: number;
+  rawWpm?: number;
+  accuracy: number;
+  consistency: number;
+  performance: PerformancePoint[];
+  ranked: boolean;
+  dailyDate: string | null;
+  createdAt: string;
 }

@@ -76,13 +76,13 @@
   padding: 0 18px;
   border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
-  color: #c9c5ce;
+  color: var(--color-text-muted);
   text-decoration: none;
   font-size: 16px;
 }
 
 .btn-outline:hover {
-  background: #232327;
+  background: var(--color-surface-raised);
   color: var(--color-text);
 }
 
@@ -92,14 +92,14 @@
   padding: 0 14px;
   border: 1px solid #34343a;
   border-radius: var(--radius-sm);
-  background: #18181b;
-  color: #c9c5ce;
+  background: var(--color-surface-solid);
+  color: var(--color-text-muted);
   font-size: 16px;
   cursor: pointer;
 }
 
 .chip:hover:not(:disabled) {
-  background: #26262b;
+  background: var(--color-surface-raised);
   color: var(--color-text);
 }
 
@@ -236,7 +236,7 @@
   width: 22px;
   height: 8px;
   border-radius: 3px;
-  background: #2a2a2f;
+  background: var(--color-surface-raised);
 }
 
 .dots i.on {
@@ -250,7 +250,7 @@
   gap: 8px;
   flex-wrap: wrap;
   font-size: 14px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .speeds {
@@ -325,7 +325,7 @@
 
 .lesson-hint {
   font-size: 14px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .lesson-status {
@@ -354,4 +354,9 @@
   .lesson-status {
     display: none;
   }
+}
+
+.review .recommended-key {
+  font-size: 22px;
+  text-transform: lowercase;
 }

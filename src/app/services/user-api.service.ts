@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ApiResponse, FollowListUser, PublicProfile, User } from '../models/models';
+import { ApiResponse, FollowListUser, PlayerSearchResult, PlayerSettings, PublicProfile, User } from '../models/models';
 import { ls } from '../utils/storage';
 
 /**
@@ -54,6 +54,10 @@ export class UserApiService {
     return this.call(this.http.post<ApiResponse<{ valid: boolean; user?: User }>>(`${this.base}/auth/verify`, { token }));
   }
 
+  updateSettings(patch: Partial<PlayerSettings>): Promise<ApiResponse<Partial<PlayerSettings>>> {
+    return this.call(this.http.patch<ApiResponse<Partial<PlayerSettings>>>(`${this.base}/users/settings`, patch));
+  }
+
   getProfile(): Promise<ApiResponse<User>> {
     return this.call(this.http.get<ApiResponse<User>>(`${this.base}/users/profile`));
   }
@@ -70,8 +74,8 @@ export class UserApiService {
     return this.call(this.http.get<ApiResponse<any[]>>(`${this.base}/users/leaderboard`, { params: { limit: String(limit), sortBy } }));
   }
 
-  searchUsers(query: string, limit = 20): Promise<ApiResponse<any[]>> {
-    return this.call(this.http.get<ApiResponse<any[]>>(`${this.base}/users/search`, { params: { q: query, limit: String(limit) } }));
+  searchUsers(query: string, limit = 20): Promise<ApiResponse<PlayerSearchResult[]>> {
+    return this.call(this.http.get<ApiResponse<PlayerSearchResult[]>>(`${this.base}/users/search`, { params: { q: query, limit: String(limit) } }));
   }
 
   getPublicProfile(userId: string): Promise<ApiResponse<PublicProfile>> {

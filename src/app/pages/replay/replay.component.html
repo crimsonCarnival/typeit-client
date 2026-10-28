@@ -1,0 +1,67 @@
+<div class="replay">
+  @if (error()) {
+    <div class="state" role="alert">
+      <p class="state-title">{{ error() }}</p>
+      <p>Replays are kept for your own runs and for verified runs of other players.</p>
+      <a routerLink="/play" class="btn">Back to the game</a>
+    </div>
+  } @else if (replay(); as r) {
+    <div class="head">
+      <div>
+        <h1 class="title">Replay</h1>
+        <p class="subtitle">
+          <a [routerLink]="['/user', r.player.userId]">{{ r.player.displayName }}</a>
+          &#183; {{ r.gameMode === 'words' ? 'Words ' + r.wordCount : 'Phrases' }}
+          &#183; {{ r.timeMax }}s
+          @if (r.rules.difficulty === 'hardcore') { &#183; Hardcore }
+          @if (r.dailyDate) { &#183; Daily {{ r.dailyDate }} }
+          @if (!r.ranked) { &#183; unranked }
+        </p>
+      </div>
+      <dl class="final">
+        <div><dt>WPM</dt><dd>{{ r.wpm }}</dd></div>
+        <div><dt>Accuracy</dt><dd>{{ r.accuracy }}%</dd></div>
+        <div><dt>Consistency</dt><dd>{{ r.consistency }}%</dd></div>
+      </dl>
+    </div>
+
+    <div class="live" aria-live="off">
+      <span class="live-clock">{{ clock() }}s</span>
+      <span>{{ sample()?.wpm ?? 0 }} <small>WPM</small></span>
+      <span>{{ sample()?.accuracy ?? 100 }}% <small>ACC</small></span>
+    </div>
+
+    <div class="typing-text replay-text" data-caret="line">
+      <p translate="no">
+        @for (c of characters(); track $index) {
+          <span [class]="charClass(c, $index)">{{ c.char }}</span>
+        }
+      </p>
+    </div>
+
+    <div class="controls">
+      <button type="button" class="ctl primary" (click)="toggle()" [attr.aria-label]="playing() ? 'Pause' : 'Play'">
+        {{ playing() ? 'Pause' : 'Play' }}
+      </button>
+      <button type="button" class="ctl" (click)="restart()">Restart</button>
+      <input
+        class="scrub"
+        type="range"
+        min="0"
+        [max]="duration()"
+        step="10"
+        [value]="playhead()"
+        (input)="onScrub($event)"
+        aria-label="Playback position"
+      />
+      <div class="speeds" role="group" aria-label="Playback speed">
+        @for (s of speeds; track s) {
+          <button type="button" class="ctl" [class.active]="speed() === s" [attr.aria-pressed]="speed() === s" (click)="speed.set(s)">{{ s }}&#215;</button>
+        }
+      </div>
+    </div>
+    <p class="hint"><kbd>Space</kbd> play / pause</p>
+  } @else {
+    <div class="state" aria-busy="true"><p>Loading replay&#8230;</p></div>
+  }
+</div>

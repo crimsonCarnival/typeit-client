@@ -22,7 +22,7 @@
   padding: 0 18px;
   border: 1px solid #34343a;
   border-radius: var(--radius-sm);
-  background: #18181b;
+  background: var(--color-surface-solid);
   color: var(--color-text);
   cursor: pointer;
 }
@@ -144,7 +144,7 @@
 }
 
 .start-btn:hover:not(:disabled) {
-  background: #18181b;
+  background: var(--color-surface-solid);
 }
 
 .start-btn:disabled {
@@ -168,8 +168,8 @@
   border: 1px solid #3a3a40;
   border-bottom-width: 2px;
   border-radius: 6px;
-  background: #18181b;
-  color: #c9c5ce;
+  background: var(--color-surface-solid);
+  color: var(--color-text-muted);
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
@@ -264,7 +264,7 @@
 
 .day-card-label {
   font-size: 13px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .day-card-name {
@@ -394,4 +394,26 @@
     height: 72px;
     font-size: 32px;
   }
+}
+
+.ghost-btn {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ghost-btn:hover:not(:disabled) {
+  background: var(--color-accent);
+}
+
+.replay-link {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
 }

@@ -57,6 +57,7 @@
   --color-rarity-common: #8e8a94;
   --color-rarity-rare: #a497ff;
   --color-rarity-epic: #f5b700;
+  --color-rarity-legendary: #ff6b3d;
 
   /* rankings medals */
   --color-rank-1: #f5b700;
@@ -77,9 +78,84 @@
   --radius-md: 12px;
   --radius-lg: 18px;
 
+  /* card background on pages, header bar, form inputs, the typing box */
+  --color-card: rgba(18, 18, 20, 0.94);
+  --color-header: rgba(10, 10, 11, 0.7);
+  --color-input: #0c0c0e;
+  --color-typing-box: rgba(16, 16, 18, 0.92);
+  --color-key: #18181b;
+
+  /* typing text (settings: font and size) */
+  --typing-font: var(--font-body);
+  --typing-size: 1;
+
   /* legacy alias, used by typing-area fades */
   --bg-color: var(--color-bg);
 }
+
+/* Themes (settings). Crimson is the default above; the others swap the
+   accent family, and light swaps the surfaces and text too. */
+:root[data-theme='ocean'] {
+  --color-primary: #1565c0;
+  --color-primary-hover: #1e7be0;
+  --color-primary-glow: rgba(21, 101, 192, 0.35);
+  --color-accent: #3fa7ff;
+  --color-accent-hover: #74c0ff;
+  --color-heat-3: #3fa7ff;
+}
+
+:root[data-theme='forest'] {
+  --color-primary: #2e7d32;
+  --color-primary-hover: #389b3d;
+  --color-primary-glow: rgba(46, 125, 50, 0.35);
+  --color-accent: #5cd65c;
+  --color-accent-hover: #8be68b;
+  --color-heat-3: #5cd65c;
+}
+
+:root[data-theme='light'] {
+  --color-bg: #f4f1ec;
+  --color-surface: rgba(255, 255, 255, 0.94);
+  --color-surface-solid: #ffffff;
+  --color-surface-raised: #ebe7e1;
+  --color-track: #ddd8d0;
+  --color-card: rgba(255, 255, 255, 0.94);
+  --color-header: rgba(244, 241, 236, 0.85);
+  --color-input: #ffffff;
+  --color-typing-box: rgba(255, 255, 255, 0.92);
+  --color-key: #ebe7e1;
+
+  --color-border: #ddd8d0;
+  --color-border-strong: #b5afa6;
+  --color-border-subtle: rgba(0, 0, 0, 0.07);
+
+  --color-text: #1d1b1f;
+  --color-text-muted: #4a464d;
+  --color-text-subtle: #625e66;
+  --color-text-faint: #9a959e;
+
+  --color-primary: #b00d28;
+  --color-primary-hover: #c8102e;
+  --color-accent: #d61f35;
+  --color-accent-hover: #b00d28;
+}
+
+:root[data-theme='light'] body {
+  background-image: none;
+}
+
+/* Typing font (settings) */
+:root[data-typing-font='mono'] {
+  --typing-font: var(--font-mono);
+}
+
+:root[data-typing-font='serif'] {
+  --typing-font: Georgia, 'Times New Roman', serif;
+}
+
+:root[data-font-size='s'] { --typing-size: 0.85; }
+:root[data-font-size='l'] { --typing-size: 1.2; }
+:root[data-font-size='xl'] { --typing-size: 1.4; }
 
 /* Game settings toolbar: shared by the toolbar components (sound, caret,
    mode, words, modifiers, time). Values from redesign/Game.dc.html. */
@@ -95,7 +171,7 @@
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .tb-buttons {
@@ -113,7 +189,7 @@
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: #cfcbd3;
+  color: var(--color-text-muted);
   font-family: var(--font-display);
   font-size: 21px;
   line-height: 1;
@@ -139,7 +215,7 @@
 /* Beats the legacy global button:disabled grey further down. */
 .tb-btn:disabled {
   background: transparent;
-  color: #cfcbd3;
+  color: var(--color-text-muted);
   cursor: not-allowed;
   opacity: 0.45;
 }
@@ -184,7 +260,7 @@
   padding: 0 10px;
   border: 1.5px solid #34343a;
   border-radius: var(--radius-sm);
-  background: #0c0c0e;
+  background: var(--color-input);
   color: var(--color-text);
   font-family: var(--font-display);
   font-size: 19px;
@@ -753,7 +829,8 @@ ul li {
   overflow-wrap: break-word;
   white-space: pre-wrap;
   line-height: 1.75;
-  font-size: 30px;
+  font-family: var(--typing-font);
+  font-size: calc(30px * var(--typing-size));
   word-spacing: 0.22em;
   transform: translateY(0);
   transition: transform 0.15s ease-out;
@@ -761,8 +838,25 @@ ul li {
   color: var(--color-text-faint);
 }
 
+.typing-text p span {
+  /* The global * rule sets a font on every element; text follows the setting. */
+  font-family: inherit;
+}
+
 .typing-text p span.correct {
   color: var(--color-text);
+}
+
+.typing-text p span.nl {
+  margin-left: 0.15em;
+  color: var(--color-text-faint);
+  opacity: 0.7;
+}
+
+.typing-text p span.skipped {
+  color: var(--color-text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-accent);
 }
 
 .typing-text p span.incorrect {
@@ -1385,7 +1479,7 @@ input:checked+.slider:before {
   }
 
   .typing-text p {
-    font-size: 21px;
+    font-size: calc(21px * var(--typing-size));
   }
 
 }

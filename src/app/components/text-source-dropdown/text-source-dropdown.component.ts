@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { GameMode, GameState } from '../../models/models';
 import { GameService } from '../../services/game.service';
 import { VocabModalComponent } from '../vocab-modal/vocab-modal.component';
+import { ls } from '../../utils/storage';
 
 @Component({
   selector: 'app-text-source-dropdown',
@@ -15,6 +16,7 @@ export class TextSourceDropdownComponent implements OnDestroy {
 
   readonly gameMode       = input<GameMode>('phrases');
   readonly textSource     = input<GameState['textSource']>('default');
+  readonly textCategory   = input<GameState['textCategory']>('classics');
   readonly generatorUnit  = input<GameState['generatorUnit']>('sentence');
   readonly generatorCount = input<number>(3);
   readonly loremMin       = input<number>(20);
@@ -24,11 +26,42 @@ export class TextSourceDropdownComponent implements OnDestroy {
   // Vocabulary modal state
   vocabModalOpen = false;
 
+  // Custom text editor
+  readonly customMax = 5000;
+  customOpen = false;
+  customDraft = '';
+
+  openCustom(): void {
+    if (this.disabled()) return;
+    this.customDraft = ls.get('customText') ?? '';
+    this.customOpen = true;
+  }
+
+  saveCustom(): void {
+    const text = this.customDraft.trim().slice(0, this.customMax);
+    if (!text) return;
+    this.customOpen = false;
+    this.game.setCustomText(text);
+  }
+
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   setSource(source: GameState['textSource']): void {
     if (this.disabled()) return;
     this.game.setGeneratorConfig({ textSource: source });
+  }
+
+  /** Passage pools served for the default source (see the server's text library). */
+  readonly categories: { id: GameState['textCategory']; label: string; hint: string }[] = [
+    { id: 'classics', label: 'Classics', hint: 'Passages from public-domain books' },
+    { id: 'quotes', label: 'Quotes', hint: 'Attributed quotations' },
+    { id: 'speeches', label: 'Speeches', hint: 'Historic speeches and documents' },
+    { id: 'gta', label: 'GTA radio', hint: 'Mature language. Casual: runs are not ranked' },
+  ];
+
+  setCategory(category: GameState['textCategory']): void {
+    if (this.disabled() || category === this.textCategory()) return;
+    this.game.setGeneratorConfig({ textCategory: category });
   }
 
   setUnit(unit: GameState['generatorUnit']): void {

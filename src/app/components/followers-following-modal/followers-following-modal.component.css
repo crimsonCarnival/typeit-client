@@ -12,7 +12,7 @@
 .follow-modal {
   width: min(420px, calc(100vw - 32px));
   max-height: min(560px, calc(100vh - 80px));
-  background: #1a1a2e;
+  background: var(--color-surface-solid);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   display: flex;
@@ -31,7 +31,7 @@
 .follow-modal-header h3 {
   font-family: 'Kirsty Regular';
   font-size: 18px;
-  color: #e5e7eb;
+  color: var(--color-text);
   margin: 0;
 }
 
@@ -116,7 +116,7 @@
 }
 
 .follow-info b {
-  color: #e5e7eb;
+  color: var(--color-text);
   font-size: 15px;
   white-space: nowrap;
   overflow: hidden;
