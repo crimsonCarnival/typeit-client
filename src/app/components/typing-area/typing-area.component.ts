@@ -1,6 +1,25 @@
 import { Component, computed, DestroyRef, effect, ElementRef, inject, input, OnDestroy, output, signal, viewChild } from '@angular/core';
 import { Character, CaretStyle } from '../../models/models';
 
+/** An opponent's cursor (pace bot or another racer) drawn in the text. */
+export interface Ghost {
+  id: string;
+  /** Shown in the small tag above the cursor. */
+  label: string;
+  /** Characters typed so far: the cursor sits before this character. */
+  index: number;
+  /** CSS colour, e.g. 'var(--color-avatar-2)' */
+  color: string;
+}
+
+interface GhostMark {
+  left: number;
+  top: number;
+  height: number;
+  /** Ghosts sharing this character share one cursor and a row of tags. */
+  ghosts: { id: string; label: string; color: string }[];
+}
+
 @Component({
   selector: 'app-typing-area',
   templateUrl: './typing-area.component.html',
@@ -11,6 +30,7 @@ export class TypingAreaComponent {
   readonly characters = input<Character[]>([]);
   readonly currentText = input('');
   readonly caretStyle = input<CaretStyle>('line');
+  readonly ghosts = input<Ghost[]>([]);
 
   readonly typing = output<string>();
   readonly focusChange = output<boolean>();
@@ -30,6 +50,8 @@ export class TypingAreaComponent {
   // Safety net: some async loads resolve after the view is already rendered,
   // so retry the layout computation until the rendered spans match the input.
   private readonly refreshKey = signal(0);
+
+  readonly ghostMarks = signal<GhostMark[]>([]);
 
   readonly currentLine = computed(() => {
     const lines = this.lineOfIndex();
@@ -52,6 +74,54 @@ export class TypingAreaComponent {
       }
       this.layout(el);
     });
+
+    effect(() => {
+      const ghosts = this.ghosts();
+      this.refreshKey();
+      this.currentText();
+      const el = this.textDisplay()?.nativeElement;
+      if (!el || ghosts.length === 0) {
+        if (this.ghostMarks().length) this.ghostMarks.set([]);
+        return;
+      }
+      if (el.querySelectorAll('span').length !== this.characters().length) {
+        requestAnimationFrame(() => this.refreshKey.update(v => v + 1));
+        return;
+      }
+      this.placeGhosts(el, ghosts);
+    });
+  }
+
+  /**
+   * Positions each ghost at its character. Measured with bounding rects
+   * relative to the paragraph, so the paragraph's scrolling transform (which
+   * moves the spans and the ghosts together) cancels out.
+   */
+  private placeGhosts(el: HTMLElement, ghosts: Ghost[]): void {
+    const spans = Array.from(el.querySelectorAll('span')) as HTMLElement[];
+    if (spans.length === 0) {
+      this.ghostMarks.set([]);
+      return;
+    }
+    const origin = el.getBoundingClientRect();
+    const byIndex = new Map<number, GhostMark>();
+    for (const g of ghosts) {
+      const index = Math.max(0, Math.min(Math.floor(g.index), spans.length));
+      let mark = byIndex.get(index);
+      if (!mark) {
+        const atEnd = index === spans.length;
+        const rect = spans[atEnd ? index - 1 : index].getBoundingClientRect();
+        mark = {
+          left: (atEnd ? rect.right : rect.left) - origin.left,
+          top: rect.top - origin.top,
+          height: rect.height,
+          ghosts: [],
+        };
+        byIndex.set(index, mark);
+      }
+      mark.ghosts.push({ id: g.id, label: g.label, color: g.color });
+    }
+    this.ghostMarks.set([...byIndex.values()]);
   }
 
   private layout(el: HTMLElement): void {

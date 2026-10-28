@@ -136,10 +136,6 @@
         }
       </div>
 
-      @if (raceLanes(); as lanes) {
-        <app-race-lanes [lanes]="lanes" />
-      }
-
       @if (raceStartsIn() > 0) {
         <div class="race-countdown" role="status" aria-live="assertive">Starts in {{ raceStartsIn() }}</div>
       }
@@ -156,7 +152,7 @@
         </div>
       }
     </div>
-  } @else if (botLanes(); as lanes) {
+  } @else if (gameState().botWpm) {
     <div class="bot-race">
       <div class="bot-race-head">
         <span class="daily-banner-tag">Bot race &#183; {{ gameState().botWpm }} WPM</span>
@@ -165,7 +161,6 @@
         }
         <button type="button" class="bot-race-stop" (click)="game.setBot(null)">Stop racing</button>
       </div>
-      <app-race-lanes [lanes]="lanes" />
     </div>
   }
 
@@ -174,6 +169,7 @@
       [characters]="characters()"
       [currentText]="gameState().currentText"
       [caretStyle]="gameState().caretStyle"
+      [ghosts]="ghosts()"
       (typing)="game.handleTyping($event)"
       (focusChange)="isFocused = $event"
     />

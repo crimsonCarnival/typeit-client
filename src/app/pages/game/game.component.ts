@@ -13,7 +13,7 @@ import { TypingAreaComponent } from '../../components/typing-area/typing-area.co
 import { TextSourceDropdownComponent } from '../../components/text-source-dropdown/text-source-dropdown.component';
 import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
-import { RaceLane, RaceLanesComponent } from '../../components/race-lanes/race-lanes.component';
+import { Ghost } from '../../components/typing-area/typing-area.component';
 import { botCharsAt } from '../../utils/pace-bot';
 import { RaceService } from '../../services/race.service';
 import { RacePlayer } from '../../models/models';
@@ -35,7 +35,6 @@ const BOT_TICK_MS = 100;
     TypingAreaComponent,
     TextSourceDropdownComponent,
     CaretPickerComponent,
-    RaceLanesComponent,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
@@ -64,21 +63,6 @@ export class GameComponent implements AfterViewInit {
     return race ? Math.max(0, Math.ceil((race.startAt - this.now()) / 1000)) : 0;
   });
 
-  /** Lanes for every racer; the player's own lane is red, others take avatar colours. */
-  readonly raceLanes = computed<RaceLane[] | null>(() => {
-    const room = this.race.room();
-    if (!this.gameState().race || !room?.text) return null;
-    const length = room.text.length;
-    return room.players.map((p, i) => ({
-      id: p.userId,
-      label: `${p.displayName}${p.finishedAt ? ', finished' : ''}`,
-      initial: p.displayName.charAt(0).toUpperCase(),
-      progress: p.index / length,
-      color: p.userId === this.race.myId() ? 'var(--color-primary)' : `var(--color-avatar-${(i % 7) + 2})`,
-      me: p.userId === this.race.myId(),
-    }));
-  });
-
   /** Racers by current position (finish order first, then progress). */
   readonly raceStandings = computed<RacePlayer[]>(() => {
     const players = [...(this.race.room()?.players ?? [])];
@@ -100,21 +84,42 @@ export class GameComponent implements AfterViewInit {
   /** Run time the bot has raced so far; frozen when the run finishes. */
   private readonly botElapsedMs = signal(0);
 
-  private readonly botProgress = computed(() => {
+  /** Characters the pace bot has typed so far (0 when no bot is racing). */
+  private readonly botChars = computed(() => {
     const gs = this.gameState();
     if (!gs.botWpm || !gs.text) return 0;
     // Same text and speed always replay the same bot run.
-    const chars = botCharsAt(this.botElapsedMs(), gs.botWpm, `${gs.botWpm}:${gs.text}`, gs.timeMax);
-    return Math.min(1, chars / gs.text.length);
+    return Math.min(gs.text.length, botCharsAt(this.botElapsedMs(), gs.botWpm, `${gs.botWpm}:${gs.text}`, gs.timeMax));
   });
 
-  readonly botLanes = computed<RaceLane[] | null>(() => {
+  private readonly botProgress = computed(() => {
+    const length = this.gameState().text.length;
+    return length ? this.botChars() / length : 0;
+  });
+
+  /**
+   * Ghost cursors drawn in the text: the pace bot, or every other racer in a
+   * live race. The player's own caret is the normal one, so a four-player
+   * race shows three ghosts.
+   */
+  readonly ghosts = computed<Ghost[]>(() => {
     const gs = this.gameState();
-    if (!gs.botWpm) return null;
-    return [
-      { id: 'you', label: 'You', initial: 'Y', progress: gs.completionPercentage / 100, color: 'var(--color-primary)', me: true },
-      { id: 'bot', label: `Bot at ${gs.botWpm} WPM`, initial: 'B', progress: this.botProgress(), color: 'var(--color-avatar-2)' },
-    ];
+    if (gs.race) {
+      const room = this.race.room();
+      if (!room?.text) return [];
+      return room.players
+        .filter((p) => p.userId !== this.race.myId())
+        .map((p) => ({
+          id: p.userId,
+          label: p.displayName,
+          index: p.index,
+          color: `var(--color-avatar-${(room.players.indexOf(p) % 7) + 2})`,
+        }));
+    }
+    if (gs.botWpm) {
+      return [{ id: 'bot', label: `Bot · ${gs.botWpm} WPM`, index: this.botChars(), color: 'var(--color-avatar-2)' }];
+    }
+    return [];
   });
 
   /** Outcome once the run is over, or null while racing. */

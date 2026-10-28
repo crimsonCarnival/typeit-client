@@ -124,3 +124,50 @@
     padding: 16px;
   }
 }
+
+/* ============================================================
+   Ghost cursors: opponents (pace bot, other racers). Inside the
+   scrolling paragraph, so they move with the text.
+   ============================================================ */
+
+.typing-text .ghost {
+  position: absolute;
+  width: 3px;
+  margin-left: -2px;
+  border-radius: 1px;
+  background: var(--ghost);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ghost) 70%, transparent);
+  font-style: normal;
+  pointer-events: none;
+  transition: left 0.12s linear;
+}
+
+.typing-text .ghost-tips {
+  position: absolute;
+  bottom: 100%;
+  left: -1px;
+  margin-bottom: 3px;
+  display: flex;
+  gap: 4px;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.typing-text .ghost-tip {
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--ghost);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  word-spacing: normal;
+  text-decoration: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-text .ghost {
+    transition: none;
+  }
+}

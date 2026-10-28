@@ -18,6 +18,15 @@
     @for (char of characters(); track $index) {
       <span [class]="charClass(char, $index)">{{ char.char }}</span>
     }
+    @for (m of ghostMarks(); track m.ghosts[0].id) {
+      <i class="ghost" aria-hidden="true" [style.left.px]="m.left" [style.top.px]="m.top" [style.height.px]="m.height" [style.--ghost]="m.ghosts[0].color">
+        <b class="ghost-tips">
+          @for (g of m.ghosts; track g.id) {
+            <u class="ghost-tip" [style.--ghost]="g.color">{{ g.label }}</u>
+          }
+        </b>
+      </i>
+    }
   </p>
   <input
     #input
