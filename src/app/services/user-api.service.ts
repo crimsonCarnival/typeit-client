@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ApiResponse, FollowListUser, PublicProfile, User } from '../models/models';
+import { ApiResponse, FollowListUser, PlayerSettings, PublicProfile, User } from '../models/models';
 import { ls } from '../utils/storage';
 
 /**
@@ -52,6 +52,10 @@ export class UserApiService {
 
   verify(token: string): Promise<ApiResponse<{ valid: boolean; user?: User }>> {
     return this.call(this.http.post<ApiResponse<{ valid: boolean; user?: User }>>(`${this.base}/auth/verify`, { token }));
+  }
+
+  updateSettings(patch: Partial<PlayerSettings>): Promise<ApiResponse<Partial<PlayerSettings>>> {
+    return this.call(this.http.patch<ApiResponse<Partial<PlayerSettings>>>(`${this.base}/users/settings`, patch));
   }
 
   getProfile(): Promise<ApiResponse<User>> {

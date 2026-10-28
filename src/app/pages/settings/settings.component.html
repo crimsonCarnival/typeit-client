@@ -1,0 +1,118 @@
+<div class="settings">
+  <div class="head">
+    <h1 class="title">Settings</h1>
+    <p class="subtitle">
+      @if (auth.isAuthenticated()) {
+        Saved to your account and on this device.
+      } @else {
+        Saved on this device. <button type="button" class="link" (click)="auth.openAuthModal('login')">Log in</button> to keep them on every device.
+      }
+    </p>
+  </div>
+
+  <ng-template #segmented let-key="key" let-options="options" let-label="label">
+    <div class="segmented" role="radiogroup" [attr.aria-label]="label">
+      @for (o of options; track o.value) {
+        <button
+          type="button"
+          role="radio"
+          class="seg-btn"
+          [class.active]="isSelected(key, o.value)"
+          [attr.aria-checked]="isSelected(key, o.value)"
+          [attr.title]="o.hint ?? null"
+          (click)="set(key, o.value)"
+        >{{ o.label }}</button>
+      }
+    </div>
+  </ng-template>
+
+  <section class="group" aria-labelledby="look-title">
+    <h2 id="look-title" class="group-title">Look</h2>
+    <div class="row">
+      <div class="row-text"><span class="row-label">Theme</span></div>
+      <div class="themes" role="radiogroup" aria-label="Theme">
+        @for (t of themes; track t.value) {
+          <button type="button" role="radio" class="theme" [attr.data-preview]="t.value" [class.active]="settings().theme === t.value" [attr.aria-checked]="settings().theme === t.value" (click)="set('theme', t.value)">
+            <span class="theme-swatch" aria-hidden="true"><i></i><i></i></span>
+            {{ t.label }}
+          </button>
+        }
+      </div>
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-label">Typing font</span></div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'typingFont', options: fonts, label: 'Typing font' }" />
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-label">Text size</span></div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'fontSize', options: sizes, label: 'Text size' }" />
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-label">Caret</span></div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'caretStyle', options: carets, label: 'Caret' }" />
+    </div>
+    <p class="preview typing-text" aria-hidden="true"><span class="correct">The quick brown </span><span class="active">f</span>ox jumps over the lazy dog.</p>
+  </section>
+
+  <section class="group" aria-labelledby="run-title">
+    <h2 id="run-title" class="group-title">While typing</h2>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Live stats</span>
+        <span class="row-hint">What the head of the screen shows during a run.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'liveStats', options: liveStats, label: 'Live stats' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Difficulty</span>
+        <span class="row-hint">Hardcore keeps the strict penalties.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'difficulty', options: difficulties, label: 'Difficulty' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Stop on error</span>
+        <span class="row-hint">Letter: wrong keys aren't accepted. Word: fix a word before moving on.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'stopOnError', options: stops, label: 'Stop on error' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Space skips word</span>
+        <span class="row-hint">Space mid-word jumps ahead; the rest counts as missed. Off with stop on error.</span>
+      </div>
+      <button type="button" class="toggle" role="switch" [attr.aria-checked]="settings().spaceSkips" [disabled]="settings().stopOnError !== 'off'" (click)="set('spaceSkips', !settings().spaceSkips)">
+        <span class="toggle-knob"></span>
+      </button>
+    </div>
+  </section>
+
+  <section class="group" aria-labelledby="sound-title">
+    <h2 id="sound-title" class="group-title">Sound</h2>
+    <div class="row">
+      <div class="row-text"><span class="row-label">Sounds</span></div>
+      <button type="button" class="toggle" role="switch" [attr.aria-checked]="!settings().soundMuted" (click)="set('soundMuted', !settings().soundMuted)">
+        <span class="toggle-knob"></span>
+      </button>
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-label">Sound pack</span></div>
+      <div class="row-controls">
+        <ng-container *ngTemplateOutlet="segmented; context: { key: 'soundPack', options: soundPacks, label: 'Sound pack' }" />
+        <button type="button" class="seg-btn" (click)="previewSound()">Preview</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="group" aria-labelledby="kb-title">
+    <h2 id="kb-title" class="group-title">Keyboard</h2>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Layout</span>
+        <span class="row-hint">How the error map draws your keyboard.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'keyboardLayout', options: layouts, label: 'Keyboard layout' }" />
+    </div>
+  </section>
+</div>

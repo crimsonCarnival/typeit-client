@@ -23,8 +23,25 @@ export interface UserStats {
   byModifier?: Record<string, StatsBucket | undefined>;
 }
 
+/** Display and typing preferences, kept on the account (server config/settings.js). */
+export interface PlayerSettings {
+  theme: 'crimson' | 'ocean' | 'forest' | 'light';
+  typingFont: 'default' | 'mono' | 'serif';
+  fontSize: 's' | 'm' | 'l' | 'xl';
+  /** What the in-run head shows: everything, speed and timer, or the timer only. */
+  liveStats: 'all' | 'speed' | 'timer';
+  soundPack: 'typewriter' | 'click' | 'soft';
+  keyboardLayout: 'qwerty' | 'dvorak' | 'colemak';
+  caretStyle: CaretStyle;
+  difficulty: Difficulty;
+  stopOnError: StopOnError;
+  spaceSkips: boolean;
+  soundMuted: boolean;
+}
+
 export interface User {
   id: string;
+  settings?: Partial<PlayerSettings>;
   username: string;
   displayName: string;
   email?: string;

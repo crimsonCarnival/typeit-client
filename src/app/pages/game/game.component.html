@@ -24,12 +24,16 @@
             <span class="run-label">Left</span>
           }
         </div>
-        <div class="run-stat"><span class="run-value">{{ gameState().lastWpm }}</span><span class="run-label">WPM</span></div>
-        <div class="run-stat"><span class="run-value">{{ accuracyLabel() }}%</span><span class="run-label">Acc</span></div>
-        <div class="run-stat">
-          <span class="run-value">{{ wordsDone() }}<span class="run-of">/{{ gameState().totalWords }}</span></span>
-          <span class="run-label">Words</span>
-        </div>
+        @if (liveStats() !== 'timer') {
+          <div class="run-stat"><span class="run-value">{{ gameState().lastWpm }}</span><span class="run-label">WPM</span></div>
+        }
+        @if (liveStats() === 'all') {
+          <div class="run-stat"><span class="run-value">{{ accuracyLabel() }}%</span><span class="run-label">Acc</span></div>
+          <div class="run-stat">
+            <span class="run-value">{{ wordsDone() }}<span class="run-of">/{{ gameState().totalWords }}</span></span>
+            <span class="run-label">Words</span>
+          </div>
+        }
       </div>
       @if (gameState().zen && !gameState().dailyDate && !gameState().practice) {
         <button type="button" class="zen-finish" (click)="game.finishRun()">Finish <kbd>Shift</kbd>+<kbd>Enter</kbd></button>

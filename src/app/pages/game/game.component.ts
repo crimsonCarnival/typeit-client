@@ -2,6 +2,7 @@ import { AfterViewInit, Component, DestroyRef, computed, effect, inject, signal,
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
+import { SettingsService } from '../../services/settings.service';
 import { SoundToggleComponent } from '../../components/sound-toggle/sound-toggle.component';
 import { RefreshButtonComponent } from '../../components/refresh-button/refresh-button.component';
 import { ModeDropdownComponent } from '../../components/mode-dropdown/mode-dropdown.component';
@@ -47,6 +48,7 @@ const BOT_TICK_MS = 100;
 export class GameComponent implements AfterViewInit {
   readonly auth = inject(AuthService);
   readonly game = inject(GameService);
+  private readonly settings = inject(SettingsService);
 
   readonly gameState = this.game.gameState;
   readonly characters = this.game.characters;
@@ -90,6 +92,8 @@ export class GameComponent implements AfterViewInit {
   private readonly botElapsedMs = signal(0);
 
   readonly ghost = this.game.ghost;
+  /** What the run head shows (settings). */
+  readonly liveStats = computed(() => this.settings.settings().liveStats);
   readonly ghostError = signal('');
 
   /** Characters the recorded-run ghost has typed so far, on this text. */

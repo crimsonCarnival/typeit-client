@@ -6,7 +6,7 @@
   flex-wrap: wrap;
   padding: 14px 40px;
   border-bottom: 1px solid var(--color-border-subtle);
-  background: rgba(10, 10, 11, 0.7);
+  background: var(--color-header);
 }
 
 .app-header.focus {

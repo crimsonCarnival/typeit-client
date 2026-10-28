@@ -142,12 +142,12 @@
 .btn-outline {
   border: 1.5px solid var(--color-border-strong);
   background: transparent;
-  color: #c9c5ce;
+  color: var(--color-text-muted);
   font-size: 16px;
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: #232327;
+  background: var(--color-surface-raised);
   color: var(--color-text);
 }
 
@@ -170,7 +170,7 @@
   padding: 4px;
   border: 1px solid var(--color-border);
   border-radius: 13px;
-  background: #111113;
+  background: var(--color-surface-solid);
 }
 
 .segmented-btn {
@@ -203,7 +203,7 @@
   flex-direction: column;
   gap: 8px;
   font-size: 15px;
-  color: #cfcbd3;
+  color: var(--color-text-muted);
 }
 
 .field input {
@@ -211,7 +211,7 @@
   padding: 0 16px;
   border: 1.5px solid #34343a;
   border-radius: var(--radius-sm);
-  background: #0c0c0e;
+  background: var(--color-input);
   color: var(--color-text);
   font-size: 17px;
 }
@@ -239,8 +239,8 @@
   padding: 0 18px;
   border: 1px solid #34343a;
   border-radius: var(--radius-sm);
-  background: #18181b;
-  color: #c9c5ce;
+  background: var(--color-surface-solid);
+  color: var(--color-text-muted);
   font-size: 16px;
   cursor: pointer;
 }
@@ -373,7 +373,7 @@
   padding: 12px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: #111113;
+  background: var(--color-surface-solid);
 }
 
 .player.me {
@@ -385,7 +385,7 @@
   border-style: dashed;
   border-color: #34343a;
   background: transparent;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .avatar {
@@ -442,7 +442,7 @@
 .ready-btn.is-ready {
   background: transparent;
   border: 1.5px solid var(--color-border-strong);
-  color: #c9c5ce;
+  color: var(--color-text-muted);
 }
 
 .countdown {
@@ -527,7 +527,7 @@
 
 .presence {
   font-size: 13px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .presence.online {

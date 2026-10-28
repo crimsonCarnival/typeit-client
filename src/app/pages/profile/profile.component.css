@@ -17,7 +17,7 @@
 .card {
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  background: rgba(18, 18, 20, 0.94);
+  background: var(--color-card);
 }
 
 /* Identity */
@@ -26,7 +26,7 @@
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: 22px;
-  background: rgba(18, 18, 20, 0.94);
+  background: var(--color-card);
 }
 
 .identity-band {
@@ -198,7 +198,7 @@
   gap: 8px;
   max-width: 640px;
   font-size: 15px;
-  color: #cfcbd3;
+  color: var(--color-text-muted);
 }
 
 .field input,
@@ -206,7 +206,7 @@
   padding: 12px 16px;
   border: 1.5px solid #34343a;
   border-radius: var(--radius-sm);
-  background: #0c0c0e;
+  background: var(--color-input);
   color: var(--color-text);
   font-size: 16px;
   resize: vertical;
@@ -254,7 +254,7 @@
   padding: 0 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: rgba(18, 18, 20, 0.94);
+  background: var(--color-card);
   color: var(--color-text-muted);
   font-size: 15px;
   cursor: pointer;

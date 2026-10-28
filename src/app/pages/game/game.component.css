@@ -11,7 +11,7 @@
   padding: 8px;
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  background: rgba(16, 16, 18, 0.92);
+  background: var(--color-typing-box);
 }
 
 /* Typing: settings can't change, the timer stays readable. */
@@ -136,7 +136,7 @@
 .run-settings {
   font-size: 16px;
   letter-spacing: 0.12em;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .content-box.typing {
@@ -331,7 +331,7 @@ app-shortcuts-footer.dimmed {
   border: 1px solid #3a3a40;
   border-bottom-width: 2px;
   border-radius: 6px;
-  background: #18181b;
+  background: var(--color-key);
   font-family: var(--font-mono);
   font-size: 13px;
 }
@@ -377,7 +377,7 @@ app-shortcuts-footer.dimmed {
 .content-box {
   border: 1px solid #2e1b1f;
   border-radius: 18px;
-  background: rgba(16, 16, 18, 0.9);
+  background: var(--color-typing-box);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
@@ -386,7 +386,7 @@ app-shortcuts-footer.dimmed {
   height: 6px;
   margin-top: 20px;
   border-radius: 3px;
-  background: #222226;
+  background: var(--color-surface-raised);
   overflow: hidden;
 }
 

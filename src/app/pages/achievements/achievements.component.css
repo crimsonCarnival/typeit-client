@@ -45,7 +45,7 @@
   gap: 8px;
   font-size: 15px;
   text-transform: capitalize;
-  color: #c9c5ce;
+  color: var(--color-text-muted);
 }
 
 .legend-swatch {
@@ -109,7 +109,7 @@
 
 .btn-ghost {
   border: 1px solid #34343a;
-  background: #18181b;
+  background: var(--color-surface-solid);
   color: var(--color-text);
 }
 
@@ -159,7 +159,7 @@
 
 .category-count {
   font-size: 13px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .bar {
@@ -243,7 +243,7 @@
 }
 
 .badge.locked .badge-name {
-  color: #c9c5ce;
+  color: var(--color-text-muted);
 }
 
 .badge-rarity {
@@ -294,7 +294,7 @@
 
 .foot {
   font-size: 15px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .foot a {

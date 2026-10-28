@@ -4,6 +4,7 @@ import { TextGeneratorService } from './text-generator.service';
 import { ApiResponse, Character, GameState, PerformancePoint, PracticeKind, Results, RunGhost, TypingRules } from '../models/models';
 import { ls } from '../utils/storage';
 import { GameAudioService, GameSound } from './game/game-audio.service';
+import { SettingsService } from './settings.service';
 import { KeystrokeLog, inputKeys } from './game/keystroke-log';
 import { defaultState, practiceLabel } from './game/game-state';
 import { DEFAULT_RULES, KeyOutcome, TypingEngine } from './game/typing-engine';
@@ -34,6 +35,7 @@ export class GameService {
   private readonly textGenerator = inject(TextGeneratorService);
   private readonly audio = inject(GameAudioService);
   private readonly sync = inject(RunSyncService);
+  private readonly settings = inject(SettingsService);
 
   private readonly gameStateSignal = signal<GameState>(defaultState(false));
   readonly gameState = this.gameStateSignal.asReadonly();
@@ -84,7 +86,7 @@ export class GameService {
   }
 
   private playSound(sound: GameSound): void {
-    this.audio.play(sound, this.gameState().isMuted);
+    this.audio.play(sound, this.gameState().isMuted, this.settings.settings().soundPack);
   }
 
   private rulesFrom(data: any): TypingRules {
@@ -525,6 +527,25 @@ export class GameService {
     void this.updateSettingsAndRefresh(this.settingsPayload({ numbersEnabled: newEnabled }));
   }
 
+  /**
+   * Applies settings that arrived from the account (on sign-in): caret and
+   * sound at once; changed typing rules start a new run under them.
+   */
+  applySyncedSettings(): void {
+    const s = this.settings.settings();
+    const gs = this.gameState();
+    const rulesChanged = gs.rules.difficulty !== s.difficulty || gs.rules.stopOnError !== s.stopOnError || gs.rules.spaceSkips !== s.spaceSkips;
+    this.gameStateSignal.update(prev => ({
+      ...prev,
+      caretStyle: s.caretStyle,
+      isMuted: s.soundMuted,
+      rules: { ...prev.rules, difficulty: s.difficulty, stopOnError: s.stopOnError, spaceSkips: s.spaceSkips },
+    }));
+    if (rulesChanged && !gs.isTyping && !gs.isFinished && !gs.dailyDate && !gs.race && !gs.practice) {
+      void this.updateSettingsAndRefresh(this.settingsPayload());
+    }
+  }
+
   /** Words mode language or code mode snippet language; starts a new run. */
   setLanguage(patch: Partial<Pick<GameState, 'language' | 'codeLanguage'>>): void {
     if (patch.language) ls.set('language', patch.language);
@@ -553,21 +574,19 @@ export class GameService {
 
   /** Changes the typing rules (difficulty, stop on error, space skips); starts a new run. */
   setRules(patch: Partial<Pick<TypingRules, 'difficulty' | 'stopOnError' | 'spaceSkips'>>): void {
-    if (patch.difficulty !== undefined) ls.set('difficulty', patch.difficulty);
-    if (patch.stopOnError !== undefined) ls.set('stopOnError', patch.stopOnError);
-    if (patch.spaceSkips !== undefined) ls.set('spaceSkips', String(patch.spaceSkips));
+    this.settings.update(patch);
     this.gameStateSignal.update(prev => ({ ...prev, rules: { ...prev.rules, ...patch } }));
     void this.updateSettingsAndRefresh(this.settingsPayload());
   }
 
   setCaretStyle(style: GameState['caretStyle']): void {
-    ls.set('caretStyle', style);
+    this.settings.update({ caretStyle: style });
     this.gameStateSignal.update(s => ({ ...s, caretStyle: style }));
   }
 
   toggleMute(): void {
     const newMuted = !this.gameState().isMuted;
-    ls.set('soundMuted', String(newMuted));
+    this.settings.update({ soundMuted: newMuted });
     this.gameStateSignal.update(prev => ({ ...prev, isMuted: newMuted }));
   }
 

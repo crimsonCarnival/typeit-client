@@ -65,7 +65,7 @@
   display: grid;
   place-items: center;
   z-index: 10;
-  background: radial-gradient(ellipse at center, rgba(10, 10, 11, 0.55), rgba(10, 10, 11, 0.1) 70%);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--color-bg) 55%, transparent), color-mix(in srgb, var(--color-bg) 10%, transparent) 70%);
   cursor: pointer;
 }
 

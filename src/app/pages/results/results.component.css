@@ -43,12 +43,12 @@
   padding: 5px 10px;
   border: 1px solid #2e2e33;
   border-radius: 8px;
-  background: #1c1c20;
+  background: var(--color-surface-solid);
   font-family: var(--font-display);
   font-size: 15px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #cfcbd3;
+  color: var(--color-text-muted);
 }
 
 .chip-accent {
@@ -159,7 +159,7 @@ kbd.on-red {
   min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  background: rgba(18, 18, 20, 0.94);
+  background: var(--color-card);
 }
 
 .hero {
@@ -333,7 +333,7 @@ kbd.on-red {
 
 .detail dt small {
   font-size: 12px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .detail dd {

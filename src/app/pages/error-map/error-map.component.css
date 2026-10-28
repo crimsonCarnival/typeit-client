@@ -91,7 +91,7 @@
 
 .btn-ghost {
   border: 1px solid #34343a;
-  background: #18181b;
+  background: var(--color-surface-solid);
   color: var(--color-text);
 }
 
@@ -125,7 +125,7 @@
   padding: 4px;
   border: 1px solid var(--color-border);
   border-radius: 13px;
-  background: #111113;
+  background: var(--color-surface-solid);
 }
 
 .segmented-btn {
@@ -245,7 +245,7 @@
 
 .board-foot {
   font-size: 14px;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .runs-select select {
@@ -253,7 +253,7 @@
   padding: 0 6px;
   border: 1px solid #34343a;
   border-radius: 6px;
-  background: #18181b;
+  background: var(--color-surface-solid);
   color: var(--color-text);
   font-size: 14px;
 }
@@ -316,7 +316,7 @@
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #85818a;
+  color: var(--color-text-subtle);
 }
 
 .instead-row {
@@ -364,7 +364,7 @@
   padding: 8px 14px;
   border: 1px solid #34343a;
   border-radius: 10px;
-  background: #18181b;
+  background: var(--color-surface-solid);
   font-family: var(--font-mono);
   font-size: 15px;
   font-weight: 700;

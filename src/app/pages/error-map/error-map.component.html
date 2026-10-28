@@ -42,7 +42,7 @@
 
         @if (view() === 'keys') {
           <div class="keyboard">
-            @for (row of keyRows; track $index) {
+            @for (row of keyRows(); track $index) {
               <div class="key-row" [style.--row-indent.px]="$index * 26">
                 @for (k of row; track k) {
                   <button

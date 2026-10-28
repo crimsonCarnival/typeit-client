@@ -70,7 +70,7 @@
   padding: 24px 28px;
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  background: rgba(18, 18, 20, 0.94);
+  background: var(--color-card);
   max-height: 320px;
   overflow-y: auto;
 }

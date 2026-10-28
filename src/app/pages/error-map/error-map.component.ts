@@ -3,9 +3,15 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameApiService } from '../../services/game-api.service';
 import { GameService } from '../../services/game.service';
-import { ErrorMap, ErrorMapKey, ErrorTrends } from '../../models/models';
+import { ErrorMap, ErrorMapKey, ErrorTrends, PlayerSettings } from '../../models/models';
+import { SettingsService } from '../../services/settings.service';
 
-const KEY_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].map((row) => row.split(''));
+/** Letter rows per keyboard layout (settings); the error map draws the player's own. */
+const KEY_ROWS: Record<PlayerSettings['keyboardLayout'], string[][]> = {
+  qwerty: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].map((row) => row.split('')),
+  dvorak: ["',.pyfgcrl", 'aoeuidhtns', ';qjkxbmwvz'].map((row) => row.split('')),
+  colemak: ['qwfpgjluy;', 'arstdhneio', 'zxcvbkm'].map((row) => row.split('')),
+};
 // Heat gradient stops, matching --color-heat-0..3 in styles.css.
 const HEAT_STOPS = [0, 0.4, 0.7, 1];
 const TYPED_INSTEAD_SHOWN = 3;
@@ -23,7 +29,8 @@ export class ErrorMapComponent {
   private readonly game = inject(GameService);
   private readonly router = inject(Router);
 
-  readonly keyRows = KEY_ROWS;
+  private readonly settings = inject(SettingsService);
+  readonly keyRows = computed(() => KEY_ROWS[this.settings.settings().keyboardLayout] ?? KEY_ROWS.qwerty);
   readonly runOptions = [10, 20, 50];
 
   readonly view = signal<View>('keys');
