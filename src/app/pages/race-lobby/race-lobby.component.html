@@ -1,7 +1,72 @@
+<!-- Race rules: editable while creating, and by the host before the race starts -->
+<ng-template #rules>
+  <fieldset class="rules" [disabled]="!canEdit()">
+    <div class="field" role="group" aria-label="Mode">
+      <span>Mode</span>
+      <div class="segmented">
+        <button type="button" class="segmented-btn" [class.active]="settings().mode === 'words'" [attr.aria-pressed]="settings().mode === 'words'" (click)="change({ mode: 'words' })">Words</button>
+        <button type="button" class="segmented-btn" [class.active]="settings().mode === 'time'" [attr.aria-pressed]="settings().mode === 'time'" (click)="change({ mode: 'time' })">Timed</button>
+      </div>
+      <span class="hint">{{ settings().mode === 'words' ? 'First across the line wins.' : 'Same clock for everyone; the highest WPM wins.' }}</span>
+    </div>
+
+    @if (settings().mode === 'words') {
+      <div class="field" role="group" aria-label="Words">
+        <span>Words</span>
+        <div class="chips">
+          @for (n of wordCounts; track n) {
+            <button type="button" class="chip" [class.active]="settings().wordCount === n" [attr.aria-pressed]="settings().wordCount === n" (click)="change({ wordCount: n })">{{ n }}</button>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="field" role="group" aria-label="Time limit">
+        <span>Time limit</span>
+        <div class="chips">
+          @for (n of timeLimits; track n) {
+            <button type="button" class="chip" [class.active]="settings().timeLimit === n" [attr.aria-pressed]="settings().timeLimit === n" (click)="change({ timeLimit: n })">{{ n }}s</button>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="field" role="group" aria-label="Players">
+      <span>Max players</span>
+      <div class="chips">
+        @for (n of playerLimits; track n) {
+          <button type="button" class="chip" [class.active]="settings().maxPlayers === n" [attr.aria-pressed]="settings().maxPlayers === n" (click)="change({ maxPlayers: n })">{{ n }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="field" role="group" aria-label="Countdown">
+      <span>Countdown</span>
+      <div class="chips">
+        @for (n of countdowns; track n) {
+          <button type="button" class="chip" [class.active]="settings().countdownSec === n" [attr.aria-pressed]="settings().countdownSec === n" (click)="change({ countdownSec: n })">{{ n }}s</button>
+        }
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <span id="punct-label">Punctuation</span>
+      <button type="button" role="switch" class="switch" [class.on]="settings().punctuation" [attr.aria-checked]="settings().punctuation" aria-labelledby="punct-label" (click)="change({ punctuation: !settings().punctuation })">
+        <span class="switch-knob"></span>
+      </button>
+    </div>
+    <div class="toggle-row">
+      <span id="nums-label">Numbers</span>
+      <button type="button" role="switch" class="switch" [class.on]="settings().numbers" [attr.aria-checked]="settings().numbers" aria-labelledby="nums-label" (click)="change({ numbers: !settings().numbers })">
+        <span class="switch-knob"></span>
+      </button>
+    </div>
+  </fieldset>
+</ng-template>
+
 <div class="lobby">
   <div>
     <h1 class="title">Race lobby</h1>
-    <p class="subtitle">Race up to four friends on the same text.</p>
+    <p class="subtitle">Race up to eight players on the same text. Share the room link to bring people in.</p>
   </div>
 
   @if (!auth.loading() && !auth.isAuthenticated()) {
@@ -40,21 +105,14 @@
                 <span>Room name</span>
                 <input type="text" maxlength="40" [value]="roomName()" (input)="onInput('roomName', $event)" placeholder="Friday sprint" />
               </label>
-              <div class="field" role="group" aria-label="Length">
-                <span>Length</span>
-                <div class="chips">
-                  @for (n of lengths; track n) {
-                    <button type="button" class="chip" [class.active]="wordCount() === n" [attr.aria-pressed]="wordCount() === n" (click)="wordCount.set(n)">{{ n }}{{ n === lengths[0] ? ' words' : '' }}</button>
-                  }
-                </div>
-              </div>
+              <ng-container [ngTemplateOutlet]="rules" />
               <div class="toggle-row">
                 <span id="private-label">Private room</span>
                 <button type="button" role="switch" class="switch" [class.on]="isPrivate()" [attr.aria-checked]="isPrivate()" aria-labelledby="private-label" (click)="isPrivate.set(!isPrivate())">
                   <span class="switch-knob"></span>
                 </button>
               </div>
-              <p class="hint">{{ isPrivate() ? 'Only people with the code can join.' : 'Listed under Join for anyone to find.' }}</p>
+              <p class="hint">{{ isPrivate() ? 'Only people with the code or link can join.' : 'Listed under Join for anyone to find.' }}</p>
               <button type="submit" class="btn-primary" [disabled]="race.status() !== 'online'">Create room</button>
             </form>
           } @else {
@@ -77,7 +135,7 @@
                   @for (r of race.openRooms(); track r.code) {
                     <li>
                       <span class="open-name">{{ r.name }}</span>
-                      <span class="hint">{{ r.players }}/{{ maxPlayers }} &#183; {{ r.wordCount }} words</span>
+                      <span class="hint">{{ r.players }}/{{ r.maxPlayers }} &#183; {{ lengthLabel(r) }}</span>
                       <button type="button" class="btn-outline small" (click)="race.join(r.code)">Join</button>
                     </li>
                   }
@@ -90,16 +148,18 @@
             <div class="field">
               <span class="field-label">Room</span>
               <span class="room-name">{{ r.name }}</span>
-              <span class="hint">{{ r.wordCount }} words &#183; {{ r.isPrivate ? 'Private' : 'Public' }}</span>
+              <span class="hint">{{ r.isPrivate ? 'Private' : 'Public' }}{{ canEdit() ? '' : ' · the host sets the rules' }}</span>
             </div>
             <div class="field">
               <span class="field-label">Invite code</span>
               <div class="code-row">
-                <span class="code">{{ r.code }}</span>
-                <button type="button" class="btn-outline" (click)="copyCode()">{{ copied() ? 'Copied' : 'Copy' }}</button>
+                <span class="code selectable">{{ r.code }}</span>
+                <button type="button" class="btn-outline" (click)="copy('code')">{{ copied() === 'code' ? 'Copied' : 'Copy' }}</button>
               </div>
+              <button type="button" class="btn-outline" (click)="copy('link')">{{ copied() === 'link' ? 'Link copied' : 'Copy race link' }}</button>
             </div>
-            <button type="button" class="btn-outline" (click)="race.leave()">Leave room</button>
+            <ng-container [ngTemplateOutlet]="rules" />
+            <button type="button" class="btn-outline" (click)="leave()">Leave room</button>
           </div>
         }
       </section>
@@ -107,47 +167,72 @@
       <!-- Waiting room -->
       <section class="panel waiting" aria-labelledby="waiting-title">
         <div class="waiting-head">
-          <h2 id="waiting-title" class="section-title">Waiting room</h2>
+          <h2 id="waiting-title" class="section-title">{{ room()?.state === 'finished' ? 'Results' : 'Waiting room' }}</h2>
           @if (room(); as r) {
-            <span class="hint">{{ r.players.length }} of {{ maxPlayers }} players &#183; {{ r.wordCount }} words</span>
+            <span class="hint">{{ r.players.length }} of {{ r.maxPlayers }} players &#183; {{ lengthLabel(r) }}{{ r.punctuation ? ' · punctuation' : '' }}{{ r.numbers ? ' · numbers' : '' }}</span>
           }
         </div>
 
         @if (!room()) {
-          <p class="hint">Create a room or join one with a code. Everyone readies up, then the server starts the countdown.</p>
+          <p class="hint">Create a room or join one with a code or link. Everyone readies up, then the server starts the countdown.</p>
         } @else if (room(); as r) {
-          <ul class="players">
-            @for (p of r.players; track p.userId; let i = $index) {
-              <li class="player" [class.me]="isMe(p)">
-                <span class="avatar" aria-hidden="true" [style.background]="avatarColor(i, p)">{{ initial(p.displayName) }}</span>
-                <span class="player-name">
-                  {{ p.displayName }}
-                  @if (p.userId === r.hostId) {
-                    <span class="tag">Host</span>
-                  }
-                </span>
-                @if (r.state === 'finished') {
-                  <span class="badge">{{ p.place ? '#' + p.place : 'DNF' }}</span>
-                } @else if (p.ready) {
-                  <span class="badge ready">Ready</span>
-                } @else {
-                  <span class="badge">Not ready</span>
+          @if (r.state === 'finished') {
+            <table class="standings">
+              <thead>
+                <tr><th>#</th><th>Player</th><th>WPM</th><th>Acc</th></tr>
+              </thead>
+              <tbody>
+                @for (p of standings(); track p.userId) {
+                  <tr [class.me]="isMe(p)">
+                    <td>{{ p.place ?? 'DNF' }}</td>
+                    <td>
+                      {{ p.displayName }}
+                      @if (p.userId === r.winnerId) {
+                        <span class="tag">Winner</span>
+                      }
+                      @if (p.ranked === false) {
+                        <span class="tag muted">Unranked</span>
+                      }
+                    </td>
+                    <td>{{ p.place ? p.wpm : '–' }}</td>
+                    <td>{{ p.place ? p.accuracy + '%' : '–' }}</td>
+                  </tr>
                 }
-              </li>
-            }
-            @if (inLobby()) {
-              @for (slot of emptySlots(); track slot) {
-                <li class="player empty">+ Invite a friend</li>
+              </tbody>
+            </table>
+            <button type="button" class="btn-outline" (click)="leave()">Leave room</button>
+          } @else {
+            <ul class="players">
+              @for (p of r.players; track p.userId; let i = $index) {
+                <li class="player" [class.me]="isMe(p)">
+                  <span class="avatar" aria-hidden="true" [style.background]="avatarColor(i, p)">{{ initial(p.displayName) }}</span>
+                  <span class="player-name">
+                    {{ p.displayName }}
+                    @if (p.userId === r.hostId) {
+                      <span class="tag">Host</span>
+                    }
+                  </span>
+                  @if (p.ready) {
+                    <span class="badge ready">Ready</span>
+                  } @else {
+                    <span class="badge">Not ready</span>
+                  }
+                </li>
               }
-            }
-          </ul>
+              @if (inLobby()) {
+                @for (slot of emptySlots(); track slot) {
+                  <li class="player empty">+ Invite a friend</li>
+                }
+              }
+            </ul>
+          }
 
           @if (r.state === 'lobby' && race.me(); as me) {
             <button type="button" class="btn-primary ready-btn" [class.is-ready]="me.ready" (click)="race.setReady(!me.ready)">
               {{ me.ready ? 'Not ready' : "I'm ready" }}
             </button>
             @if (r.players.length < 2) {
-              <p class="hint">Waiting for at least one more racer.</p>
+              <p class="hint">Waiting for at least one more racer. Share the race link to invite people.</p>
             }
           }
 

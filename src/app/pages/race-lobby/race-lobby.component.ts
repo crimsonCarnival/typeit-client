@@ -1,30 +1,72 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { RaceService } from '../../services/race.service';
-import { RaceFriend, RacePlayer } from '../../models/models';
+import { RaceFriend, RaceMode, RacePlayer, RaceSettings } from '../../models/models';
 
-const LENGTHS = [25, 50, 75];
-const MAX_PLAYERS = 4; // mirrors the server's RACE_MAX_PLAYERS
+// These mirror the server's lists in config/race.js; the server is the one
+// that enforces them.
+const WORD_COUNTS = [10, 25, 50, 75, 100];
+const TIME_LIMITS = [15, 30, 60, 120];
+const PLAYER_LIMITS = [2, 3, 4, 6, 8];
+const COUNTDOWNS = [3, 5, 10, 15];
+const DEFAULT_SETTINGS: RaceSettings = {
+  mode: 'words',
+  wordCount: 25,
+  timeLimit: 30,
+  maxPlayers: 4,
+  countdownSec: 5,
+  punctuation: false,
+  numbers: false,
+};
 const FRIENDS_REFRESH_MS = 15000;
+
+/** Create-form settings from URL query params; anything invalid is ignored. */
+const settingsFromQuery = (q: (key: string) => string | null): RaceSettings => {
+  const pick = (key: string, allowed: number[], fallback: number) => {
+    const n = Number(q(key));
+    return allowed.includes(n) ? n : fallback;
+  };
+  const mode: RaceMode = q('mode') === 'time' ? 'time' : 'words';
+  return {
+    mode,
+    wordCount: pick('words', WORD_COUNTS, DEFAULT_SETTINGS.wordCount),
+    timeLimit: pick('time', TIME_LIMITS, DEFAULT_SETTINGS.timeLimit),
+    maxPlayers: pick('players', PLAYER_LIMITS, DEFAULT_SETTINGS.maxPlayers),
+    countdownSec: pick('countdown', COUNTDOWNS, DEFAULT_SETTINGS.countdownSec),
+    punctuation: q('punct') === '1',
+    numbers: q('nums') === '1',
+  };
+};
 
 @Component({
   selector: 'app-race-lobby',
+  imports: [NgTemplateOutlet],
   templateUrl: './race-lobby.component.html',
   styleUrl: './race-lobby.component.css',
 })
 export class RaceLobbyComponent {
   readonly auth = inject(AuthService);
   readonly race = inject(RaceService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  readonly lengths = LENGTHS;
-  readonly maxPlayers = MAX_PLAYERS;
+  readonly wordCounts = WORD_COUNTS;
+  readonly timeLimits = TIME_LIMITS;
+  readonly playerLimits = PLAYER_LIMITS;
+  readonly countdowns = COUNTDOWNS;
 
-  readonly tab = signal<'create' | 'join'>('create');
-  readonly roomName = signal('');
-  readonly wordCount = signal(25);
-  readonly isPrivate = signal(true);
-  readonly joinCode = signal('');
-  readonly copied = signal(false);
+  private readonly query = this.route.snapshot.queryParamMap;
+  /** Invite code from a /race/:code link. */
+  readonly linkCode = (this.route.snapshot.paramMap.get('code') ?? '').toUpperCase();
+
+  readonly tab = signal<'create' | 'join'>(this.linkCode ? 'join' : 'create');
+  readonly roomName = signal(this.query.get('name') ?? '');
+  readonly isPrivate = signal(this.query.get('public') !== '1');
+  readonly draft = signal<RaceSettings>(settingsFromQuery((k) => this.query.get(k)));
+  readonly joinCode = signal(this.linkCode);
+  readonly copied = signal<'' | 'code' | 'link'>('');
   readonly friends = signal<RaceFriend[]>([]);
   readonly invited = signal<Set<string>>(new Set());
   private readonly now = signal(Date.now());
@@ -34,6 +76,10 @@ export class RaceLobbyComponent {
     const s = this.room()?.state;
     return s === 'lobby' || s === 'countdown';
   });
+  /** Settings shown in the form: the room's while in one, else the draft. */
+  readonly settings = computed<RaceSettings>(() => this.room() ?? this.draft());
+  /** Who may edit them: anyone creating, only the host once in a room. */
+  readonly canEdit = computed(() => (this.room() ? this.race.isHost() && this.inLobby() : true));
 
   readonly startsIn = computed(() => {
     const room = this.room();
@@ -42,8 +88,15 @@ export class RaceLobbyComponent {
   });
 
   readonly emptySlots = computed(() =>
-    Array.from({ length: Math.max(0, MAX_PLAYERS - (this.room()?.players.length ?? 0)) }, (_, i) => i)
+    Array.from({ length: Math.max(0, (this.room()?.maxPlayers ?? 0) - (this.room()?.players.length ?? 0)) }, (_, i) => i)
   );
+
+  /** Standings once the race ends: placed finishers by place, then the rest. */
+  readonly standings = computed(() => {
+    const room = this.room();
+    if (room?.state !== 'finished') return [];
+    return [...room.players].sort((a, b) => (a.place ?? 99) - (b.place ?? 99) || b.wpm - a.wpm);
+  });
 
   constructor() {
     effect(() => {
@@ -51,6 +104,25 @@ export class RaceLobbyComponent {
     });
     effect(() => {
       if (!this.auth.loading() && this.auth.isAuthenticated()) void this.loadFriends();
+    });
+
+    // Opening a /race/:code link joins that race once the socket is up.
+    let linked = false;
+    effect(() => {
+      if (linked || !this.linkCode || this.race.status() !== 'online' || !this.auth.isAuthenticated()) return;
+      linked = true;
+      if (this.race.room()?.code !== this.linkCode) this.race.join(this.linkCode);
+    });
+
+    // Keep the address bar shareable: the room's link while in one, otherwise
+    // the create form's settings as query params.
+    effect(() => {
+      const room = this.room();
+      if (room && room.state !== 'finished') {
+        void this.router.navigate(['/race', room.code], { replaceUrl: true });
+      } else if (!room && this.tab() === 'create') {
+        void this.router.navigate(['/race'], { queryParams: this.draftQuery(), replaceUrl: true });
+      }
     });
 
     const tick = setInterval(() => this.now.set(Date.now()), 250);
@@ -63,13 +135,36 @@ export class RaceLobbyComponent {
     });
   }
 
+  /** Only values that differ from the defaults, so the URL stays short. */
+  private draftQuery(): Record<string, string | number | null> {
+    const d = this.draft();
+    const base = DEFAULT_SETTINGS;
+    return {
+      mode: d.mode !== base.mode ? d.mode : null,
+      words: d.wordCount !== base.wordCount ? d.wordCount : null,
+      time: d.timeLimit !== base.timeLimit ? d.timeLimit : null,
+      players: d.maxPlayers !== base.maxPlayers ? d.maxPlayers : null,
+      countdown: d.countdownSec !== base.countdownSec ? d.countdownSec : null,
+      punct: d.punctuation ? 1 : null,
+      nums: d.numbers ? 1 : null,
+      public: this.isPrivate() ? null : 1,
+    };
+  }
+
   async loadFriends(): Promise<void> {
     this.friends.set(await this.race.loadFriends());
   }
 
+  /** Applies a settings change: to the draft, or (host) to the live room. */
+  change(patch: Partial<RaceSettings>): void {
+    if (!this.canEdit()) return;
+    if (this.room()) this.race.updateSettings(patch);
+    else this.draft.update((d) => ({ ...d, ...patch }));
+  }
+
   create(event: Event): void {
     event.preventDefault();
-    this.race.create(this.roomName(), this.wordCount(), this.isPrivate());
+    this.race.create(this.roomName(), this.isPrivate(), this.draft());
   }
 
   join(event: Event): void {
@@ -77,13 +172,18 @@ export class RaceLobbyComponent {
     if (this.joinCode().trim()) this.race.join(this.joinCode());
   }
 
-  async copyCode(): Promise<void> {
+  leave(): void {
+    this.race.leave();
+    void this.router.navigate(['/race'], { replaceUrl: true });
+  }
+
+  async copy(what: 'code' | 'link'): Promise<void> {
     const code = this.room()?.code;
     if (!code) return;
     try {
-      await navigator.clipboard.writeText(code);
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 1500);
+      await navigator.clipboard.writeText(what === 'link' ? this.race.linkFor(code) : code);
+      this.copied.set(what);
+      setTimeout(() => this.copied.set(''), 1500);
     } catch {
       // Clipboard can be blocked; the code is on screen to copy by hand.
     }
@@ -104,6 +204,11 @@ export class RaceLobbyComponent {
 
   avatarColor(index: number, p: RacePlayer): string {
     return this.isMe(p) ? 'var(--color-primary)' : `var(--color-avatar-${(index % 7) + 2})`;
+  }
+
+  /** "25 words" / "30s timed" for summaries. */
+  lengthLabel(s: Pick<RaceSettings, 'mode' | 'wordCount' | 'timeLimit'>): string {
+    return s.mode === 'time' ? `${s.timeLimit}s timed` : `${s.wordCount} words`;
   }
 
   onInput(target: 'roomName' | 'joinCode', event: Event): void {

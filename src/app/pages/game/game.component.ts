@@ -17,7 +17,7 @@ import { RaceLane, RaceLanesComponent } from '../../components/race-lanes/race-l
 import { botCharsAt } from '../../utils/pace-bot';
 import { RaceService } from '../../services/race.service';
 import { RacePlayer } from '../../models/models';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 const BOT_TICK_MS = 100;
 
@@ -56,7 +56,26 @@ export class GameComponent implements AfterViewInit {
 
   readonly race = inject(RaceService);
   private readonly router = inject(Router);
+  private readonly urlParams = inject(ActivatedRoute).snapshot.queryParamMap;
   private readonly now = signal(Date.now());
+  private urlApplied = false;
+
+  /**
+   * The settings a plain run is configured with, as the /play query string
+   * (/play?mode=words&words=25&time=60&punct=1). Races, the daily challenge,
+   * practice and bot runs set up their own text, so they leave the URL alone.
+   */
+  private readonly settingsQuery = computed(() => {
+    const gs = this.gameState();
+    if (gs.race || gs.dailyDate || gs.practice || gs.botWpm) return null;
+    return JSON.stringify({
+      mode: gs.gameMode,
+      words: gs.gameMode === 'words' ? gs.wordCount : null,
+      time: gs.timeMax,
+      punct: gs.punctuationEnabled ? 1 : null,
+      nums: gs.numbersEnabled ? 1 : null,
+    });
+  });
 
   /** Seconds until a live race starts, or 0 once it has. */
   readonly raceStartsIn = computed(() => {
@@ -148,6 +167,19 @@ export class GameComponent implements AfterViewInit {
       this.game.setAuthenticated(this.auth.isAuthenticated());
     });
 
+    // Open /play with the settings from the URL, once sign-in state is known.
+    effect(() => {
+      if (this.urlApplied || this.auth.loading()) return;
+      this.urlApplied = true;
+      untracked(() => this.applyUrlSettings());
+    });
+
+    effect(() => {
+      const query = this.settingsQuery();
+      if (!this.urlApplied || !query) return;
+      untracked(() => void this.router.navigate([], { queryParams: JSON.parse(query), replaceUrl: true }));
+    });
+
     // Advance the bot while a run is in progress; reset it between runs.
     // The same tick drives the race countdown.
     const tick = setInterval(() => {
@@ -187,6 +219,25 @@ export class GameComponent implements AfterViewInit {
       // ignore in non-browser environments
     }
 
+  }
+
+  /** Applies valid /play query params that differ from the current settings. */
+  private applyUrlSettings(): void {
+    const gs = this.gameState();
+    if (gs.race || gs.dailyDate || gs.practice || gs.botWpm) return;
+    const num = (key: string) => Number(this.urlParams.get(key));
+    const mode = this.urlParams.get('mode');
+    const words = num('words');
+    const time = num('time');
+
+    // Mode and modifiers are account settings (guests always play plain words).
+    if (this.isAuthenticated()) {
+      if ((mode === 'words' || mode === 'phrases') && mode !== gs.gameMode) this.game.setGameMode(mode);
+      if (this.urlParams.has('punct') && (this.urlParams.get('punct') === '1') !== gs.punctuationEnabled) this.game.togglePunctuation();
+      if (this.urlParams.has('nums') && (this.urlParams.get('nums') === '1') !== gs.numbersEnabled) this.game.toggleNumbers();
+    }
+    if (Number.isInteger(words) && words >= 1 && words <= 500 && words !== gs.wordCount) this.game.setWordCount(words);
+    if (Number.isInteger(time) && time >= 5 && time <= 600 && time !== gs.timeMax) this.game.setTimeMax(time);
   }
 
   focusInput(): void {

@@ -565,3 +565,55 @@
     padding: 20px;
   }
 }
+
+/* Race rules (shared by the create form and the host's room settings) */
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rules:disabled .chip,
+.rules:disabled .segmented-btn,
+.rules:disabled .switch {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Results */
+
+.standings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.standings th {
+  padding: 8px 10px;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.standings td {
+  padding: 12px 10px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.standings tr.me td {
+  background: var(--color-surface-raised);
+}
+
+.tag.muted {
+  color: var(--color-text-subtle);
+}
