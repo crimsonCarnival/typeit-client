@@ -9,7 +9,6 @@ import { ApiResponse, OpenRace, RaceFriend, RaceInvite, RaceRoom } from '../mode
 import { ls } from '../utils/storage';
 
 const SOCKET_PATH = '/ws/race';
-const PROGRESS_INTERVAL_MS = 200;
 const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 15000;
 // Give up after this many failed attempts in a row; `retry()` starts over.
@@ -44,8 +43,6 @@ export class RaceService {
   private reconnectDelay = RECONNECT_BASE_MS;
   private failedAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private lastProgressAt = 0;
-  private pendingProgress: ReturnType<typeof setTimeout> | null = null;
   /** serverTime - localTime, from the latest server message. */
   private clockOffset = 0;
 
@@ -215,19 +212,6 @@ export class RaceService {
     const invite = this.invite();
     this.invite.set(null);
     if (invite) this.join(invite.code);
-  }
-
-  /** Throttled: at most one progress message per PROGRESS_INTERVAL_MS. */
-  sendProgress(index: number, accuracy: number): void {
-    const flush = () => {
-      this.pendingProgress = null;
-      this.lastProgressAt = Date.now();
-      this.send({ type: 'progress', index, accuracy });
-    };
-    if (this.pendingProgress) clearTimeout(this.pendingProgress);
-    const wait = PROGRESS_INTERVAL_MS - (Date.now() - this.lastProgressAt);
-    if (wait <= 0) flush();
-    else this.pendingProgress = setTimeout(flush, wait);
   }
 
   async loadFriends(): Promise<RaceFriend[]> {

@@ -751,6 +751,12 @@ ul li {
   color: var(--color-text);
 }
 
+.typing-text p span.skipped {
+  color: var(--color-text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-accent);
+}
+
 .typing-text p span.incorrect {
   color: var(--color-accent);
   text-decoration: underline;

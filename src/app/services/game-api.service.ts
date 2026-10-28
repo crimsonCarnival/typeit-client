@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Achievement, ApiResponse, DailyOverview, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
+import { Achievement, ApiResponse, LiveStats, DailyOverview, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
 
 /**
  * Game HTTP service. Mirrors the React typeIt.api wrapper: every method
@@ -18,8 +18,8 @@ export class GameApiService {
       return await firstValueFrom(obs);
     } catch (err) {
       if (err instanceof HttpErrorResponse) {
-        const body = err.error as { error?: string } | undefined;
-        return { success: false, error: body?.error || `Request failed (${err.status})` };
+        const body = err.error as { error?: string; data?: T } | undefined;
+        return { success: false, error: body?.error || `Request failed (${err.status})`, data: body?.data };
       }
       return { success: false, error: 'Network error' };
     }
@@ -78,8 +78,9 @@ export class GameApiService {
     return this.call(this.http.post<ApiResponse<any>>(`${this.base}/daily/start`, {}));
   }
 
-  beginGame(): Promise<ApiResponse<unknown>> {
-    return this.call(this.http.post<ApiResponse<unknown>>(`${this.base}/game/begin`, {}));
+  /** Streams keys of the run in progress; answers server-computed live stats. */
+  progress(body: Record<string, unknown>): Promise<ApiResponse<{ keyCount: number; live: LiveStats }>> {
+    return this.call(this.http.post<ApiResponse<{ keyCount: number; live: LiveStats }>>(`${this.base}/game/progress`, body));
   }
 
   endGame(gameData: Record<string, unknown>): Promise<ApiResponse<any>> {
@@ -96,10 +97,6 @@ export class GameApiService {
 
   updateSettings(settings: Record<string, unknown>): Promise<ApiResponse<any>> {
     return this.call(this.http.patch<ApiResponse<any>>(`${this.base}/game/settings`, settings));
-  }
-
-  saveSessionState(state: Record<string, unknown>): Promise<ApiResponse<any>> {
-    return this.call(this.http.patch<ApiResponse<any>>(`${this.base}/game/session`, state));
   }
 
   migrateGame(payload: Record<string, unknown>): Promise<ApiResponse<any>> {

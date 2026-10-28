@@ -13,6 +13,7 @@ import { TypingAreaComponent } from '../../components/typing-area/typing-area.co
 import { TextSourceDropdownComponent } from '../../components/text-source-dropdown/text-source-dropdown.component';
 import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
+import { RulesPatch, RulesPickerComponent } from '../../components/rules-picker/rules-picker.component';
 import { Ghost } from '../../components/typing-area/typing-area.component';
 import { botCharsAt } from '../../utils/pace-bot';
 import { RaceService } from '../../services/race.service';
@@ -35,6 +36,7 @@ const BOT_TICK_MS = 100;
     TypingAreaComponent,
     TextSourceDropdownComponent,
     CaretPickerComponent,
+    RulesPickerComponent,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
@@ -172,11 +174,6 @@ export class GameComponent implements AfterViewInit {
       });
     });
 
-    // Report live progress to the race (throttled in RaceService).
-    effect(() => {
-      const gs = this.gameState();
-      if (gs.race && gs.isTyping) this.race.sendProgress(gs.currentIndex, gs.accuracy);
-    });
     inject(DestroyRef).onDestroy(() => clearInterval(tick));
   }
 
@@ -232,6 +229,10 @@ export class GameComponent implements AfterViewInit {
 
   handleSourceChange(patch: Parameters<GameService['setGeneratorConfig']>[0]): void {
     this.game.setGeneratorConfig(patch);
+  }
+
+  handleRulesChange(patch: RulesPatch): void {
+    this.game.setRules(patch);
   }
 
   handleCaretChange(style: import('../../models/models').CaretStyle): void {

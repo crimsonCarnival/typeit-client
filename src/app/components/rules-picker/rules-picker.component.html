@@ -1,0 +1,8 @@
+<div class="tb-section">
+  <span class="tb-label" aria-hidden="true">Rules</span>
+  <div class="tb-buttons" role="group" aria-label="Typing rules">
+    <button type="button" class="tb-btn" [class.active]="rules().difficulty === 'hardcore'" [attr.aria-pressed]="rules().difficulty === 'hardcore'" title="Hardcore: every 3 backspaces and every mashed key cost a point and a second. Normal: fixing mistakes only costs a point per 10 backspaces." [disabled]="disabled()" (click)="set({ difficulty: rules().difficulty === 'hardcore' ? 'normal' : 'hardcore' })">Hardcore</button>
+    <button type="button" class="tb-btn" [class.active]="rules().stopOnError !== 'off'" [title]="stopTitle()" [attr.aria-label]="'Stop on error: ' + stopLabel()" [disabled]="disabled()" (click)="cycleStop()">Stop: {{ stopLabel() }}</button>
+    <button type="button" class="tb-btn" [class.active]="rules().spaceSkips" [attr.aria-pressed]="rules().spaceSkips" title="Space jumps to the next word; the rest counts as missed (not with stop on error)" [disabled]="disabled() || rules().stopOnError !== 'off'" (click)="set({ spaceSkips: !rules().spaceSkips })">Skip word</button>
+  </div>
+</div>

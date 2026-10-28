@@ -44,6 +44,41 @@ export interface Character {
 }
 
 export type GameMode = 'phrases' | 'words';
+export type Difficulty = 'normal' | 'hardcore';
+export type StopOnError = 'off' | 'letter' | 'word';
+
+/** Typing rules of a run, as the server reports them (with the numbers the input rules need). */
+export interface TypingRules {
+  difficulty: Difficulty;
+  stopOnError: StopOnError;
+  spaceSkips: boolean;
+  spamRun: number;
+  backspaceEvery: number;
+  backspaceSeconds: number;
+  backspacePoints: number;
+}
+
+/** Server-computed numbers for the run in progress (POST /game/progress). */
+export interface LiveStats {
+  wpm: number;
+  rawWpm: number;
+  accuracy: number;
+  mistakes: number;
+  position: number;
+  completionPercentage: number;
+  penalty: { points: number; seconds: number };
+  /** When time runs out, in ms from the run's start (penalties included). */
+  deadlineMs: number;
+  timeLeft: number;
+}
+
+export interface WordStat {
+  word: string;
+  errors: number;
+  skipped: boolean;
+  ms: number;
+  wpm: number | null;
+}
 export type TextCategory = 'classics' | 'quotes' | 'speeches' | 'gta';
 
 export interface Passage {
@@ -93,6 +128,8 @@ export interface GameState {
   botWpm: number | null;
   /** Live race in progress: its code and the start time on the local clock. */
   race: { code: string; startAt: number } | null;
+  /** Typing rules of the current run. */
+  rules: TypingRules;
 }
 
 export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list';
@@ -118,6 +155,9 @@ export interface PerformancePoint {
   mistakes: number;
   highestWpm: number;
   consistency: number;
+  /** That second's raw speed (what consistency is computed from). */
+  burst?: number;
+  /** Backspaces pressed during that second. */
   backspaces: number;
   afkPeriods?: AfkEvent[];
 }
@@ -135,8 +175,16 @@ export interface Results {
   totalWords: number;
   elapsedTime: number;
   consistency: number;
-  afkTime?: string;
-  afkCount?: number;
+  completionPercentage?: number;
+  /** Wrong keys per minute. */
+  errorRate?: number;
+  /** Seconds away from the keyboard. */
+  afkTime?: number;
+  afkPeriods?: number;
+  backspaces?: number;
+  penalty?: { points: number; seconds: number };
+  performance?: PerformancePoint[];
+  wordStats?: WordStat[];
   /** Server integrity verdict (signed-in runs only). */
   ranked?: boolean;
   integrityFlags?: string[];

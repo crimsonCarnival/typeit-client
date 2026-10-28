@@ -1,5 +1,6 @@
 import { Character, GameState, PracticeKind } from '../../models/models';
 import { ls } from '../../utils/storage';
+import { DEFAULT_RULES } from './typing-engine';
 
 /**
  * Creates the character array from a text string. Characters before
@@ -22,6 +23,17 @@ export const practiceLabel = (p: { kind: PracticeKind; id: string | null }): str
     case 'common-words': return 'Common words';
     case 'list': return 'Custom list';
   }
+};
+
+/** Rules the player picked last (sent with settings; the server confirms them). */
+export const savedRules = (): Partial<GameState['rules']> => {
+  const difficulty = ls.get('difficulty');
+  const stopOnError = ls.get('stopOnError');
+  return {
+    ...(difficulty === 'normal' || difficulty === 'hardcore' ? { difficulty } : {}),
+    ...(stopOnError === 'off' || stopOnError === 'letter' || stopOnError === 'word' ? { stopOnError } : {}),
+    spaceSkips: ls.bool('spaceSkips'),
+  };
 };
 
 export const defaultState = (isAuthenticated: boolean): GameState => {
@@ -64,5 +76,6 @@ export const defaultState = (isAuthenticated: boolean): GameState => {
     practice: null,
     botWpm: null,
     race: null,
+    rules: { ...DEFAULT_RULES, ...savedRules() },
   };
 };

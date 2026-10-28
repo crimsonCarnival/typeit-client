@@ -29,6 +29,7 @@
       <p class="run-settings">
         @if (gameState().gameMode === 'words') { Words {{ gameState().wordCount }} } @else { Phrases }
         &#183; Limit {{ gameState().timeMax }}s
+        @if (gameState().rules.difficulty === 'hardcore') { &#183; Hardcore }
       </p>
     </div>
   } @else {
@@ -80,6 +81,13 @@
         [loremMin]="gameState().loremMin"
         [loremMax]="gameState().loremMax"
         [disabled]="gameState().isTyping"
+      />
+    }
+    @if (!gameState().dailyDate && !gameState().race) {
+      <app-rules-picker
+        [rules]="gameState().rules"
+        [disabled]="gameState().isTyping"
+        (rulesChange)="handleRulesChange($event)"
       />
     }
     <app-custom-time-dropdown
