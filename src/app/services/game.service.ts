@@ -640,6 +640,11 @@ export class GameService {
         this.gameStateSignal.update(prev => ({ ...prev, isTyping: true }));
         this.startTimer();
         this.lastKeystrokeTime = Date.now();
+        // Lets the server time the run on its own clock (needed to rank it).
+        // Fire-and-forget: a failed call only makes this run unranked.
+        if (this.isAuthenticated && this.sessionId) {
+          void this.gameApi.beginGame();
+        }
       }
 
       // AFK detection.

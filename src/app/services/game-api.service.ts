@@ -33,6 +33,10 @@ export class GameApiService {
     return this.call(this.http.post<ApiResponse<any>>(`${this.base}/game/state`, { sessionData }));
   }
 
+  beginGame(): Promise<ApiResponse<unknown>> {
+    return this.call(this.http.post<ApiResponse<unknown>>(`${this.base}/game/begin`, {}));
+  }
+
   endGame(gameData: Record<string, unknown>): Promise<ApiResponse<any>> {
     return this.call(this.http.post<ApiResponse<any>>(`${this.base}/game/end`, gameData));
   }
