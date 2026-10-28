@@ -7,6 +7,9 @@ import { ls } from '../utils/storage';
 const AFK_THRESHOLD_MS = 1600;
 const HEARTBEAT_INTERVAL_S = 5;
 const BACKSPACE_THRESHOLD = 3;
+// Matches the server's MAX_KEYSTROKES; a longer log is cut off (and the run left unranked).
+const MAX_KEYSTROKES = 8000;
+const BACKSPACE = '';
 
 const KEY_SOUND_URL = 'https://res.cloudinary.com/dzjid2tos/video/upload/v1770240117/typewriter-single-key_wbesmp.mp3';
 const TIME_UP_SOUND_URL = 'https://res.cloudinary.com/dzjid2tos/video/upload/v1770240117/typewriter-bell_xrpggk.mp3';
@@ -122,8 +125,13 @@ export class GameService {
   private penaltyTime = 0;
   private penaltyPoints = 0;
   private pendingGuestFinish: Record<string, any> | null = null;
-  /** Per-key mismatch tally — sent with endGame payload for the heatmap. */
-  private keyErrors: Record<string, number> = {};
+  /**
+   * Keystroke log sent with the end payload as [gapMs, char] pairs
+   * ('' = backspace). The server replays it against the text to derive
+   * per-key errors and to check the run's integrity.
+   */
+  private keystrokes: [number, string][] = [];
+  private lastLoggedKeyTime: number | null = null;
 
   constructor() {
     this.initAudio();
@@ -474,7 +482,7 @@ export class GameService {
       timeMax: gs.timeMax,
       text: gs.text,
       totalWords: gs.totalWords,
-      keyErrors: this.keyErrors,
+      keystrokes: this.keystrokes,
     };
 
     const markFinished = () => {
@@ -521,6 +529,7 @@ export class GameService {
               performance: this.performance(),
               penalty: this.penaltyPoints,
               rawKeystrokes: this.rawKeystrokes,
+              keystrokes: this.keystrokes,
             },
           };
         }
@@ -712,10 +721,6 @@ export class GameService {
             newCharacters[newIndex - 1] = { ...newCharacters[newIndex - 1], status: 'incorrect' };
           }
           newMistakes++;
-          // Track which character was expected — used by the keyboard heatmap.
-          if (currentChar) {
-            this.keyErrors[currentChar] = (this.keyErrors[currentChar] ?? 0) + 1;
-          }
           if (this.errorSoundBuffer) {
             this.playSound(this.errorSoundBuffer);
           }
@@ -738,6 +743,7 @@ export class GameService {
         ? (newIndex / targetText.length) * 100
         : 0;
 
+      this.recordKeystrokes(this.currentText, newCurrentText);
       this.characters.set(newCharacters);
       this.currentText = newCurrentText;
       this.successes = totalSuccesses;
@@ -762,6 +768,28 @@ export class GameService {
     } catch {
       // Input handling must never throw in a controlled input.
     }
+  }
+
+  /**
+   * Appends the edit from `prev` to `next` to the keystroke log. A prefix diff
+   * covers single keys, word deletion (Ctrl+Backspace) and replacements alike.
+   */
+  private recordKeystrokes(prev: string, next: string): void {
+    let common = 0;
+    while (common < prev.length && common < next.length && prev[common] === next[common]) common++;
+
+    const now = Date.now();
+    let gap = this.lastLoggedKeyTime === null ? 0 : now - this.lastLoggedKeyTime;
+    this.lastLoggedKeyTime = now;
+
+    const push = (char: string) => {
+      if (this.keystrokes.length >= MAX_KEYSTROKES) return;
+      this.keystrokes.push([gap, char]);
+      gap = 0; // keys landing in the same input event share one timestamp
+    };
+    for (let i = prev.length; i > common; i--) push(BACKSPACE);
+    // Index by UTF-16 unit, not code point: the server expects 1-length chars.
+    for (let i = common; i < next.length; i++) push(next[i]);
   }
 
   /**
@@ -805,7 +833,8 @@ export class GameService {
     this.backspaceCount = 0;
     this.penaltyTime = 0;
     this.penaltyPoints = 0;
-    this.keyErrors = {};
+    this.keystrokes = [];
+    this.lastLoggedKeyTime = null;
 
     this.results.set(null);
     this.performance.set([]);
@@ -996,7 +1025,8 @@ export class GameService {
     const text = this.gameState().text;
     if (!text) return;
     this.resetInternalState();
-    this.keyErrors = {};
+    this.keystrokes = [];
+    this.lastLoggedKeyTime = null;
     this.characters.set(textToCharacters(text));
     this.gameStateSignal.update(prev => ({
       ...prev,
