@@ -46,6 +46,21 @@
   --color-afk: #ff9a3c;
   --color-pb: #ff5c8a;
 
+  /* rankings medals */
+  --color-rank-1: #f5b700;
+  --color-rank-2: #c9c5ce;
+  --color-rank-3: #d98a4e;
+
+  /* initial-avatar backgrounds */
+  --color-avatar-1: #c8102e;
+  --color-avatar-2: #2f7dd3;
+  --color-avatar-3: #7a55d6;
+  --color-avatar-4: #d3812f;
+  --color-avatar-5: #2a8f7a;
+  --color-avatar-6: #b03a8f;
+  --color-avatar-7: #4a6fa5;
+  --color-avatar-8: #8a8a32;
+
   --radius-sm: 10px;
   --radius-md: 12px;
   --radius-lg: 18px;

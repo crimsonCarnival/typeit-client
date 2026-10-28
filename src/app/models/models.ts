@@ -161,3 +161,33 @@ export interface SessionSummary {
 export interface SessionHistoryResponse {
   sessions: SessionSummary[];
 }
+
+export type RankingPeriod = 'all' | 'month';
+export type RankingModifiers = 'none' | 'punctuation' | 'numbers' | 'both';
+export type RankingRegion = 'all' | 'africa' | 'americas' | 'asia' | 'europe' | 'oceania';
+
+export interface RankingQuery {
+  period: RankingPeriod;
+  mode: GameMode;
+  time: number;
+  modifiers: RankingModifiers;
+  region: RankingRegion;
+}
+
+export interface RankingEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  wpm: number;
+  accuracy: number;
+  raceWins: number;
+}
+
+export interface RankingsResponse {
+  entries: RankingEntry[];
+  me: RankingEntry | null;
+  totalPlayers: number;
+  updatedAt: string;
+}

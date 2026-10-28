@@ -5,13 +5,14 @@
       <span class="app-logo-caret" aria-hidden="true"></span>
     </a>
 
-    @if (auth.isAuthenticated()) {
-      <nav class="app-nav" aria-label="Primary">
-        <a class="app-nav-link" routerLink="/play" routerLinkActive="active" ariaCurrentWhenActive="page">Play</a>
+    <nav class="app-nav" aria-label="Primary">
+      <a class="app-nav-link" routerLink="/play" routerLinkActive="active" ariaCurrentWhenActive="page">Play</a>
+      <a class="app-nav-link" routerLink="/ranks" routerLinkActive="active" ariaCurrentWhenActive="page">Ranks</a>
+      @if (auth.isAuthenticated()) {
         <a class="app-nav-link" routerLink="/profile" routerLinkActive="active" ariaCurrentWhenActive="page">Profile</a>
         <a class="app-nav-link" routerLink="/stats" routerLinkActive="active" ariaCurrentWhenActive="page">Statistics</a>
-      </nav>
-    }
+      }
+    </nav>
   </div>
 
   <app-user-menu />

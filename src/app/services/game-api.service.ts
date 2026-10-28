@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ApiResponse, SessionHistoryResponse } from '../models/models';
+import { ApiResponse, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
 
 /**
  * Game HTTP service. Mirrors the React typeIt.api wrapper: every method
@@ -31,6 +31,11 @@ export class GameApiService {
 
   getGameState(sessionData: Record<string, unknown> = {}): Promise<ApiResponse<any>> {
     return this.call(this.http.post<ApiResponse<any>>(`${this.base}/game/state`, { sessionData }));
+  }
+
+  getRankings(query: RankingQuery): Promise<ApiResponse<RankingsResponse>> {
+    const params = new HttpParams({ fromObject: { ...query, time: String(query.time) } });
+    return this.call(this.http.get<ApiResponse<RankingsResponse>>(`${this.base}/rankings`, { params }));
   }
 
   beginGame(): Promise<ApiResponse<unknown>> {

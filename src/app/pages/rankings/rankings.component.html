@@ -1,0 +1,160 @@
+<div class="rankings">
+  <div class="rankings-head">
+    <div>
+      <h1 class="rankings-title">Rankings</h1>
+      <p class="rankings-subtitle">
+        Ranked by best WPM in the selected mode and time limit. Only verified runs count.
+      </p>
+    </div>
+
+    <div class="segmented" role="tablist" aria-label="Leaderboard scope">
+      @for (t of tabs; track t.id) {
+        <button
+          type="button"
+          role="tab"
+          class="segmented-btn"
+          [class.active]="tab() === t.id"
+          [attr.aria-selected]="tab() === t.id"
+          (click)="tab.set(t.id)"
+        >
+          {{ t.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group" role="group" aria-label="Mode">
+      <span class="filter-label">Mode</span>
+      @for (m of modes; track m.id) {
+        <button type="button" class="chip" [class.active]="mode() === m.id" [attr.aria-pressed]="mode() === m.id" (click)="mode.set(m.id)">
+          {{ m.label }}
+        </button>
+      }
+    </div>
+
+    <div class="filter-group" role="group" aria-label="Time limit">
+      <span class="filter-label">Time limit</span>
+      @for (t of timeLimits; track t) {
+        <button type="button" class="chip" [class.active]="time() === t" [attr.aria-pressed]="time() === t" (click)="time.set(t)">
+          {{ t }}s
+        </button>
+      }
+    </div>
+
+    @if (tab() === 'modifiers') {
+      <div class="filter-group" role="group" aria-label="Modifiers">
+        <span class="filter-label">Modifiers</span>
+        @for (m of modifierOptions; track m.id) {
+          <button type="button" class="chip" [class.active]="modifiers() === m.id" [attr.aria-pressed]="modifiers() === m.id" (click)="modifiers.set(m.id)">
+            {{ m.label }}
+          </button>
+        }
+      </div>
+    }
+
+    <label class="region">
+      <span class="visually-hidden">Region</span>
+      <select class="chip region-select" [value]="region()" (change)="onRegionChange($event)">
+        @for (r of regions; track r.id) {
+          <option [value]="r.id">{{ r.label }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <div class="board" [attr.aria-busy]="loading()">
+    @if (error()) {
+      <div class="board-state" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="chip" (click)="load()">Try again</button>
+      </div>
+    } @else if (loading() && !data()) {
+      <div class="board-state">
+        <p>Loading rankings&#8230;</p>
+      </div>
+    } @else if (data(); as d) {
+      @if (d.entries.length === 0) {
+        <div class="board-state">
+          <p class="board-state-title">No ranked runs yet</p>
+          <p>Nobody has a verified {{ boardLabel() }} run on this board. Be the first.</p>
+          <a class="btn-primary" routerLink="/play">Play now</a>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table class="table" [class.stale]="loading()">
+            <thead>
+              <tr>
+                <th scope="col">Rank</th>
+                <th scope="col">Player</th>
+                <th scope="col" class="num">WPM</th>
+                <th scope="col" class="num">Accuracy</th>
+                <th scope="col" class="num">Wins</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of d.entries; track e.userId) {
+                <ng-container *ngTemplateOutlet="row; context: { $implicit: e }" />
+              }
+            </tbody>
+            @if (pinnedMe(); as me) {
+              <tbody class="pinned">
+                <ng-container *ngTemplateOutlet="row; context: { $implicit: me }" />
+              </tbody>
+            }
+          </table>
+        </div>
+      }
+    }
+  </div>
+
+  @if (data(); as d) {
+    <div class="rankings-foot">
+      <span>
+        Updated every 5 minutes &#183;
+        @if (d.me) {
+          {{ d.me.rank.toLocaleString() }} of {{ d.totalPlayers.toLocaleString() }} ranked players
+        } @else {
+          {{ d.totalPlayers.toLocaleString() }} ranked players
+        }
+      </span>
+      @if (!auth.isAuthenticated()) {
+        <span>
+          <button type="button" class="link-btn" (click)="auth.openAuthModal('login')">Log in</button>
+          to get ranked.
+        </span>
+      }
+    </div>
+  }
+</div>
+
+<ng-template #row let-e>
+  <tr [class.me]="isMe(e)">
+    <td class="rank-cell">
+      <span class="rank" [class.rank-1]="e.rank === 1" [class.rank-2]="e.rank === 2" [class.rank-3]="e.rank === 3" [class.rank-me]="isMe(e)">
+        {{ e.rank.toLocaleString() }}
+      </span>
+    </td>
+    <td>
+      <div class="player">
+        @if (e.avatar) {
+          <img class="avatar" [src]="e.avatar" alt="" />
+        } @else {
+          <span class="avatar" aria-hidden="true" [style.background]="avatarColor(e)">{{ initial(e) }}</span>
+        }
+        <div class="player-names">
+          <a class="player-name" [routerLink]="['/user', e.userId]">
+            {{ e.displayName }}
+            @if (isMe(e)) {
+              <span class="you-tag">You</span>
+            }
+          </a>
+          <span class="player-handle">&#64;{{ e.username }}</span>
+        </div>
+      </div>
+    </td>
+    <td class="num wpm">{{ e.wpm }}</td>
+    <td class="num accuracy">{{ e.accuracy.toFixed(1) }}%</td>
+    <td class="num">{{ e.raceWins }}</td>
+  </tr>
+</ng-template>
