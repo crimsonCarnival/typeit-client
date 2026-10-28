@@ -2,8 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
 
 export const routes: Routes = [
-  // Landing page will take '' once it exists; until then send visitors straight to the game.
-  { path: '', pathMatch: 'full', redirectTo: 'play' },
+  { path: '', pathMatch: 'full', loadComponent: () => import('./pages/landing/landing.component').then((m) => m.LandingComponent) },
   { path: 'play', loadComponent: () => import('./pages/game/game.component').then((m) => m.GameComponent) },
   { path: 'results', loadComponent: () => import('./pages/results/results.component').then((m) => m.ResultsComponent) },
   { path: 'daily', loadComponent: () => import('./pages/daily/daily.component').then((m) => m.DailyComponent) },

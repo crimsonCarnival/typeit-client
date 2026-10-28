@@ -1,0 +1,183 @@
+<div class="landing">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span>Free typing test &#183; no account needed</p>
+      <h1 class="hero-title">Type fast.<br />Type clean.<br /><span class="red">Prove it.</span></h1>
+      <p class="lead">
+        A no-nonsense typing test that tracks more than speed: raw WPM, accuracy, consistency, even the seconds you went AFK.
+        Play as a guest. Sign up to keep every run.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary btn-lg" routerLink="/play">
+          Start typing
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+        @if (!auth.isAuthenticated()) {
+          <button type="button" class="btn btn-outline btn-lg" (click)="auth.openAuthModal('register')">Create free account</button>
+        }
+      </div>
+    </div>
+
+    <div class="demo" role="img" aria-label="Illustration: a typing test in progress">
+      <div class="demo-shadow" aria-hidden="true"></div>
+      <div class="demo-card" aria-hidden="true">
+        <div class="demo-top">
+          <div class="demo-time"><span class="demo-clock">0:24</span><span class="demo-label">Left</span></div>
+          <div class="demo-stats">
+            <div><span class="demo-num">67</span><span class="demo-label">WPM</span></div>
+            <div><span class="demo-num">95%</span><span class="demo-label">Acc</span></div>
+            <div><span class="demo-num">5/25</span><span class="demo-label">Words</span></div>
+          </div>
+        </div>
+        <p class="demo-text"><span class="typed">price wherever ki<span class="miss">k</span>l year swe</span><span class="demo-caret"></span>pt bicycle victory remember bare age win task series truck having today eat tonight next</p>
+        <div class="demo-bar"><div class="demo-bar-fill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What it measures -->
+  <section class="band" id="features" aria-labelledby="features-title">
+    <div class="section">
+      <div class="section-head">
+        <h2 id="features-title" class="section-title">More than<br />one <span class="red">number.</span></h2>
+        <p class="section-lead">WPM says how fast. TypeIt also shows how clean, how steady, and exactly where you stalled.</p>
+      </div>
+
+      <div class="metric-grid">
+        @for (m of metrics; track m.title; let i = $index) {
+          <div class="card metric">
+            <span class="metric-num">0{{ i + 1 }}</span>
+            <h3 class="card-title">{{ m.title }}</h3>
+            <p class="card-text">{{ m.text }}</p>
+          </div>
+        }
+      </div>
+
+      <div class="card breakdown">
+        <div class="breakdown-copy">
+          <p class="kicker">After every run</p>
+          <h3 class="breakdown-title">A second-by-second breakdown</h3>
+          <div class="breakdown-stats" role="img" aria-label="Illustration: sample results">
+            <div aria-hidden="true"><span class="bd-num wpm">33</span><span class="bd-label">WPM</span></div>
+            <div aria-hidden="true"><span class="bd-num acc">80%</span><span class="bd-label">Accuracy</span></div>
+            <div aria-hidden="true"><span class="bd-num">41</span><span class="bd-label">Raw WPM</span></div>
+            <div aria-hidden="true"><span class="bd-num con">73.6%</span><span class="bd-label">Consistency</span></div>
+          </div>
+        </div>
+        <svg class="breakdown-chart" viewBox="0 0 600 230" preserveAspectRatio="none" aria-hidden="true">
+          <g class="grid"><line x1="40" y1="20" x2="590" y2="20" /><line x1="40" y1="110" x2="590" y2="110" /><line x1="40" y1="200" x2="590" y2="200" /></g>
+          <path class="area" d="M40 120 C 80 118, 110 118, 140 135 S 220 160, 260 155 S 340 130, 380 128 S 470 122, 520 120 S 570 112, 590 112 L 590 200 L 40 200 Z" />
+          <path class="line raw" d="M40 120 C 90 118, 130 125, 170 140 S 240 150, 280 145 S 360 120, 410 118 S 500 112, 590 106" />
+          <path class="line accl" d="M40 20 C 70 20, 80 20, 95 50 S 120 75, 160 75 S 240 75, 280 72 S 330 45, 380 42 S 470 40, 540 36 S 580 50, 590 55" />
+          <path class="line conl" d="M40 20 C 90 20, 120 30, 170 45 S 260 70, 320 70 S 450 70, 590 70" />
+          <path class="line wpml" d="M40 120 C 80 118, 110 118, 140 135 S 220 160, 260 155 S 340 130, 380 128 S 470 122, 520 120 S 570 112, 590 112" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modes -->
+  <section class="section" id="modes" aria-labelledby="modes-title">
+    <div class="section-head">
+      <h2 id="modes-title" class="section-title">Pick your<br /><span class="red">format.</span></h2>
+      <p class="section-lead">Sprint 25 words or grind 120 seconds. Words and time limits are open to everyone; phrases and modifiers unlock with a free account.</p>
+    </div>
+
+    <div class="format-grid">
+      @for (f of formats; track f.title) {
+        <div class="card format">
+          <div class="format-head">
+            <h3 class="card-title">{{ f.title }}</h3>
+            @if (f.account) {
+              <span class="account-tag">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+                Account
+              </span>
+            }
+          </div>
+          <p class="card-text">{{ f.text }}</p>
+          @if (f.chips.length) {
+            <div class="format-chips">
+              @for (c of f.chips; track c) {
+                <span class="mini-chip">{{ c }}</span>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <p class="also">
+      <span class="kicker">Also</span>
+      <span>Four caret styles</span><span class="sep" aria-hidden="true">/</span>
+      <span>Keystroke sounds, mute with <kbd>M</kbd></span><span class="sep" aria-hidden="true">/</span>
+      <span>New text <kbd>Esc</kbd></span><span class="sep" aria-hidden="true">/</span>
+      <span>Restart same <kbd>Tab</kbd></span>
+    </p>
+  </section>
+
+  <!-- Stats -->
+  <section class="band" id="stats" aria-labelledby="stats-title">
+    <div class="section record">
+      <div class="record-copy">
+        <h2 id="stats-title" class="section-title">Every run,<br /><span class="red">on the record.</span></h2>
+        <p class="section-lead">Make an account and every test lands on your profile.</p>
+        <ul class="perks">
+          @for (p of perks; track p) {
+            <li><span class="perk-dot" aria-hidden="true"></span>{{ p }}</li>
+          }
+        </ul>
+      </div>
+
+      <div class="card preview" role="img" aria-label="Illustration: a profile with personal bests and a performance chart">
+        <div class="preview-head" aria-hidden="true">
+          <span class="preview-avatar">Y</span>
+          <div class="preview-names"><span class="preview-name">Your name</span><span class="preview-handle">&#64;you</span></div>
+          <span class="preview-tag">Profile preview</span>
+        </div>
+        <div class="preview-stats" aria-hidden="true">
+          <div><span>67</span><small>Best WPM</small></div>
+          <div><span>1476</span><small>High score</small></div>
+          <div><span>95%</span><small>Best accuracy</small></div>
+          <div><span>8</span><small>Games</small></div>
+        </div>
+        <div class="preview-chart" aria-hidden="true">
+          <span class="kicker muted">Performance history &#183; WPM</span>
+          <svg viewBox="0 0 560 160" preserveAspectRatio="none">
+            <line class="pb-line" x1="0" y1="20" x2="560" y2="20" />
+            <path class="area" d="M5 22 C 40 50, 60 60, 85 62 S 150 40, 175 40 S 230 10, 270 18 S 310 30, 330 60 S 380 145, 400 145 S 450 115, 470 115 S 520 60, 555 45 L 555 160 L 5 160 Z" />
+            <path class="wpml" d="M5 22 C 40 50, 60 60, 85 62 S 150 40, 175 40 S 230 10, 270 18 S 310 30, 330 60 S 380 145, 400 145 S 450 115, 470 115 S 520 60, 555 45" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing CTA -->
+  <section class="section">
+    <div class="cta-band">
+      <span class="cta-watermark" aria-hidden="true">GO GO GO</span>
+      <div class="cta-copy">
+        <h2 class="cta-title">Your first test takes 30 seconds.</h2>
+        <p>No sign-up to play. Make an account later to keep your stats.</p>
+      </div>
+      <button type="button" class="btn btn-dark btn-lg" (click)="startFirstTest()">
+        Start typing
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+      </button>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span class="footer-logo">TYPE<span class="red">IT</span></span>
+    <nav class="footer-nav" aria-label="Footer">
+      <a routerLink="/play">Play</a>
+      @if (!auth.isAuthenticated()) {
+        <button type="button" class="link" (click)="auth.openAuthModal('login')">Log in</button>
+        <button type="button" class="link" (click)="auth.openAuthModal('register')">Sign up</button>
+      }
+    </nav>
+    <span class="footer-copy">&#169; 2026 TypeIt</span>
+  </footer>
+</div>
