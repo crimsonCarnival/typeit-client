@@ -23,6 +23,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   'not-friends': 'You can only invite friends (people you follow who follow you back).',
   'invite-cooldown': 'Invite already sent. Give them a moment.',
   'bad-settings': 'Those race settings are not allowed.',
+  'rated-room': 'Quick-match rules are fixed.',
   'too-many-players': 'More players are in the room than that limit allows.',
   'too-many-attempts': 'Too many wrong codes. Wait a minute and try again.',
   'already-racing': "You're racing in that room.",
