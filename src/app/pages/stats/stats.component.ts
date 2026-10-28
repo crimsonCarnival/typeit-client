@@ -1,9 +1,8 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
 import { GameApiService } from '../../services/game-api.service';
-import { UserMenuComponent } from '../../components/user-menu/user-menu.component';
 import { StatsSectionsComponent } from '../../components/stats-sections/stats-sections.component';
 import { SessionHistoryChartComponent } from '../../components/session-history-chart/session-history-chart.component';
 import { SessionSummary } from '../../models/models';
@@ -11,7 +10,7 @@ import { TimeDisplayService } from '../../services/time-display.service';
 
 @Component({
   selector: 'app-stats',
-  imports: [RouterLink, UserMenuComponent, StatsSectionsComponent, SessionHistoryChartComponent],
+  imports: [StatsSectionsComponent, SessionHistoryChartComponent],
   templateUrl: './stats.component.html',
   styleUrl: './stats.component.css',
 })

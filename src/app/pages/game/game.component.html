@@ -1,10 +1,3 @@
-<div class="app-header">
-  <app-user-menu
-    [loginClick]="() => openAuthModal('login')"
-    [registerClick]="() => openAuthModal('register')"
-  />
-</div>
-
 <div class="wrapper" (click)="handleWrapperClick($event)">
   <div class="theme-switch" [class.locked]="gameState().isTyping">
     <div class="toggle-container">
@@ -85,7 +78,7 @@
                 Sign in to unlock phrases mode, punctuation and numbers
               </p>
               <div class="mdc-tooltip--rich-actions">
-                <button class="user-menu-login-btn" (click)="openAuthModal('register')">Sign Up / Log In</button>
+                <button class="user-menu-login-btn" (click)="auth.openAuthModal('register')">Sign Up / Log In</button>
               </div>
             </div>
           </div>
@@ -152,13 +145,6 @@
     [performance]="performance()"
     [isAuthenticated]="isAuthenticated()"
     (close)="handleCloseResults()"
-    (loginClick)="openAuthModal('login')"
-  />
-}
-
-@if (authModalOpen) {
-  <app-auth-modal
-    [initialMode]="authModalMode"
-    (close)="closeAuthModal()"
+    (loginClick)="auth.openAuthModal('login')"
   />
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
@@ -8,11 +8,8 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './user-menu.component.css',
 })
 export class UserMenuComponent {
-  private readonly auth = inject(AuthService);
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-
-  readonly loginClick = input<() => void>();
-  readonly registerClick = input<() => void>();
 
   readonly user = this.auth.user;
   readonly isAuthenticated = this.auth.isAuthenticated;

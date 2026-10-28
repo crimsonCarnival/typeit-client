@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -6,8 +6,9 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './auth-modal.component.html',
   styleUrl: './auth-modal.component.css',
 })
-export class AuthModalComponent {
+export class AuthModalComponent implements AfterViewInit {
   private readonly auth = inject(AuthService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly initialMode = input<'login' | 'register'>('login');
   readonly close = output<void>();
@@ -18,6 +19,7 @@ export class AuthModalComponent {
   email = '';
   password = '';
   confirmPassword = '';
+  showPassword = false;
   readonly formError = signal('');
   readonly isSubmitting = signal(false);
 
@@ -29,6 +31,19 @@ export class AuthModalComponent {
     effect(() => {
       this.mode = this.initialMode();
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.focusFirstField();
+  }
+
+  // Game shortcuts listen on `document` and swallow Tab/Esc; keep keys inside
+  // the dialog so Tab moves between fields and Esc closes the dialog instead.
+  handleKeydown(event: KeyboardEvent): void {
+    event.stopPropagation();
+    if (event.key === 'Escape') {
+      this.closeModal();
+    }
   }
 
   handleChange(field: string, event: Event): void {
@@ -106,6 +121,7 @@ export class AuthModalComponent {
     this.email = '';
     this.password = '';
     this.confirmPassword = '';
+    this.showPassword = false;
     this.formError.set('');
     this.auth.clearError();
   }
@@ -113,6 +129,8 @@ export class AuthModalComponent {
   switchMode(): void {
     this.mode = this.mode === 'login' ? 'register' : 'login';
     this.resetForm();
+    // The field set changes with the mode; wait for the re-render before focusing.
+    setTimeout(() => this.focusFirstField());
   }
 
   closeModal(): void {
@@ -124,5 +142,9 @@ export class AuthModalComponent {
     if (event.target === event.currentTarget) {
       this.closeModal();
     }
+  }
+
+  private focusFirstField(): void {
+    this.host.nativeElement.querySelector<HTMLInputElement>('input')?.focus();
   }
 }

@@ -33,6 +33,8 @@ export const normalizeUser = (raw: any): User | null => {
   };
 };
 
+export type AuthModalMode = 'login' | 'register';
+
 /**
  * Auth state service. Mirrors the React AuthContext: verifies the stored
  * token on bootstrap, keeps the user in a signal, and persists the client
@@ -48,8 +50,19 @@ export class AuthService {
   readonly error = signal<string | null>(null);
   readonly isAuthenticated = computed(() => this.userSignal() !== null);
 
+  /** Which auth dialog is open (rendered once in the app shell), or null. */
+  readonly authModal = signal<AuthModalMode | null>(null);
+
   constructor() {
     void this.bootstrap();
+  }
+
+  openAuthModal(mode: AuthModalMode): void {
+    this.authModal.set(mode);
+  }
+
+  closeAuthModal(): void {
+    this.authModal.set(null);
   }
 
   private async persistTimezone(user: User | null): Promise<void> {

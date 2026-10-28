@@ -1,21 +1,57 @@
 @font-face {
   font-family: 'Hapna Demibold';
-  src: url('https://res.cloudinary.com/dzjid2tos/raw/upload/v1764109056/Hapna_Slab_Serif_DemiBold_dwvx3i.ttf');
+  src: url('/fonts/hapna-slab-demibold.ttf') format('truetype');
+  font-weight: 100 900;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'Kirsty Regular';
-  src: url('https://res.cloudinary.com/dzjid2tos/raw/upload/v1764109055/chinese_rocks_rg_y8h96e.ttf');
-  fontdisplay: swap;
+  src: url('/fonts/kirsty-regular.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
 }
 
+/* Redesign tokens — values from redesign/*.dc.html */
 :root {
-  --bg-color: #fff;
-}
+  --font-display: 'Kirsty Regular', 'Big Shoulders Display', Impact, sans-serif;
+  --font-body: 'Hapna Demibold', 'Zilla Slab', Rockwell, Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-:root {
-  --bg-color: #2a2a2a;
+  --color-bg: #0a0a0b;
+  --color-surface: rgba(16, 16, 18, 0.94);
+  --color-surface-solid: #141416;
+  --color-surface-raised: #1e1e22;
+  --color-track: #26262a;
+
+  --color-border: #26262a;
+  --color-border-strong: #4a474e;
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
+
+  --color-text: #f2efea;
+  --color-text-muted: #bdb9c1;
+  --color-text-subtle: #a9a5ad;
+  --color-text-faint: #6e6a74;
+
+  --color-primary: #c8102e;
+  --color-primary-hover: #e01535;
+  --color-primary-glow: rgba(200, 16, 46, 0.35);
+  --color-accent: #ff3b4f;
+  --color-accent-hover: #ff6b7a;
+
+  /* chart / stat series */
+  --color-wpm: #f5b700;
+  --color-accuracy: #2fd3a7;
+  --color-consistency: #a497ff;
+  --color-afk: #ff9a3c;
+  --color-pb: #ff5c8a;
+
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* legacy alias, used by typing-area fades */
+  --bg-color: var(--color-bg);
 }
 
 * {
@@ -23,25 +59,6 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-/* App Header */
-
-.app-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 10px 24px;
-  background: rgba(20, 20, 20, 0.55);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 h2 {
@@ -156,9 +173,7 @@ h2 {
 
 /* App Header (duplicate - overridden by first definition) */
 
-/* .app-header duplicate removed */
 
-/* dark .app-header styles consolidated in first definition below line 40 */
 
 h2 {
   font-family: 'Kirsty Regular';
@@ -461,11 +476,14 @@ body {
   align-items: flex-start;
   justify-content: center;
   min-height: 100vh;
-  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+  background-color: var(--color-bg);
+  background-image: url('/img/grunge-bg.jpg');
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   background-repeat: no-repeat;
-  padding: 70px 10px 20px 10px;  /* was 50px, header is fixed at ~50px */
+  background-attachment: fixed;
+  color: var(--color-text);
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -1277,240 +1295,6 @@ body {
   color: #e0e0e0;
 }
 
-/* ==================== AUTH MODAL STYLES ==================== */
-
-.auth-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-.auth-modal {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  width: 100%;
-  max-width: 400px;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease;
-}
-
-.auth-modal {
-  background: #1e1e1e;
-  border: 1px solid #333;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.auth-modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background 0.2s ease;
-}
-
-.auth-modal-close:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.auth-modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.auth-modal-close svg {
-  width: 20px;
-  height: 20px;
-  color: #666;
-}
-
-.auth-modal-close svg {
-  color: #999;
-}
-
-.auth-modal-title {
-  font-family: 'Kirsty Regular';
-  font-size: 28px;
-  color: #121212;
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.auth-modal-title {
-  color: #fff;
-}
-
-.auth-error {
-  background: #ffebee;
-  color: #c62828;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 14px;
-  border-left: 3px solid #c62828;
-}
-
-.auth-error {
-  background: rgba(198, 40, 40, 0.2);
-  color: hsl(1, 83%, 63%);
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.auth-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.auth-field label {
-  font-size: 14px;
-  color: #555;
-  font-weight: 500;
-}
-
-.auth-field label {
-  color: #aaa;
-}
-
-.auth-field input {
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 16px;
-  font-family: 'Hapna Demibold';
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  background: #fff;
-  color: #121212;
-}
-
-.auth-field input {
-  background: #2a2a2a;
-  border-color: #444;
-  color: #fff;
-}
-
-.auth-field input:focus {
-  outline: none;
-  border-color: #bc0517;
-  box-shadow: 0 0 0 3px rgba(188, 5, 23, 0.1);
-}
-
-.auth-field input:focus {
-  box-shadow: 0 0 0 3px rgba(188, 5, 23, 0.2);
-}
-
-.auth-field input::placeholder {
-  color: #999;
-}
-
-.auth-field input::placeholder {
-  color: #666;
-}
-
-.auth-field input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.auth-submit-btn {
-  background: #bc0517;
-  color: #fff;
-  border: none;
-  padding: 14px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-family: 'Hapna Demibold';
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
-  margin-top: 8px;
-}
-
-.auth-submit-btn:hover:not(:disabled) {
-  background: #a00414;
-}
-
-.auth-submit-btn:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.auth-submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.auth-switch {
-  text-align: center;
-  margin-top: 20px;
-  color: #666;
-  font-size: 14px;
-}
-
-.auth-switch {
-  color: #999;
-}
-
-.auth-switch button {
-  background: none;
-  border: none;
-  color: #bc0517;
-  cursor: pointer;
-  font-size: 14px;
-  font-family: 'Hapna Demibold';
-  text-decoration: underline;
-  padding: 0;
-}
-
-.auth-switch button:hover {
-  color: #a00414;
-}
-
-.auth-switch button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 /* ==================== USER MENU STYLES ==================== */
 
 @keyframes dropdownSlide {
@@ -1557,11 +1341,7 @@ body {
 
 @media (max-width: 768px) {
   body {
-    padding: 60px 8px 8px 8px;
-  }
-
-  .app-header {
-    padding: 8px 16px;
+    padding: 0;
   }
 
   .wrapper {
@@ -1582,11 +1362,7 @@ body {
 
 @media (max-width: 480px) {
   body {
-    padding: 54px 4px 4px 4px;
-  }
-
-  .app-header {
-    padding: 6px 10px;
+    padding: 0;
   }
 
   .wrapper {
@@ -1925,8 +1701,7 @@ body {
 /* ============ Profile & Stats pages ============ */
 
 .account-page {
-  min-height: 100vh;
-  padding: 70px 32px 60px;
+  padding: 32px 32px 60px;
 }
 
 .page-loading {
@@ -1937,31 +1712,6 @@ body {
   color: #888;
   font-family: 'Kirsty Regular';
   font-size: 18px;
-}
-
-.app-nav {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-right: auto;
-}
-
-.app-nav-link {
-  color: #e5e7eb;
-  text-decoration: none;
-  font-family: 'Kirsty Regular';
-  font-size: 16px;
-  opacity: 0.75;
-  transition: opacity 0.2s ease, color 0.2s ease;
-}
-
-.app-nav-link:hover {
-  opacity: 1;
-}
-
-.app-nav-link.active {
-  opacity: 1;
-  color: #bc0517;
 }
 
 .profile-card {
