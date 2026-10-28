@@ -1,18 +1,16 @@
-<div class="account-page">
+<div class="stats-page">
+  <h1 class="title">Statistics</h1>
   @if (loading()) {
-    <div class="page-loading">Loading&#8230;</div>
+    <div class="state" aria-busy="true">Loading&#8230;</div>
   } @else {
-    <div class="profile-card stats-card-wide">
-      <h2 class="profile-title">Statistics</h2>
-      <app-stats-sections [stats]="user()?.stats ?? null" [overall]="overall()" [averages]="averages()" />
-    </div>
-
-    <div class="profile-card stats-card-wide">
-      @if (historyLoading()) {
-        <div class="history-loading">Loading history&#8230;</div>
-      } @else {
-        <app-session-history-chart [sessions]="sessions()" />
-      }
-    </div>
+    <app-stats-sections [stats]="user()?.stats ?? null" [overall]="overall()" [averages]="averages()">
+      <section class="history-card">
+        @if (historyLoading()) {
+          <div class="state" aria-busy="true">Loading history&#8230;</div>
+        } @else {
+          <app-session-history-chart [sessions]="sessions()" />
+        }
+      </section>
+    </app-stats-sections>
   }
 </div>

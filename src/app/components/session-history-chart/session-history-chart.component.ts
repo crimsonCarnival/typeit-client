@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, input, viewChild } from '@angular/core';
 import { Chart } from 'chart.js/auto';
 import { SessionSummary } from '../../models/models';
+import { token, tokenAlpha } from '../../utils/chart-tokens';
 
 Chart.defaults.font.family = "'Hapna Demibold', sans-serif";
 
@@ -57,7 +58,7 @@ export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
       {
         label: 'WPM',
         data: sessions.map((s) => s.wpm),
-        borderColor: '#eab308',
+        borderColor: token('wpm'),
         borderWidth: 3,
         fill: true,
         tension: 0.4,
@@ -66,10 +67,10 @@ export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
         yAxisID: 'y',
         backgroundColor: (context: any) => {
           const { ctx, chartArea } = context.chart;
-          if (!chartArea) return 'rgba(234,179,8,0.3)';
+          if (!chartArea) return tokenAlpha('wpm', 0.3);
           const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-          gradient.addColorStop(0, 'rgba(234,179,8,0)');
-          gradient.addColorStop(1, 'rgba(234,179,8,0.3)');
+          gradient.addColorStop(0, tokenAlpha('wpm', 0));
+          gradient.addColorStop(1, tokenAlpha('wpm', 0.3));
           return gradient;
         },
       },
@@ -77,7 +78,7 @@ export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
       {
         label: 'Personal Best',
         data: pbData,
-        borderColor: '#f472b6',
+        borderColor: token('pb'),
         borderDash: [8, 4],
         borderWidth: 1.5,
         pointRadius: 0,
@@ -89,7 +90,7 @@ export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
       ...(hasRawWpm ? [{
         label: 'Raw WPM',
         data: sessions.map((s) => s.rawWpm ?? null),
-        borderColor: '#9ca3af',
+        borderColor: token('raw'),
         borderWidth: 1.5,
         tension: 0.4,
         pointRadius: 3,
@@ -100,7 +101,7 @@ export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
       {
         label: 'Accuracy',
         data: sessions.map((s) => s.accuracy),
-        borderColor: '#34d399',
+        borderColor: token('accuracy'),
         borderWidth: 2,
         tension: 0.4,
         pointRadius: 3,
@@ -111,7 +112,7 @@ export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
       ...(hasConsistency ? [{
         label: 'Consistency',
         data: sessions.map((s) => s.consistency ?? null),
-        borderColor: '#8b5cf6',
+        borderColor: token('consistency'),
         borderWidth: 2,
         tension: 0.4,
         pointRadius: 3,
@@ -140,28 +141,28 @@ export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
         interaction: { mode: 'index', axis: 'x', intersect: false },
         scales: {
           x: {
-            ticks: { color: '#6b7280', font: { size: 12 } },
-            grid: { color: '#404040' },
-            title: { display: true, text: 'Session #', color: '#6b7280', font: { size: 12 } },
+            ticks: { color: token('text-faint'), font: { size: 12 } },
+            grid: { color: token('border') },
+            title: { display: true, text: 'Session #', color: token('text-faint'), font: { size: 12 } },
           },
           y: {
-            ticks: { color: '#6b7280', font: { size: 12 } },
-            grid: { color: '#404040' },
-            title: { display: true, text: 'WPM', color: '#6b7280', font: { size: 12 } },
+            ticks: { color: token('text-faint'), font: { size: 12 } },
+            grid: { color: token('border') },
+            title: { display: true, text: 'WPM', color: token('text-faint'), font: { size: 12 } },
           },
           y2: {
             position: 'right',
             min: 0,
             max: 100,
-            ticks: { color: '#6b7280', font: { size: 12 } },
+            ticks: { color: token('text-faint'), font: { size: 12 } },
             grid: { display: false },
-            title: { display: true, text: 'Accuracy / Consistency %', color: '#6b7280', font: { size: 12 } },
+            title: { display: true, text: 'Accuracy / Consistency %', color: token('text-faint'), font: { size: 12 } },
           },
         },
         plugins: {
           legend: {
             position: 'bottom',
-            labels: { color: '#9ca3af', font: { size: 12 }, padding: 18, boxWidth: 24, boxHeight: 10 },
+            labels: { color: token('text-muted'), font: { size: 12 }, padding: 18, boxWidth: 24, boxHeight: 10 },
           },
           tooltip: {
             usePointStyle: true,

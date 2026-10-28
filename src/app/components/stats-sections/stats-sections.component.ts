@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal, WritableSignal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { StatsBucket, UserStats } from '../../models/models';
 import { TimeDisplayService } from '../../services/time-display.service';
 
@@ -7,20 +7,19 @@ const WORD_BUCKETS = ['25', '50', '75', '100', 'custom'];
 const MODE_BUCKETS = ['words', 'phrases'];
 const MODIFIER_BUCKETS = ['none', 'punctuation', 'numbers', 'both'];
 
-const timeLabel = (key: string) => (key === 'custom' ? 'Custom time' : `${key}s`);
-const wordsLabel = (key: string) => (key === 'custom' ? 'Custom words' : `${key} words`);
+const timeLabel = (key: string) => (key === 'custom' ? 'Custom' : `${key}s`);
+const wordsLabel = (key: string) => (key === 'custom' ? 'Custom' : key);
 const modeLabel = (key: string) => (key === 'words' ? 'Words' : 'Phrases');
 const modifierLabel = (key: string) => {
   switch (key) {
-    case 'none': return 'No modifiers';
+    case 'none': return 'None';
     case 'punctuation': return 'Punctuation';
     case 'numbers': return 'Numbers';
-    case 'both': return 'Punct. & Numbers';
+    case 'both': return 'Punct + Numbers';
     default: return key;
   }
 };
 
-const PAGE_SIZE = 5;
 
 interface BucketItem {
   key: string;
@@ -46,10 +45,6 @@ export class StatsSectionsComponent {
     this.timeDisplay.toggleFormat();
   }
 
-  readonly timePage = signal(0);
-  readonly wordsPage = signal(0);
-  readonly modePage = signal(0);
-  readonly modifierPage = signal(0);
 
   readonly byTime = computed(() => this.stats()?.byTime || {});
   readonly byWords = computed(() => this.stats()?.byWords || {});
@@ -69,44 +64,29 @@ export class StatsSectionsComponent {
     MODIFIER_BUCKETS.map((key) => ({ key, label: modifierLabel(key), data: this.byModifier()[key] }))
   );
 
-  readonly visibleTime = computed(() => this.paginate(this.timeItems(), this.timePage()));
-  readonly visibleWords = computed(() => this.paginate(this.wordsItems(), this.wordsPage()));
-  readonly visibleMode = computed(() => this.paginate(this.modeItems(), this.modePage()));
-  readonly visibleModifier = computed(() => this.paginate(this.modifierItems(), this.modifierPage()));
 
-  readonly timePages = computed(() => Math.max(1, Math.ceil(this.timeItems().length / PAGE_SIZE)));
-  readonly wordsPages = computed(() => Math.max(1, Math.ceil(this.wordsItems().length / PAGE_SIZE)));
-  readonly modePages = computed(() => Math.max(1, Math.ceil(this.modeItems().length / PAGE_SIZE)));
-  readonly modifierPages = computed(() => Math.max(1, Math.ceil(this.modifierItems().length / PAGE_SIZE)));
 
-  private paginate(items: BucketItem[], page: number): BucketItem[] {
-    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-    const current = Math.min(page, totalPages - 1);
-    return items.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
-  }
+  readonly tables = computed(() => [
+    { id: 'time', title: 'By time limit', column: 'Limit', items: this.timeItems() },
+    { id: 'words', title: 'By word count', column: 'Words', items: this.wordsItems() },
+    { id: 'mode', title: 'By mode', column: 'Mode', items: this.modeItems() },
+    { id: 'modifiers', title: 'By modifiers', column: 'Modifiers', items: this.modifierItems() },
+  ]);
 
   isEmpty(data?: StatsBucket): boolean {
     return !data || (data.games || 0) === 0;
   }
 
-  bucketRows(data?: StatsBucket): { label: string; value: string }[] {
-    if (!data) return [];
-    return [
-      { label: 'Games', value: String(data.games || 0) },
-      { label: 'Best WPM', value: String(data.bestWpm || 0) },
-      { label: 'High Score', value: String(data.highScore || 0) },
-      { label: 'Best Accuracy', value: `${data.bestAccuracy || 0}%` },
-      { label: 'Total Time', value: this.timeDisplay.format(data.totalTimeTyping || 0) },
-      { label: 'AFK Time', value: this.timeDisplay.format(data.afkTime || 0) },
-    ];
+  /** Highest value of a column within one table, to highlight the best row. */
+  best(items: BucketItem[], field: 'bestWpm' | 'highScore'): number {
+    return Math.max(0, ...items.map((i) => i.data?.[field] || 0));
   }
 
-  prevPage(page: WritableSignal<number>): void {
-    page.set(Math.max(0, page() - 1));
+  fmt(seconds?: number): string {
+    return this.timeDisplay.format(seconds || 0);
   }
 
-  nextPage(page: WritableSignal<number>, totalPages: number): void {
-    page.set(Math.min(totalPages - 1, page() + 1));
-  }
+
+
 }
 

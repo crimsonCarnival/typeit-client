@@ -1,137 +1,76 @@
-<div class="stats-section-header">
-  <h3 class="profile-section-title" style="margin-bottom: 0;">Overall</h3>
-  <button
-    type="button"
-    class="time-format-toggle-btn"
-    (click)="toggleTimeFormat()"
-  >
-    <span class="toggle-icon">⏱️</span>
-    <span class="toggle-text">Time Format: <strong>{{ formatMode() === 'formatted' ? 'Breakdown (1 m 24 s)' : 'Full Seconds (84s)' }}</strong></span>
-  </button>
-</div>
-<div class="stats-row">
-  @for (item of overall(); track item.label) {
-    <div class="stats-card">
-      <span class="stats-card-value">{{ item.value }}</span>
-      <span class="stats-card-label">{{ item.label }}</span>
+<div class="summary">
+  <section class="summary-block overall" aria-labelledby="overall-title">
+    <div class="block-head">
+      <h2 id="overall-title" class="block-title">Overall</h2>
+      <button type="button" class="format-toggle" (click)="toggleTimeFormat()" [attr.aria-label]="'Time format: ' + (formatMode() === 'formatted' ? '1m 24s' : '84s') + '. Switch format.'">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        Time format <b>{{ formatMode() === 'formatted' ? '1m 24s' : '84s' }}</b>
+      </button>
     </div>
-  }
-</div>
+    <div class="overall-grid">
+      @for (item of overall(); track item.label) {
+        <div class="card stat">
+          <span class="stat-value" [class.wpm]="item.label === 'Best WPM'" [class.acc]="item.label === 'Best Accuracy'">{{ item.value }}</span>
+          <span class="stat-label">{{ item.label }}</span>
+        </div>
+      }
+    </div>
+  </section>
 
-@if (averages().length > 0) {
-  <h3 class="profile-section-title">Recent Averages</h3>
-  <div class="stats-row">
-    @for (item of averages(); track item.label) {
-      <div class="stats-card">
-        <span class="stats-card-value">{{ item.value }}</span>
-        <span class="stats-card-label">{{ item.label }}</span>
+  @if (averages().length > 0) {
+    <section class="summary-block averages" aria-labelledby="averages-title">
+      <h2 id="averages-title" class="block-title">Recent averages</h2>
+      <div class="averages-grid">
+        @for (item of averages(); track item.label) {
+          <div class="card average">
+            <span class="stat-label">{{ item.label.replace('Avg ', '') }}</span>
+            <span class="average-value">{{ item.value }}</span>
+          </div>
+        }
       </div>
-    }
-  </div>
-}
-
-<h3 class="profile-section-title">By time</h3>
-<div class="stats-row">
-  @for (item of visibleTime(); track item.key) {
-    <div class="stats-card" [class.empty]="isEmpty(item.data)">
-      <span class="stats-card-title">{{ item.label }}</span>
-      @if (isEmpty(item.data)) {
-        <span class="stats-card-empty" style="text-align: center; display: block; width: 100%;">No games yet</span>
-      } @else {
-        <div class="stats-card-rows">
-          @for (row of bucketRows(item.data); track row.label) {
-            <div>
-              <span>{{ row.label }}</span>
-              <b>{{ row.value }}</b>
-            </div>
-          }
-        </div>
-      }
-    </div>
+    </section>
   }
 </div>
-@if (timePages() > 1) {
-  <div class="stats-pagination">
-    <button type="button" (click)="prevPage(timePage)" [disabled]="timePage() === 0">
-      &#8249; Prev
-    </button>
-    <span>Page {{ timePage() + 1 }} of {{ timePages() }}</span>
-    <button type="button" (click)="nextPage(timePage, timePages())" [disabled]="timePage() === timePages() - 1">
-      Next &#8250;
-    </button>
-  </div>
-}
 
-<h3 class="profile-section-title">By word count</h3>
-<div class="stats-row">
-  @for (item of visibleWords(); track item.key) {
-    <div class="stats-card" [class.empty]="isEmpty(item.data)">
-      <span class="stats-card-title">{{ item.label }}</span>
-      @if (isEmpty(item.data)) {
-        <span class="stats-card-empty" style="text-align: center; display: block; width: 100%;">No games yet</span>
-      } @else {
-        <div class="stats-card-rows">
-          @for (row of bucketRows(item.data); track row.label) {
-            <div>
-              <span>{{ row.label }}</span>
-              <b>{{ row.value }}</b>
-            </div>
-          }
-        </div>
-      }
-    </div>
+<!-- Pages place the performance chart here, between the summary and the tables. -->
+<ng-content />
+
+<div class="tables">
+  @for (table of tables(); track table.id) {
+    <section class="card table-card" [attr.aria-labelledby]="'table-' + table.id">
+      <h2 class="table-title" [id]="'table-' + table.id">{{ table.title }}</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">{{ table.column }}</th>
+              <th scope="col" class="num">Games</th>
+              <th scope="col" class="num">Best WPM</th>
+              <th scope="col" class="num">High score</th>
+              <th scope="col" class="num">Best acc</th>
+              <th scope="col" class="num">Time</th>
+              <th scope="col" class="num">AFK</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of table.items; track item.key) {
+              <tr [class.empty]="isEmpty(item.data)">
+                <th scope="row">{{ item.label }}</th>
+                @if (isEmpty(item.data)) {
+                  <td class="none" colspan="6">No games yet</td>
+                } @else {
+                  <td class="num">{{ item.data!.games }}</td>
+                  <td class="num" [class.top]="item.data!.bestWpm === best(table.items, 'bestWpm')">{{ item.data!.bestWpm || 0 }}</td>
+                  <td class="num" [class.top]="item.data!.highScore === best(table.items, 'highScore')">{{ item.data!.highScore || 0 }}</td>
+                  <td class="num">{{ item.data!.bestAccuracy || 0 }}%</td>
+                  <td class="num">{{ fmt(item.data!.totalTimeTyping) }}</td>
+                  <td class="num" [class.afk]="(item.data!.afkTime || 0) > 0">{{ fmt(item.data!.afkTime) }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
   }
 </div>
-@if (wordsPages() > 1) {
-  <div class="stats-pagination">
-    <button type="button" (click)="prevPage(wordsPage)" [disabled]="wordsPage() === 0">
-      &#8249; Prev
-    </button>
-    <span>Page {{ wordsPage() + 1 }} of {{ wordsPages() }}</span>
-    <button type="button" (click)="nextPage(wordsPage, wordsPages())" [disabled]="wordsPage() === wordsPages() - 1">
-      Next &#8250;
-    </button>
-  </div>
-}
-
-<h3 class="profile-section-title">By game mode</h3>
-@for (item of modeItems(); track item.key) {
-  <div class="stats-mode-section">
-    <h4 class="stats-mode-label">{{ item.label }}</h4>
-    <div class="stats-card" [class.empty]="isEmpty(item.data)">
-      @if (isEmpty(item.data)) {
-        <span class="stats-card-empty" style="text-align: center; display: block; width: 100%;">No games yet</span>
-      } @else {
-        <div class="stats-card-rows stats-card-rows--grid">
-          @for (row of bucketRows(item.data); track row.label) {
-            <div>
-              <span>{{ row.label }}</span>
-              <b>{{ row.value }}</b>
-            </div>
-          }
-        </div>
-      }
-    </div>
-  </div>
-}
-
-<h3 class="profile-section-title">By modifiers</h3>
-@for (item of modifierItems(); track item.key) {
-  <div class="stats-mode-section">
-    <h4 class="stats-mode-label">{{ item.label }}</h4>
-    <div class="stats-card" [class.empty]="isEmpty(item.data)">
-      @if (isEmpty(item.data)) {
-        <span class="stats-card-empty" style="text-align: center; display: block; width: 100%;">No games yet</span>
-      } @else {
-        <div class="stats-card-rows stats-card-rows--grid">
-          @for (row of bucketRows(item.data); track row.label) {
-            <div>
-              <span>{{ row.label }}</span>
-              <b>{{ row.value }}</b>
-            </div>
-          }
-        </div>
-      }
-    </div>
-  </div>
-}
