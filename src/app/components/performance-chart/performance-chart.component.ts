@@ -11,22 +11,13 @@ import {
   Tooltip,
 } from 'chart.js';
 import { PerformancePoint } from '../../models/models';
+import { token, tokenAlpha } from '../../utils/chart-tokens';
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip, Legend);
 
 // Ensure the chart uses the application's global font
 Chart.defaults.font.family = "'Hapna Demibold', sans-serif";
 
-/** Reads a design token from styles.css so chart colours stay in one place. */
-const token = (name: string): string =>
-  getComputedStyle(document.documentElement).getPropertyValue(`--color-${name}`).trim();
-
-/** A token colour (hex) at the given opacity, for canvas gradients. */
-const tokenAlpha = (name: string, a: number): string => {
-  const hex = token(name).replace('#', '');
-  const n = parseInt(hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex, 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
-};
 
 /**
  * Named dataset indices. Update this object whenever datasets are added,
