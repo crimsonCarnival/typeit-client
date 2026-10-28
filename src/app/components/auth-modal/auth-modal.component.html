@@ -1,120 +1,164 @@
-<div class="auth-modal-overlay" (click)="handleOverlayClick($event)">
-  <div class="auth-modal">
-    <button class="auth-modal-close" (click)="closeModal()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
+<div class="auth-modal-overlay" (click)="handleOverlayClick($event)" (keydown)="handleKeydown($event)">
+  <div
+    class="auth-modal"
+    [class.auth-modal-register]="mode === 'register'"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="auth-modal-title"
+  >
+    <div class="auth-brand">
+      <span class="auth-brand-watermark" aria-hidden="true">{{ mode === 'login' ? 'GO' : 'WPM' }}</span>
+      <span class="auth-brand-logo">TYPE<span>IT</span></span>
 
-    <h2 class="auth-modal-title">
-      {{ mode === 'login' ? 'Welcome Back' : 'Create Account' }}
-    </h2>
-
-    @if (displayError()) {
-      <div class="auth-error">
-        {{ displayError() }}
+      <div class="auth-brand-body">
+        @if (mode === 'login') {
+          <h1 id="auth-modal-title" class="auth-brand-title">Welcome<br />back.</h1>
+          <p class="auth-brand-text">Log in to save this run and pick up your stats where you left them.</p>
+        } @else {
+          <h1 id="auth-modal-title" class="auth-brand-title">Join the<br />race.</h1>
+          <ul class="auth-brand-perks">
+            @for (perk of ['Every run saved to your profile', 'Phrases, punctuation & numbers', 'Personal bests and full statistics']; track perk) {
+              <li>
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12l5 5L20 6"></path>
+                </svg>
+                {{ perk }}
+              </li>
+            }
+          </ul>
+        }
       </div>
-    }
+    </div>
 
-    <form class="auth-form" (submit)="handleSubmit($event)">
+    <form class="auth-form" (submit)="handleSubmit($event)" novalidate>
+      <button type="button" class="auth-icon-btn auth-modal-close" aria-label="Close" (click)="closeModal()">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M6 6l12 12M18 6 6 18"></path>
+        </svg>
+      </button>
+
+      <h2 class="auth-form-title">{{ mode === 'login' ? 'Log in' : 'Create account' }}</h2>
+
+      @if (displayError()) {
+        <div class="auth-error" role="alert">{{ displayError() }}</div>
+      }
+
       @if (mode === 'register') {
-        <div class="auth-field">
-          <label for="displayName">Display name</label>
-          <input
-            type="text"
-            id="displayName"
-            name="displayName"
-            [value]="displayName"
-            (input)="handleChange('displayName', $event)"
-            placeholder="How you want to be shown"
-            autocomplete="nickname"
-            [disabled]="isSubmitting()"
-          />
-        </div>
-        <div class="auth-field">
-          <label for="username">Account name</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            [value]="username"
-            (input)="handleChange('username', $event)"
-            placeholder="Choose an account name"
-            autocomplete="username"
-            [disabled]="isSubmitting()"
-          />
+        <div class="auth-row">
+          <div class="auth-field">
+            <label for="displayName">Display name</label>
+            <input
+              type="text"
+              id="displayName"
+              name="displayName"
+              [value]="displayName"
+              (input)="handleChange('displayName', $event)"
+              placeholder="How you're shown"
+              autocomplete="nickname"
+              [disabled]="isSubmitting()"
+            />
+          </div>
+          <div class="auth-field">
+            <label for="username">Account name</label>
+            <div class="auth-input-wrap">
+              <span class="auth-input-prefix" aria-hidden="true">&#64;</span>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                class="has-prefix"
+                [value]="username"
+                (input)="handleChange('username', $event)"
+                placeholder="handle"
+                autocomplete="username"
+                [disabled]="isSubmitting()"
+              />
+            </div>
+          </div>
         </div>
       }
 
       <div class="auth-field">
-        <label for="email">
-          {{ mode === 'login' ? 'Username or Email' : 'Email' }}
-        </label>
+        <label for="email">{{ mode === 'login' ? 'Username or email' : 'Email' }}</label>
         <input
-          type="{{ mode === 'register' ? 'email' : 'text' }}"
+          [type]="mode === 'register' ? 'email' : 'text'"
           id="email"
           name="email"
           [value]="email"
           (input)="handleChange('email', $event)"
-          [placeholder]="mode === 'login' ? 'Enter username or email' : 'Enter your email'"
+          placeholder="you@example.com"
           [attr.autocomplete]="mode === 'register' ? 'email' : 'username'"
           [disabled]="isSubmitting()"
         />
       </div>
 
-      <div class="auth-field">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          [value]="password"
-          (input)="handleChange('password', $event)"
-          placeholder="Enter your password"
-          [attr.autocomplete]="mode === 'register' ? 'new-password' : 'current-password'"
-          [disabled]="isSubmitting()"
-        />
-      </div>
-
-      @if (mode === 'register') {
+      <div class="auth-row">
         <div class="auth-field">
-          <label for="confirmPassword">Confirm Password</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            [value]="confirmPassword"
-            (input)="handleChange('confirmPassword', $event)"
-            placeholder="Confirm your password"
-            autocomplete="new-password"
-            [disabled]="isSubmitting()"
-          />
+          <label for="password">Password</label>
+          <div class="auth-input-wrap">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              name="password"
+              class="has-suffix"
+              [value]="password"
+              (input)="handleChange('password', $event)"
+              [placeholder]="mode === 'login' ? 'Your password' : 'Password'"
+              [attr.autocomplete]="mode === 'register' ? 'new-password' : 'current-password'"
+              [disabled]="isSubmitting()"
+            />
+            <button
+              type="button"
+              class="auth-icon-btn auth-input-suffix"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="showPassword"
+              (click)="showPassword = !showPassword"
+            >
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+                @if (showPassword) {
+                  <path d="M4 4l16 16"></path>
+                }
+              </svg>
+            </button>
+          </div>
         </div>
-      }
+
+        @if (mode === 'register') {
+          <div class="auth-field">
+            <label for="confirmPassword">Confirm password</label>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="confirmPassword"
+              name="confirmPassword"
+              [value]="confirmPassword"
+              (input)="handleChange('confirmPassword', $event)"
+              placeholder="Type it again"
+              autocomplete="new-password"
+              [disabled]="isSubmitting()"
+            />
+          </div>
+        }
+      </div>
 
       <button type="submit" class="auth-submit-btn" [disabled]="isSubmitting()">
         {{
           isSubmitting()
             ? (mode === 'login' ? 'Logging in...' : 'Creating account...')
-            : (mode === 'login' ? 'Login' : 'Create Account')
+            : (mode === 'login' ? 'Log in' : 'Create account')
         }}
       </button>
-    </form>
 
-    <div class="auth-switch">
-      @if (mode === 'login') {
-        Don't have an account?
-        <button type="button" (click)="switchMode()" [disabled]="isSubmitting()">
-          Sign up
-        </button>
-      } @else {
-        Already have an account?
-        <button type="button" (click)="switchMode()" [disabled]="isSubmitting()">
-          Login
-        </button>
-      }
-    </div>
+      <p class="auth-switch">
+        @if (mode === 'login') {
+          New here?
+          <button type="button" (click)="switchMode()" [disabled]="isSubmitting()">Create an account</button>
+        } @else {
+          Already have an account?
+          <button type="button" (click)="switchMode()" [disabled]="isSubmitting()">Log in</button>
+        }
+      </p>
+    </form>
   </div>
 </div>
-
