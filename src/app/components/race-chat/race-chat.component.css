@@ -1,0 +1,91 @@
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.compact .chat-log {
+  max-height: none;
+}
+
+.chat-line {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.chat-name {
+  margin-right: 6px;
+  color: var(--color-text-subtle);
+}
+
+.mine .chat-name {
+  color: var(--color-accent);
+}
+
+.chat-emote {
+  font-size: 18px;
+}
+
+.chat-empty {
+  font-size: 13px;
+  color: var(--color-text-subtle);
+}
+
+.chat-emotes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.emote-btn {
+  min-width: 36px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.emote-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.chat-form {
+  display: flex;
+  gap: 6px;
+}
+
+.chat-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.chat-send {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}

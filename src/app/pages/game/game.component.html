@@ -201,10 +201,17 @@
         <div class="race-result" role="status">
           <span class="race-result-title">{{ raceWinnerLabel() }}</span>
           <span class="race-result-note">Only runs that pass verification can win.</span>
-          <button type="button" class="race-btn" (click)="backToLobby()">Back to race lobby</button>
+          @if (race.room()?.ratingChanges?.[race.myId() ?? '']; as change) {
+            <span class="race-result-note">Rating {{ change > 0 ? '+' : '' }}{{ change }}</span>
+          }
+          <div class="race-result-actions">
+            <button type="button" class="race-btn" (click)="rematch()">Rematch</button>
+            <button type="button" class="race-btn" (click)="backToLobby()">Back to race lobby</button>
+          </div>
         </div>
       } @else {
         <div class="race-foot">
+          <app-race-chat [compact]="true" />
           <span><kbd>Esc</kbd> Leave race</span>
         </div>
       }

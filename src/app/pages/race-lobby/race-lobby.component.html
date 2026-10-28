@@ -1,7 +1,7 @@
 <div class="lobby">
   <div>
     <h1 class="title">Race lobby</h1>
-    <p class="subtitle">Race up to four friends on the same text.</p>
+    <p class="subtitle">Race up to seven others on the same text, or find a rated quick match.</p>
   </div>
 
   @if (!auth.loading() && !auth.isAuthenticated()) {
@@ -23,6 +23,25 @@
     }
     @if (race.error()) {
       <p class="notice error" role="alert">{{ race.error() }}</p>
+    }
+
+    @if (!room() || room()!.state === 'finished') {
+      <section class="panel quick" aria-labelledby="quick-title">
+        <div class="quick-text">
+          <h2 id="quick-title" class="section-title">Quick match</h2>
+          <p class="hint">
+            Rated races against players near your rating{{ race.queue().rating !== null ? ' (' + race.queue().rating + ')' : '' }}. 50 words; the race starts as soon as you're matched.
+          </p>
+        </div>
+        @if (race.queue().queued) {
+          <div class="quick-actions" role="status">
+            <span class="searching">Searching&#8230; {{ race.queue().size }} in queue</span>
+            <button type="button" class="btn-outline" (click)="race.cancelMatch()">Cancel</button>
+          </div>
+        } @else {
+          <button type="button" class="btn-primary" [disabled]="race.status() !== 'online'" (click)="race.findMatch()">Find a match</button>
+        }
+      </section>
     }
 
     <div class="layout">
@@ -48,6 +67,14 @@
                   }
                 </div>
               </div>
+              <div class="field" role="group" aria-label="Players">
+                <span>Players</span>
+                <div class="chips">
+                  @for (n of playerCaps; track n) {
+                    <button type="button" class="chip" [class.active]="maxPlayers() === n" [attr.aria-pressed]="maxPlayers() === n" (click)="maxPlayers.set(n)">{{ n }}</button>
+                  }
+                </div>
+              </div>
               <div class="toggle-row">
                 <span id="private-label">Private room</span>
                 <button type="button" role="switch" class="switch" [class.on]="isPrivate()" [attr.aria-checked]="isPrivate()" aria-labelledby="private-label" (click)="isPrivate.set(!isPrivate())">
@@ -64,6 +91,7 @@
                 <input class="code-input" type="text" maxlength="9" [value]="joinCode()" (input)="onInput('joinCode', $event)" placeholder="TYPE-7QK2" autocapitalize="characters" />
               </label>
               <button type="submit" class="btn-primary" [disabled]="race.status() !== 'online'">Join</button>
+              <button type="button" class="btn-outline" [disabled]="race.status() !== 'online' || !joinCode().trim()" (click)="race.spectate(joinCode())">Watch instead</button>
             </form>
             <div class="open-rooms">
               <div class="open-head">
@@ -71,14 +99,18 @@
                 <button type="button" class="link-btn" (click)="race.listOpen()">Refresh</button>
               </div>
               @if (race.openRooms().length === 0) {
-                <p class="hint">No public races waiting right now.</p>
+                <p class="hint">No public races right now.</p>
               } @else {
                 <ul class="open-list">
                   @for (r of race.openRooms(); track r.code) {
                     <li>
                       <span class="open-name">{{ r.name }}</span>
-                      <span class="hint">{{ r.players }}/{{ maxPlayers }} &#183; {{ r.wordCount }} words</span>
-                      <button type="button" class="btn-outline small" (click)="race.join(r.code)">Join</button>
+                      <span class="hint">{{ r.players }}/{{ r.maxPlayers }} &#183; {{ r.wordCount }} words{{ r.rated ? ' · rated' : '' }}</span>
+                      @if (r.state === 'lobby' && r.players < r.maxPlayers) {
+                        <button type="button" class="btn-outline small" (click)="race.join(r.code)">Join</button>
+                      } @else {
+                        <button type="button" class="btn-outline small" (click)="race.spectate(r.code)">Watch</button>
+                      }
                     </li>
                   }
                 </ul>
@@ -90,7 +122,10 @@
             <div class="field">
               <span class="field-label">Room</span>
               <span class="room-name">{{ r.name }}</span>
-              <span class="hint">{{ r.wordCount }} words &#183; {{ r.isPrivate ? 'Private' : 'Public' }}</span>
+              <span class="hint">{{ r.wordCount }} words &#183; {{ r.isPrivate ? 'Private' : 'Public' }}{{ r.rated ? ' · rated' : '' }}{{ r.spectators ? ' · ' + r.spectators + ' watching' : '' }}</span>
+              @if (race.spectating()) {
+                <span class="tag">Watching</span>
+              }
             </div>
             <div class="field">
               <span class="field-label">Invite code</span>
@@ -99,7 +134,7 @@
                 <button type="button" class="btn-outline" (click)="copyCode()">{{ copied() ? 'Copied' : 'Copy' }}</button>
               </div>
             </div>
-            <button type="button" class="btn-outline" (click)="race.leave()">Leave room</button>
+            <button type="button" class="btn-outline" (click)="race.leave()">{{ race.spectating() ? 'Stop watching' : 'Leave room' }}</button>
           </div>
         }
       </section>
@@ -109,7 +144,7 @@
         <div class="waiting-head">
           <h2 id="waiting-title" class="section-title">Waiting room</h2>
           @if (room(); as r) {
-            <span class="hint">{{ r.players.length }} of {{ maxPlayers }} players &#183; {{ r.wordCount }} words</span>
+            <span class="hint">{{ r.players.length }} of {{ r.maxPlayers }} players &#183; {{ r.wordCount }} words</span>
           }
         </div>
 
@@ -125,8 +160,17 @@
                   @if (p.userId === r.hostId) {
                     <span class="tag">Host</span>
                   }
+                  @if (r.rated && p.rating) {
+                    <span class="rating">{{ p.rating }}</span>
+                  }
                 </span>
-                @if (r.state === 'finished') {
+                @if (r.state === 'racing' && race.spectating()) {
+                  <span class="lane" aria-hidden="true"><span class="lane-fill" [style.width.%]="progress(p)"></span></span>
+                  <span class="badge">{{ p.finishedAt ? (p.place ? '#' + p.place : 'Done') : p.wpm + ' WPM' }}</span>
+                } @else if (r.state === 'finished') {
+                  @if (ratingChange(p.userId); as change) {
+                    <span class="rating-change" [class.up]="change.startsWith('+')">{{ change }}</span>
+                  }
                   <span class="badge">{{ p.place ? '#' + p.place : 'DNF' }}</span>
                 } @else if (p.ready) {
                   <span class="badge ready">Ready</span>
@@ -169,11 +213,35 @@
             </div>
           }
 
-          @if (r.state === 'racing') {
+          @if (r.state === 'racing' && !race.spectating()) {
             <p class="notice" role="status">Race in progress&#8230;</p>
           }
+
+          @if (r.state === 'finished' && !race.spectating()) {
+            <button type="button" class="btn-primary ready-btn" (click)="race.rematch()">Rematch</button>
+          }
+
+          <div class="room-chat">
+            <app-race-chat />
+          </div>
         }
       </section>
+
+      <!-- Quick-match ratings -->
+      @if (leaderboard().length) {
+        <section class="panel ratings" aria-labelledby="ratings-title">
+          <h2 id="ratings-title" class="section-title">Top ratings</h2>
+          <ol class="rating-list">
+            @for (e of leaderboard().slice(0, 10); track e.userId) {
+              <li [class.me]="e.userId === race.myId()">
+                <span class="rating-rank">{{ e.rank }}</span>
+                <span class="rating-name">{{ e.displayName }}</span>
+                <span class="rating-value">{{ e.rating }}</span>
+              </li>
+            }
+          </ol>
+        </section>
+      }
 
       <!-- Friends -->
       <section class="panel friends" aria-labelledby="friends-title">

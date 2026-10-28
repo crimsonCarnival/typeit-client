@@ -1,14 +1,17 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { RaceService } from '../../services/race.service';
-import { RaceFriend, RacePlayer } from '../../models/models';
+import { RaceFriend, RacePlayer, RaceRatingEntry } from '../../models/models';
+import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
 
 const LENGTHS = [25, 50, 75];
-const MAX_PLAYERS = 4; // mirrors the server's RACE_MAX_PLAYERS
+// Room sizes the host can pick (the server allows 2-8).
+const PLAYER_CAPS = [2, 4, 6, 8];
 const FRIENDS_REFRESH_MS = 15000;
 
 @Component({
   selector: 'app-race-lobby',
+  imports: [RaceChatComponent],
   templateUrl: './race-lobby.component.html',
   styleUrl: './race-lobby.component.css',
 })
@@ -17,7 +20,9 @@ export class RaceLobbyComponent {
   readonly race = inject(RaceService);
 
   readonly lengths = LENGTHS;
-  readonly maxPlayers = MAX_PLAYERS;
+  readonly playerCaps = PLAYER_CAPS;
+  readonly maxPlayers = signal(4);
+  readonly leaderboard = signal<RaceRatingEntry[]>([]);
 
   readonly tab = signal<'create' | 'join'>('create');
   readonly roomName = signal('');
@@ -42,7 +47,7 @@ export class RaceLobbyComponent {
   });
 
   readonly emptySlots = computed(() =>
-    Array.from({ length: Math.max(0, MAX_PLAYERS - (this.room()?.players.length ?? 0)) }, (_, i) => i)
+    Array.from({ length: Math.max(0, (this.room()?.maxPlayers ?? 4) - (this.room()?.players.length ?? 0)) }, (_, i) => i)
   );
 
   constructor() {
@@ -52,6 +57,7 @@ export class RaceLobbyComponent {
     effect(() => {
       if (!this.auth.loading() && this.auth.isAuthenticated()) void this.loadFriends();
     });
+    void this.race.loadLeaderboard().then((entries) => this.leaderboard.set(entries));
 
     const tick = setInterval(() => this.now.set(Date.now()), 250);
     const refresh = setInterval(() => {
@@ -69,7 +75,7 @@ export class RaceLobbyComponent {
 
   create(event: Event): void {
     event.preventDefault();
-    this.race.create(this.roomName(), this.wordCount(), this.isPrivate());
+    this.race.create(this.roomName(), this.wordCount(), this.isPrivate(), this.maxPlayers());
   }
 
   join(event: Event): void {
@@ -92,6 +98,18 @@ export class RaceLobbyComponent {
   invite(friend: RaceFriend): void {
     this.race.inviteFriend(friend.userId);
     this.invited.update((s) => new Set(s).add(friend.userId));
+  }
+
+  /** Signed rating change for a player after a rated race, e.g. "+12". */
+  ratingChange(userId: string): string | null {
+    const d = this.room()?.ratingChanges?.[userId];
+    return d === undefined ? null : d >= 0 ? `+${d}` : String(d);
+  }
+
+  /** A lane's progress through the text, for spectators. */
+  progress(p: RacePlayer): number {
+    const len = this.room()?.text?.length ?? 0;
+    return len ? Math.min(100, (p.index / len) * 100) : 0;
   }
 
   isMe(p: RacePlayer): boolean {

@@ -322,6 +322,9 @@ app-shortcuts-footer.dimmed {
 }
 
 .race-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   font-size: 15px;
   color: var(--color-text-subtle);
 }
@@ -462,4 +465,10 @@ app-shortcuts-footer.dimmed {
 
 .zen-finish:hover {
   background: var(--color-accent);
+}
+
+.race-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

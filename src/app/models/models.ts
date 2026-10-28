@@ -432,6 +432,8 @@ export type RaceState = 'lobby' | 'countdown' | 'racing' | 'finished';
 
 export interface RacePlayer {
   userId: string;
+  /** Quick-match rating when the player joined (null outside rated rooms). */
+  rating?: number | null;
   username: string;
   displayName: string;
   avatar: string;
@@ -452,12 +454,39 @@ export interface RaceRoom {
   hostId: string;
   isPrivate: boolean;
   wordCount: number;
+  maxPlayers: number;
+  /** Quick-match room: the result moves ratings. */
+  rated: boolean;
+  /** Number of people watching. */
+  spectators: number;
   state: RaceState;
   startAt: number | null;
   serverNow: number;
   text: string | null;
   winnerId: string | null;
   players: RacePlayer[];
+  /** Rating change per userId once a rated race is over. */
+  ratingChanges: Record<string, number> | null;
+}
+
+export type RaceEmote = 'wave' | 'fire' | 'laugh' | 'wow' | 'clap' | 'gg';
+
+export interface RaceChatMessage {
+  from: { userId: string; displayName: string };
+  text?: string;
+  emote?: RaceEmote;
+  at: number;
+}
+
+export interface RaceRatingEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  rating: number;
+  races: number;
+  wins: number;
 }
 
 export interface RaceFriend {
@@ -479,6 +508,10 @@ export interface OpenRace {
   name: string;
   wordCount: number;
   players: number;
+  maxPlayers: number;
+  /** Lobbies can be joined; races under way can be watched. */
+  state: RaceState;
+  rated: boolean;
 }
 
 /** Cursor positions over a run: [ms from the run's start, chars typed]. */

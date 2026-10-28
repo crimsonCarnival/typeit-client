@@ -15,6 +15,7 @@ import { TextSourceDropdownComponent } from '../../components/text-source-dropdo
 import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
 import { RulesPatch, RulesPickerComponent } from '../../components/rules-picker/rules-picker.component';
+import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
 import { LanguagePatch, LanguagePickerComponent } from '../../components/language-picker/language-picker.component';
 import { Ghost } from '../../components/typing-area/typing-area.component';
 import { botCharsAt } from '../../utils/pace-bot';
@@ -41,6 +42,7 @@ const BOT_TICK_MS = 100;
     CaretPickerComponent,
     RulesPickerComponent,
     LanguagePickerComponent,
+    RaceChatComponent,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
@@ -247,6 +249,13 @@ export class GameComponent implements AfterViewInit {
   leaveRace(): void {
     this.race.leave();
     this.game.clearRace();
+  }
+
+  /** Same room, same players: back to its lobby to ready up again. */
+  rematch(): void {
+    this.race.rematch();
+    this.game.clearRace();
+    void this.router.navigate(['/race']);
   }
 
   backToLobby(): void {

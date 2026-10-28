@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { GameService } from './game.service';
-import { ApiResponse, OpenRace, RaceFriend, RaceInvite, RaceRoom } from '../models/models';
+import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceInvite, RaceRatingEntry, RaceRoom } from '../models/models';
 import { ls } from '../utils/storage';
 
 const SOCKET_PATH = '/ws/race';
@@ -24,6 +24,23 @@ const ERROR_MESSAGES: Record<string, string> = {
   'invite-cooldown': 'Invite already sent. Give them a moment.',
   'bad-settings': 'Pick a race length.',
   'too-many-attempts': 'Too many wrong codes. Wait a minute and try again.',
+  'already-racing': "You're racing in that room.",
+  'too-many-spectators': 'That race has as many spectators as it can take.',
+  'chat-cooldown': 'Slow down a little.',
+  'not-finished': 'The race is still on.',
+};
+
+// Chat lines kept on screen.
+const CHAT_HISTORY = 50;
+
+/** How each emote is shown. */
+export const EMOTES: Record<RaceEmote, string> = {
+  wave: '👋',
+  fire: '🔥',
+  laugh: '😂',
+  wow: '😮',
+  clap: '👏',
+  gg: 'GG',
 };
 
 /**
@@ -54,6 +71,11 @@ export class RaceService {
   readonly invite = signal<RaceInvite | null>(null);
   readonly error = signal('');
   readonly myId = signal<string | null>(null);
+  /** Quick-match queue state. */
+  readonly queue = signal<{ queued: boolean; size: number; rating: number | null }>({ queued: false, size: 0, rating: null });
+  /** True while watching a room rather than racing in it. */
+  readonly spectating = signal(false);
+  readonly chat = signal<RaceChatMessage[]>([]);
 
   readonly me = computed(() => this.room()?.players.find((p) => p.userId === this.myId()) ?? null);
   readonly isHost = computed(() => !!this.room() && this.room()!.hostId === this.myId());
@@ -67,7 +89,7 @@ export class RaceService {
     // When the server starts our race, load it into the game and open it.
     effect(() => {
       const room = this.room();
-      if (room?.state !== 'racing' || !room.startAt || room.code === this.startedCode) return;
+      if (room?.state !== 'racing' || !room.startAt || room.code === this.startedCode || this.spectating()) return;
       this.startedCode = room.code;
       void this.game.startRace(room.code, this.toLocal(room.startAt)).then(() => this.router.navigate(['/play']));
     });
@@ -152,11 +174,23 @@ export class RaceService {
         break;
       case 'room':
         this.clockOffset = msg.room.serverNow - Date.now();
+        if (this.room()?.code !== msg.room.code) this.chat.set([]);
+        // A rematch reuses the room code: let the next start load again.
+        if (msg.room.state === 'lobby' && this.startedCode === msg.room.code) this.startedCode = null;
+        this.spectating.set(!!msg.spectating);
         this.room.set(msg.room);
         this.error.set('');
         break;
       case 'left':
         this.room.set(null);
+        this.spectating.set(false);
+        this.chat.set([]);
+        break;
+      case 'queue':
+        this.queue.set({ queued: !!msg.queued, size: msg.size ?? 0, rating: msg.rating ?? this.queue().rating });
+        break;
+      case 'chat':
+        this.chat.update((lines) => [...lines, msg as RaceChatMessage].slice(-CHAT_HISTORY));
         break;
       case 'rooms':
         this.openRooms.set(msg.rooms);
@@ -175,8 +209,44 @@ export class RaceService {
     else this.error.set('Not connected to the race server yet.');
   }
 
-  create(name: string, wordCount: number, isPrivate: boolean): void {
-    this.send({ type: 'create', name, wordCount, isPrivate });
+  create(name: string, wordCount: number, isPrivate: boolean, maxPlayers: number): void {
+    this.send({ type: 'create', name, wordCount, isPrivate, maxPlayers });
+  }
+
+  /** Quick match: rated public races against players near your rating. */
+  findMatch(): void {
+    this.send({ type: 'queue' });
+  }
+
+  cancelMatch(): void {
+    this.send({ type: 'unqueue' });
+  }
+
+  rematch(): void {
+    this.send({ type: 'rematch' });
+  }
+
+  spectate(code: string): void {
+    this.send({ type: 'spectate', code });
+  }
+
+  say(text: string): void {
+    if (text.trim()) this.send({ type: 'chat', text });
+  }
+
+  emote(emote: RaceEmote): void {
+    this.send({ type: 'emote', emote });
+  }
+
+  async loadLeaderboard(): Promise<RaceRatingEntry[]> {
+    try {
+      const res = await firstValueFrom(
+        this.http.get<ApiResponse<{ entries: RaceRatingEntry[] }>>(`${environment.apiUrl}/race/leaderboard`)
+      );
+      return res.data?.entries ?? [];
+    } catch {
+      return [];
+    }
   }
 
   join(code: string): void {
@@ -186,6 +256,7 @@ export class RaceService {
   leave(): void {
     this.send({ type: 'leave' });
     this.room.set(null);
+    this.spectating.set(false);
   }
 
   setReady(ready: boolean): void {
