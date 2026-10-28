@@ -231,3 +231,20 @@ export interface DailyOverview {
     myWpm: number | null;
   }[];
 }
+
+export type AchievementCategory = 'speed' | 'accuracy' | 'habits' | 'racing';
+export type AchievementRarity = 'common' | 'rare' | 'epic';
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  category: AchievementCategory;
+  rarity: AchievementRarity;
+  icon: string;
+  target: number;
+  unit: string;
+  value: number;
+  unlocked: boolean;
+  unlockedAt: string | null;
+}

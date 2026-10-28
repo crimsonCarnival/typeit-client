@@ -46,6 +46,11 @@
   --color-afk: #ff9a3c;
   --color-pb: #ff5c8a;
 
+  /* achievement rarity */
+  --color-rarity-common: #8e8a94;
+  --color-rarity-rare: #a497ff;
+  --color-rarity-epic: #f5b700;
+
   /* rankings medals */
   --color-rank-1: #f5b700;
   --color-rank-2: #c9c5ce;

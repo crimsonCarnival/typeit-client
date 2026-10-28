@@ -123,6 +123,8 @@
           <button type="button" class="link-btn" (click)="auth.openAuthModal('login')">Log in</button>
           to get ranked.
         </span>
+      } @else {
+        <a class="link-btn" routerLink="/achievements">See your badges &#8594;</a>
       }
     </div>
   }

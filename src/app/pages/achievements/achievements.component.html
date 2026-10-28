@@ -1,0 +1,84 @@
+<div class="achievements">
+  <div class="head">
+    <div>
+      <h1 class="title">Achievements</h1>
+      @if (loaded()) {
+        <p class="subtitle">{{ unlockedCount() }} of {{ achievements().length }} unlocked &#183; {{ percent() }}% complete</p>
+      }
+    </div>
+    <ul class="legend" aria-label="Rarity">
+      @for (r of rarities; track r) {
+        <li><span class="legend-swatch" [class]="'rarity-' + r"></span>{{ r }}</li>
+      }
+    </ul>
+  </div>
+
+  @if (!auth.loading() && !auth.isAuthenticated()) {
+    <div class="state">
+      <p class="state-title">Badges need an account</p>
+      <p>Speed, accuracy, streak and racing badges are tracked on your profile.</p>
+      <button type="button" class="btn-primary" (click)="auth.openAuthModal('register')">Create free account</button>
+    </div>
+  } @else if (error()) {
+    <div class="state" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" class="btn-ghost" (click)="load()">Try again</button>
+    </div>
+  } @else if (!loaded()) {
+    <div class="state" aria-busy="true"><p>Loading achievements&#8230;</p></div>
+  } @else {
+    <div class="categories">
+      @for (c of categories(); track c.id) {
+        <div class="category">
+          <div class="category-head">
+            <span>{{ c.label }}</span>
+            <span class="category-pct" [class.zero]="c.percent === 0">{{ c.percent }}%</span>
+          </div>
+          <div class="bar" role="progressbar" [attr.aria-label]="c.label + ' badges'" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="c.percent">
+            <div class="bar-fill bar-fill-primary" [style.width.%]="c.percent"></div>
+          </div>
+          <span class="category-count">{{ c.unlocked }} of {{ c.total }} unlocked</span>
+        </div>
+      }
+    </div>
+
+    <div class="grid">
+      @for (a of achievements(); track a.id) {
+        <article class="badge" [class.locked]="!a.unlocked">
+          <div class="badge-head">
+            <span class="badge-icon" [class]="'badge-icon rarity-' + a.rarity" [class.locked]="!a.unlocked" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                @for (d of iconPaths(a); track $index) {
+                  <path [attr.d]="d"></path>
+                }
+              </svg>
+            </span>
+            <div class="badge-names">
+              <h2 class="badge-name">{{ a.name }}</h2>
+              <span class="badge-rarity" [class]="'badge-rarity rarity-text-' + a.rarity">{{ a.rarity }}</span>
+            </div>
+          </div>
+          <p class="badge-desc">{{ a.description }}</p>
+          <div class="badge-foot">
+            <span class="badge-category">{{ categoryLabel(a.category) }}</span>
+            @if (a.unlocked) {
+              <span class="badge-unlocked">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg>
+                Unlocked
+              </span>
+            } @else {
+              <div class="bar" role="progressbar" [attr.aria-label]="a.name + ' progress'" aria-valuemin="0" [attr.aria-valuemax]="a.target" [attr.aria-valuenow]="a.value">
+                <div class="bar-fill" [class]="'bar-fill bar-fill-' + a.rarity" [style.width.%]="progressPercent(a)"></div>
+              </div>
+              <span class="badge-progress">{{ progressLabel(a) }}</span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    <p class="foot">
+      Speed and accuracy badges count verified runs only. <a routerLink="/ranks">See the rankings &#8594;</a>
+    </p>
+  }
+</div>
