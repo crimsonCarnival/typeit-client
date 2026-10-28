@@ -43,12 +43,13 @@
     </div>
 
     <div class="grid">
-      @for (a of achievements(); track a.id) {
+      @for (card of cards(); track card.key) {
+        @let a = card.shown;
         <article class="badge" [class.locked]="!a.unlocked">
           <div class="badge-head">
-            <span class="badge-icon" [class]="'badge-icon rarity-' + a.rarity" [class.locked]="!a.unlocked" aria-hidden="true">
+            <span class="badge-icon" [class]="'badge-icon rarity-' + a.rarity" [class.locked]="!a.unlocked && !tiersDone(card)" aria-hidden="true">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                @for (d of iconPaths(a); track $index) {
+                @for (d of iconPaths(a, tiersDone(card) > 0); track $index) {
                   <path [attr.d]="d"></path>
                 }
               </svg>
@@ -59,6 +60,16 @@
             </div>
           </div>
           <p class="badge-desc">{{ a.description }}</p>
+          @if (card.tiers; as tiers) {
+            <div class="tier-row" [class]="'rarity-' + a.rarity">
+              <span class="tier-label">Tier {{ a.tier }} of {{ tiers.length }} &#183; {{ tiersDone(card) }} earned</span>
+              <div class="tiers" aria-hidden="true">
+                @for (t of tiers; track t.id) {
+                  <span class="tier-pip" [class.done]="t.unlocked" [title]="t.name + ': ' + t.description"></span>
+                }
+              </div>
+            </div>
+          }
           <div class="badge-foot">
             <span class="badge-category">{{ categoryLabel(a.category) }}</span>
             @if (a.unlocked) {

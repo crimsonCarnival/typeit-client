@@ -57,6 +57,7 @@
 .rarity-common { --rarity: var(--color-rarity-common); }
 .rarity-rare { --rarity: var(--color-rarity-rare); }
 .rarity-epic { --rarity: var(--color-rarity-epic); }
+.rarity-legendary { --rarity: var(--color-rarity-legendary); }
 
 .legend-swatch {
   background: var(--rarity);
@@ -177,6 +178,7 @@
 .bar-fill-common { background: var(--color-rarity-common); }
 .bar-fill-rare { background: var(--color-rarity-rare); }
 .bar-fill-epic { background: var(--color-rarity-epic); }
+.bar-fill-legendary { background: var(--color-rarity-legendary); }
 
 /* Badges */
 
@@ -254,6 +256,7 @@
 .rarity-text-common { color: var(--color-rarity-common); }
 .rarity-text-rare { color: var(--color-rarity-rare); }
 .rarity-text-epic { color: var(--color-rarity-epic); }
+.rarity-text-legendary { color: var(--color-rarity-legendary); }
 
 .badge-desc {
   font-size: 15px;
@@ -306,4 +309,26 @@
   .title {
     font-size: 44px;
   }
+}
+
+.tiers {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tier-pip {
+  width: 18px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border-strong);
+}
+
+.tier-pip.done {
+  background: var(--rarity);
+}
+
+.tier-label {
+  font-size: 12px;
+  color: var(--color-text-subtle);
 }

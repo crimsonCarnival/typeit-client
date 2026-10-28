@@ -310,11 +310,14 @@ export interface DailyOverview {
   }[];
 }
 
-export type AchievementCategory = 'speed' | 'accuracy' | 'habits' | 'racing';
-export type AchievementRarity = 'common' | 'rare' | 'epic';
+export type AchievementCategory = 'speed' | 'accuracy' | 'habits' | 'racing' | 'learning';
+export type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
 export interface Achievement {
   id: string;
+  /** Tiered badges share a family; tiers count from 1. */
+  family?: string;
+  tier?: number;
   name: string;
   description: string;
   category: AchievementCategory;
