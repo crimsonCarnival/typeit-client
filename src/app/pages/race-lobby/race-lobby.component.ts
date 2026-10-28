@@ -12,12 +12,12 @@ const WORD_COUNTS = [10, 25, 50, 75, 100, 150, 200, 300, 400, 500];
 const TIME_LIMITS = [15, 30, 60, 120, 180, 300, 600];
 const PLAYER_LIMITS = [2, 3, 4, 6, 8];
 const COUNTDOWNS = [3, 5, 10, 15];
-// Phrases text categories (casual ones are never ranked).
+// Phrases text categories.
 const CATEGORIES = [
-  { id: 'classics', label: 'Classics', casual: false },
-  { id: 'quotes', label: 'Quotes', casual: false },
-  { id: 'speeches', label: 'Speeches', casual: false },
-  { id: 'gta', label: 'GTA', casual: true },
+  { id: 'classics', label: 'Classics' },
+  { id: 'quotes', label: 'Quotes' },
+  { id: 'speeches', label: 'Speeches' },
+  { id: 'gta', label: 'GTA' },
 ];
 const DEFAULT_SETTINGS: RaceSettings = {
   mode: 'words',

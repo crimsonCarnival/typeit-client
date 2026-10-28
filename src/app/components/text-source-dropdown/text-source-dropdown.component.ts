@@ -56,7 +56,7 @@ export class TextSourceDropdownComponent implements OnDestroy {
     { id: 'classics', label: 'Classics', hint: 'Passages from public-domain books' },
     { id: 'quotes', label: 'Quotes', hint: 'Attributed quotations' },
     { id: 'speeches', label: 'Speeches', hint: 'Historic speeches and documents' },
-    { id: 'gta', label: 'GTA radio', hint: 'Mature language. Casual: runs are not ranked' },
+    { id: 'gta', label: 'GTA radio', hint: 'Mature language' },
   ];
 
   setCategory(category: GameState['textCategory']): void {
