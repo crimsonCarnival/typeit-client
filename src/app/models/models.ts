@@ -43,7 +43,9 @@ export interface Character {
   status: string;
 }
 
-export type GameMode = 'phrases' | 'words';
+export type GameMode = 'phrases' | 'words' | 'code';
+export type WordLanguage = 'english' | 'spanish' | 'french' | 'german' | 'portuguese' | 'italian';
+export type CodeLanguage = 'javascript' | 'python' | 'go' | 'rust' | 'sql' | 'bash';
 export type Difficulty = 'normal' | 'hardcore';
 export type StopOnError = 'off' | 'letter' | 'word';
 
@@ -82,7 +84,7 @@ export interface WordStat {
 export type TextCategory = 'classics' | 'quotes' | 'speeches' | 'gta';
 
 export interface Passage {
-  category: TextCategory;
+  category: TextCategory | 'code' | 'language';
   title: string | null;
   author: string;
 }
@@ -110,7 +112,13 @@ export interface GameState {
   lastCpm: number;
   totalWords: number;
   // Text source (phrases mode only)
-  textSource: 'default' | 'generated' | 'lorem';
+  textSource: 'default' | 'generated' | 'lorem' | 'custom';
+  /** Words mode language. */
+  language: WordLanguage;
+  /** Code mode snippet language. */
+  codeLanguage: CodeLanguage;
+  /** Zen: no time pressure; the run ends when you press Finish. */
+  zen: boolean;
   /** Server passage pool used when textSource is 'default'. */
   textCategory: TextCategory;
   /** Where the current phrases text came from (attribution), or null. */

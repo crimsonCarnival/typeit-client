@@ -3,5 +3,6 @@
   <div class="tb-buttons" role="group" aria-label="Mode">
     <button type="button" class="tb-btn" [class.active]="gameMode() === 'phrases'" [attr.aria-pressed]="gameMode() === 'phrases'" [disabled]="isTyping()" (click)="handleModeSelect('phrases')">Phrases</button>
     <button type="button" class="tb-btn" [class.active]="gameMode() === 'words'" [attr.aria-pressed]="gameMode() === 'words'" [disabled]="isTyping()" (click)="handleModeSelect('words')">Words</button>
+    <button type="button" class="tb-btn" [class.active]="gameMode() === 'code'" [attr.aria-pressed]="gameMode() === 'code'" [disabled]="isTyping()" title="Code snippets: Enter types a line break" (click)="handleModeSelect('code')">Code</button>
   </div>
 </div>

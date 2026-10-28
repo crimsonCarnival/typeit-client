@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { GameMode, GameState } from '../../models/models';
 import { GameService } from '../../services/game.service';
 import { VocabModalComponent } from '../vocab-modal/vocab-modal.component';
+import { ls } from '../../utils/storage';
 
 @Component({
   selector: 'app-text-source-dropdown',
@@ -24,6 +25,24 @@ export class TextSourceDropdownComponent implements OnDestroy {
 
   // Vocabulary modal state
   vocabModalOpen = false;
+
+  // Custom text editor
+  readonly customMax = 5000;
+  customOpen = false;
+  customDraft = '';
+
+  openCustom(): void {
+    if (this.disabled()) return;
+    this.customDraft = ls.get('customText') ?? '';
+    this.customOpen = true;
+  }
+
+  saveCustom(): void {
+    const text = this.customDraft.trim().slice(0, this.customMax);
+    if (!text) return;
+    this.customOpen = false;
+    this.game.setCustomText(text);
+  }
 
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 

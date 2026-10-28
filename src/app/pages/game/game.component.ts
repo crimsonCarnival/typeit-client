@@ -14,6 +14,7 @@ import { TextSourceDropdownComponent } from '../../components/text-source-dropdo
 import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
 import { RulesPatch, RulesPickerComponent } from '../../components/rules-picker/rules-picker.component';
+import { LanguagePatch, LanguagePickerComponent } from '../../components/language-picker/language-picker.component';
 import { Ghost } from '../../components/typing-area/typing-area.component';
 import { botCharsAt } from '../../utils/pace-bot';
 import { ghostCharsAt } from '../../utils/ghost';
@@ -38,6 +39,7 @@ const BOT_TICK_MS = 100;
     TextSourceDropdownComponent,
     CaretPickerComponent,
     RulesPickerComponent,
+    LanguagePickerComponent,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
@@ -259,6 +261,26 @@ export class GameComponent implements AfterViewInit {
   handleSourceChange(patch: Parameters<GameService['setGeneratorConfig']>[0]): void {
     this.game.setGeneratorConfig(patch);
   }
+
+  handleLanguageChange(patch: LanguagePatch): void {
+    this.game.setLanguage(patch);
+  }
+
+  /** Shift+Enter ends a zen run. */
+  onFinishKey(): void {
+    if (this.gameState().zen) this.game.finishRun();
+  }
+
+  toggleZen(): void {
+    this.game.setZen(!this.gameState().zen);
+  }
+
+  /** Zen runs show time spent instead of time left. */
+  readonly elapsedLabel = computed(() => {
+    this.now();
+    const t = Math.floor(this.game.getElapsedMs() / 1000);
+    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  });
 
   handleRulesChange(patch: RulesPatch): void {
     this.game.setRules(patch);

@@ -752,6 +752,12 @@ ul li {
   color: var(--color-text);
 }
 
+.typing-text p span.nl {
+  margin-left: 0.15em;
+  color: var(--color-text-faint);
+  opacity: 0.7;
+}
+
 .typing-text p span.skipped {
   color: var(--color-text-faint);
   text-decoration: line-through;

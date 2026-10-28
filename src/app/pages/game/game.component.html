@@ -16,8 +16,13 @@
     <div class="run-head">
       <div class="run-stats">
         <div class="run-timer">
-          <span class="run-timer-value" role="timer">{{ timeLeftLabel() }}</span>
-          <span class="run-label">Left</span>
+          @if (gameState().zen && !gameState().dailyDate && !gameState().practice) {
+            <span class="run-timer-value" role="timer">{{ elapsedLabel() }}</span>
+            <span class="run-label">Zen</span>
+          } @else {
+            <span class="run-timer-value" role="timer">{{ timeLeftLabel() }}</span>
+            <span class="run-label">Left</span>
+          }
         </div>
         <div class="run-stat"><span class="run-value">{{ gameState().lastWpm }}</span><span class="run-label">WPM</span></div>
         <div class="run-stat"><span class="run-value">{{ accuracyLabel() }}%</span><span class="run-label">Acc</span></div>
@@ -26,9 +31,12 @@
           <span class="run-label">Words</span>
         </div>
       </div>
+      @if (gameState().zen && !gameState().dailyDate && !gameState().practice) {
+        <button type="button" class="zen-finish" (click)="game.finishRun()">Finish <kbd>Shift</kbd>+<kbd>Enter</kbd></button>
+      }
       <p class="run-settings">
-        @if (gameState().gameMode === 'words') { Words {{ gameState().wordCount }} } @else { Phrases }
-        &#183; Limit {{ gameState().timeMax }}s
+        @if (gameState().gameMode === 'words') { Words {{ gameState().zen ? '' : gameState().wordCount }} } @else if (gameState().gameMode === 'code') { Code } @else { Phrases }
+        @if (gameState().zen) { &#183; Zen } @else { &#183; Limit {{ gameState().timeMax }}s }
         @if (gameState().rules.difficulty === 'hardcore') { &#183; Hardcore }
       </p>
     </div>
@@ -57,11 +65,20 @@
         (modeChange)="handleModeChange($event)"
       />
     }
+    @if (!gameState().zen) {
     <app-word-count-dropdown
       [wordCount]="gameState().wordCount"
       [gameMode]="gameState().gameMode"
       [isTyping]="gameState().isTyping"
       (wordCountChange)="handleWordCountChange($event)"
+    />
+    }
+    <app-language-picker
+      [gameMode]="gameState().gameMode"
+      [language]="gameState().language"
+      [codeLanguage]="gameState().codeLanguage"
+      [disabled]="gameState().isTyping"
+      (languageChange)="handleLanguageChange($event)"
     />
     @if (isAuthenticated()) {
       <app-word-mode-settings
@@ -90,6 +107,14 @@
         (rulesChange)="handleRulesChange($event)"
       />
     }
+    @if (!gameState().dailyDate && !gameState().race) {
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Zen</span>
+        <div class="tb-buttons">
+          <button type="button" class="tb-btn" [class.active]="gameState().zen" [attr.aria-pressed]="gameState().zen" title="No clock pressure: a long text you finish when you like (not ranked)" [disabled]="gameState().isTyping" (click)="toggleZen()">Zen</button>
+        </div>
+      </div>
+    }
     @if (isAuthenticated() && !gameState().dailyDate && !gameState().race && !ghost()) {
       <div class="tb-section">
         <span class="tb-label" aria-hidden="true">Ghost</span>
@@ -98,6 +123,7 @@
         </div>
       </div>
     }
+    @if (!gameState().zen) {
     <app-custom-time-dropdown
       [timeMax]="gameState().timeMax"
       [timeLeft]="gameState().timeLeft"
@@ -105,6 +131,7 @@
       [disabled]="gameState().isFinished"
       (timeSelect)="handleTimeSelect($event)"
     />
+    }
     @if (!isAuthenticated()) {
       <button type="button" class="unlock-card" (click)="auth.openAuthModal('register')">
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
@@ -121,11 +148,17 @@
   }
   <p class="status-line">
     @if (gameState().gameMode === 'words') {
-      Words <b>{{ gameState().wordCount }}</b>
+      Words <b>{{ gameState().zen ? 'zen' : gameState().wordCount }}</b>
+    } @else if (gameState().gameMode === 'code') {
+      <b>Code</b>
     } @else {
       <b>Phrases</b>
     }
-    &#183; Limit <b>{{ gameState().timeMax }}s</b>
+    @if (gameState().zen) {
+      &#183; <b>Zen</b>, no limit
+    } @else {
+      &#183; Limit <b>{{ gameState().timeMax }}s</b>
+    }
     @if (personalBest(); as pb) {
       &#183; PB <b class="pb">{{ pb }} WPM</b>
     }
@@ -201,6 +234,7 @@
       [caretStyle]="gameState().caretStyle"
       [ghosts]="ghosts()"
       (typing)="game.handleTyping($event)"
+      (finish)="onFinishKey()"
       (focusChange)="isFocused = $event"
     />
   </div>

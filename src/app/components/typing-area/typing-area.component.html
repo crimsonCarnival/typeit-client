@@ -16,7 +16,11 @@
   }
   <p #textDisplay translate="no">
     @for (char of characters(); track $index) {
-      <span [class]="charClass(char, $index)">{{ char.char }}</span>
+      @if (char.char === '\n') {
+        <span [class]="charClass(char, $index) + ' nl'">&#8629;</span><br />
+      } @else {
+        <span [class]="charClass(char, $index)">{{ char.char }}</span>
+      }
     }
     @for (m of ghostMarks(); track m.ghosts[0].id) {
       <i class="ghost" aria-hidden="true" [style.left.px]="m.left" [style.top.px]="m.top" [style.height.px]="m.height" [style.--ghost]="m.ghosts[0].color">
@@ -32,8 +36,16 @@
     #input
     type="text"
     class="input-field hidden-input"
-    [value]="currentText()"
+    [value]="inputValue()"
+    (beforeinput)="onBeforeInput($event)"
     (input)="onInput($event)"
+    (compositionstart)="onCompositionStart()"
+    (compositionend)="onCompositionEnd($event)"
+    autocomplete="off"
+    autocapitalize="off"
+    spellcheck="false"
+    (keydown.enter)="onEnter($event)"
+    (keydown.shift.enter)="onEnter($event)"
     (focus)="onFocus()"
     (blur)="onBlur()"
   />

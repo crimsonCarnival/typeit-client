@@ -28,7 +28,7 @@
     @if (r.total > 0) {
       <section class="recommended review" aria-label="Digraph review">
         <div class="recommended-main">
-          <span class="recommended-key" aria-hidden="true">{{ r.duePairs[0] ?? '✓' }}</span>
+          <span class="recommended-key" aria-hidden="true">{{ r.duePairs.length ? r.duePairs[0] : '✓' }}</span>
           <div class="recommended-text">
             <span class="recommended-tag">Review &#183; {{ r.due }} due of {{ r.total }}</span>
             @if (r.due > 0) {

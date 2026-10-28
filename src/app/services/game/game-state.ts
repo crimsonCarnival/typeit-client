@@ -69,6 +69,9 @@ export const defaultState = (isAuthenticated: boolean): GameState => {
       ? (ls.get('textSource') as GameState['textSource']) || 'default'
       : 'default',
     textCategory: (ls.get('textCategory') as GameState['textCategory']) || 'classics',
+    language: (ls.get('language') as GameState['language']) || 'english',
+    codeLanguage: (ls.get('codeLanguage') as GameState['codeLanguage']) || 'javascript',
+    zen: ls.bool('zen'),
     passage: null,
     generatorUnit: (ls.get('generatorUnit') as GameState['generatorUnit']) || 'sentence',
     generatorCount: ls.int('generatorCount', 3),

@@ -17,6 +17,10 @@
         [class.active]="textSource() === 'lorem'"
         (click)="setSource('lorem')"
       >Lorem</span>
+      <span
+        [class.active]="textSource() === 'custom'"
+        (click)="openCustom()"
+      >Custom</span>
     </div>
 
     <!-- Passage pool for the default source -->
@@ -77,6 +81,21 @@
         </div>
       </div>
     }
+  </div>
+}
+
+@if (customOpen) {
+  <div class="custom-backdrop" (click)="customOpen = false">
+    <div class="custom-dialog" role="dialog" aria-modal="true" aria-labelledby="custom-title" (click)="$event.stopPropagation()">
+      <h2 id="custom-title">Your own text</h2>
+      <p class="custom-note">Paste anything up to {{ customMax }} characters. Runs on your own text are saved but not ranked.</p>
+      <textarea #customArea class="custom-area" rows="8" [maxLength]="customMax" [value]="customDraft" (input)="customDraft = customArea.value" aria-label="Text to type"></textarea>
+      <div class="custom-actions">
+        <span class="custom-count">{{ customDraft.length }} / {{ customMax }}</span>
+        <button type="button" class="custom-btn" (click)="customOpen = false">Cancel</button>
+        <button type="button" class="custom-btn primary" [disabled]="!customDraft.trim()" (click)="saveCustom()">Use this text</button>
+      </div>
+    </div>
   </div>
 }
 

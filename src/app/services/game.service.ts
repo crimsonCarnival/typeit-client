@@ -10,6 +10,9 @@ import { DEFAULT_RULES, KeyOutcome, TypingEngine } from './game/typing-engine';
 import { PROGRESS_INTERVAL_MS, RACE_PROGRESS_INTERVAL_MS, RunSyncService } from './game/run-sync.service';
 
 const CLOCK_TICK_MS = 250;
+// Zen runs: the longest text and limit the server allows; no timer shown.
+const ZEN_WORDS = 500;
+const ZEN_SECONDS = 600;
 
 const SOUND_FOR: Partial<Record<KeyOutcome, GameSound>> = {
   correct: 'key',
@@ -58,6 +61,8 @@ export class GameService {
   private ending = false;
   private engine = new TypingEngine('');
   private readonly log = new KeystrokeLog();
+  /** Time limit of the run on screen (the server's; zen runs differ from the setting). */
+  private runLimitSec: number | null = null;
   /** Guest run finished before signing in: saved to the account on sign-in. */
   private guestFinishedId: string | null = null;
 
@@ -66,11 +71,13 @@ export class GameService {
     const gs = this.gameState();
     return {
       gameMode: gs.gameMode,
-      wordCount: gs.wordCount,
-      timeMax: gs.timeMax,
+      wordCount: gs.zen && gs.gameMode === 'words' ? ZEN_WORDS : gs.wordCount,
+      timeMax: gs.zen ? ZEN_SECONDS : gs.timeMax,
       punctuationEnabled: gs.punctuationEnabled,
       numbersEnabled: gs.numbersEnabled,
       textCategory: gs.textCategory,
+      language: gs.language,
+      codeLanguage: gs.codeLanguage,
       rules: { difficulty: gs.rules.difficulty, stopOnError: gs.rules.stopOnError, spaceSkips: gs.rules.spaceSkips },
       ...overrides,
     };
@@ -90,6 +97,7 @@ export class GameService {
     // A daily ghost belongs to that day's text only.
     if (this.ghost()?.kind === 'daily') this.ghost.set(null);
     if (data.sessionId) this.sessionId = data.sessionId;
+    this.runLimitSec = data.timeMax ?? null;
     const rules = this.rulesFrom(data);
     this.engine = new TypingEngine(data.text || '', rules);
     this.characters.set(this.engine.characters());
@@ -108,7 +116,7 @@ export class GameService {
       completionPercentage: 0,
       lastWpm: 0,
       lastCpm: 0,
-      timeLeft: prev.timeMax,
+      timeLeft: this.runLimitSec ?? prev.timeMax,
       isTyping: false,
       isFinished: false,
       dailyDate: null,
@@ -124,6 +132,9 @@ export class GameService {
   private applyServerText(data: any): void {
     this.resetInternalState();
     if (data.sessionId) this.sessionId = data.sessionId;
+    this.runLimitSec = data.timeMax ?? null;
+    // A zen run's long limit is not the player's time setting.
+    const zenRun = this.gameState().zen && !data.dailyDate && !data.practice && !data.raceCode;
     const text: string = data.text || '';
     const rules = this.rulesFrom(data);
     const resumeText: string = data.incomplete && typeof data.typedText === 'string' ? data.typedText : '';
@@ -148,9 +159,11 @@ export class GameService {
       lastCpm: 0,
       completionPercentage: text.length ? (this.engine.position / text.length) * 100 : 0,
       gameMode: data.gameMode ?? prev.gameMode,
-      wordCount: data.wordCount ?? prev.wordCount,
-      timeMax: data.timeMax ?? prev.timeMax,
+      wordCount: zenRun ? prev.wordCount : data.wordCount ?? prev.wordCount,
+      timeMax: zenRun ? prev.timeMax : data.timeMax ?? prev.timeMax,
       timeLeft: data.timeMax ?? prev.timeMax,
+      language: data.language ?? prev.language,
+      codeLanguage: data.codeLanguage ?? prev.codeLanguage,
       punctuationEnabled: data.punctuationEnabled ?? prev.punctuationEnabled,
       numbersEnabled: data.numbersEnabled ?? prev.numbersEnabled,
       dailyDate: data.dailyDate ?? null,
@@ -171,6 +184,10 @@ export class GameService {
   /** Locally generated text (phrases mode, generated or lorem source). */
   private generateLocalText(): { text: string; totalWords: number } {
     const gs = this.gameState();
+    if (gs.textSource === 'custom') {
+      const text = (ls.get('customText') ?? '').replace(/\s+/g, ' ').trim() || 'Paste your own text in the text source menu.';
+      return { text, totalWords: text.split(' ').length };
+    }
     if (gs.textSource === 'lorem') {
       return this.textGenerator.generateLorem(gs.loremMin, gs.loremMax);
     }
@@ -322,7 +339,7 @@ export class GameService {
   private tickClock(): void {
     if (!this.startTime) return;
     const gs = this.gameState();
-    const deadline = this.sync.live()?.deadlineMs ?? gs.timeMax * 1000;
+    const deadline = this.sync.live()?.deadlineMs ?? (this.runLimitSec ?? gs.timeMax) * 1000;
     const remaining = deadline - this.getElapsedMs();
     const timeLeft = Math.max(0, Math.ceil(remaining / 1000));
     if (timeLeft !== gs.timeLeft) this.gameStateSignal.update(prev => ({ ...prev, timeLeft }));
@@ -506,6 +523,32 @@ export class GameService {
     ls.set('numbersEnabled', String(newEnabled));
     this.gameStateSignal.update(prev => ({ ...prev, numbersEnabled: newEnabled }));
     void this.updateSettingsAndRefresh(this.settingsPayload({ numbersEnabled: newEnabled }));
+  }
+
+  /** Words mode language or code mode snippet language; starts a new run. */
+  setLanguage(patch: Partial<Pick<GameState, 'language' | 'codeLanguage'>>): void {
+    if (patch.language) ls.set('language', patch.language);
+    if (patch.codeLanguage) ls.set('codeLanguage', patch.codeLanguage);
+    this.gameStateSignal.update(prev => ({ ...prev, ...patch }));
+    void this.updateSettingsAndRefresh(this.settingsPayload());
+  }
+
+  /** Zen: a long untimed-feeling run you end yourself. */
+  setZen(zen: boolean): void {
+    ls.set('zen', String(zen));
+    this.gameStateSignal.update(prev => ({ ...prev, zen }));
+    void this.updateSettingsAndRefresh(this.settingsPayload());
+  }
+
+  /** Ends the run now (zen's Finish button); the server scores what was typed. */
+  finishRun(): void {
+    if (this.gameState().isTyping) void this.handleEnd();
+  }
+
+  /** Saves pasted text for the custom source and starts a run on it. */
+  setCustomText(text: string): void {
+    ls.set('customText', text);
+    this.setGeneratorConfig({ textSource: 'custom' });
   }
 
   /** Changes the typing rules (difficulty, stop on error, space skips); starts a new run. */

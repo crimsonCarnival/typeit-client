@@ -12,6 +12,11 @@ export interface Ghost {
   color: string;
 }
 
+const INPUT_NEWLINE = '\uE000';
+const toInput = (text: string) => text.replace(/\n/g, INPUT_NEWLINE);
+// NFC: accented letters arrive as one character, as the server's text has them.
+const fromInput = (value: string) => value.split(INPUT_NEWLINE).join('\n').normalize('NFC');
+
 interface GhostMark {
   left: number;
   top: number;
@@ -33,6 +38,8 @@ export class TypingAreaComponent {
   readonly ghosts = input<Ghost[]>([]);
 
   readonly typing = output<string>();
+  /** Shift+Enter: end the run now (zen). */
+  readonly finish = output<void>();
   readonly focusChange = output<boolean>();
 
   isFocused = false;
@@ -52,6 +59,12 @@ export class TypingAreaComponent {
   private readonly refreshKey = signal(0);
 
   readonly ghostMarks = signal<GhostMark[]>([]);
+
+  /**
+   * The text in the hidden input. Inputs drop line breaks from their value,
+   * so a line break of code text is held there as a private-use character.
+   */
+  readonly inputValue = computed(() => toInput(this.currentText() ?? ''));
 
   readonly currentLine = computed(() => {
     const lines = this.lineOfIndex();
@@ -231,17 +244,54 @@ export class TypingAreaComponent {
     this.focus();
   }
 
+  /** Text always goes in at the end, wherever the caret was left. */
+  onBeforeInput(event: Event): void {
+    const el = event.target as HTMLInputElement;
+    const end = el.value.length;
+    if (el.selectionStart !== end || el.selectionEnd !== end) el.setSelectionRange(end, end);
+  }
+
+  /** True while an IME or dead key is composing a character. */
+  private composing = false;
+
+  onCompositionStart(): void {
+    this.composing = true;
+  }
+
+  /** The composed character (e.g. ´ + u = ú) arrives as one key. */
+  onCompositionEnd(event: Event): void {
+    this.composing = false;
+    this.onInput(event);
+  }
+
   onInput(event: Event): void {
+    // Mid-composition values (a lone dead key) aren't keys yet.
+    if (this.composing || (event as InputEvent).isComposing) return;
     this.resetIdleTimer();
     const el = event.target as HTMLInputElement;
-    this.typing.emit(el.value);
+    this.typing.emit(fromInput(el.value));
     // When the parent rejects an edit (anti-spam guard, race not started yet)
     // the bound value doesn't change, so Angular never rewrites the input and
     // the rejected characters would linger. Re-sync after change detection.
     setTimeout(() => {
-      const accepted = typeof this.currentText() === 'string' ? this.currentText() : '';
+      const accepted = toInput(typeof this.currentText() === 'string' ? this.currentText() : '');
       if (el.value !== accepted) el.value = accepted;
+      // Typing always continues at the end of the text.
+      if (el.selectionStart !== accepted.length) el.setSelectionRange(accepted.length, accepted.length);
     });
+  }
+
+  /** Enter types a line break (code text); Shift+Enter finishes the run. */
+  onEnter(event: Event): void {
+    event.preventDefault();
+    if ((event as KeyboardEvent).shiftKey) {
+      this.finish.emit();
+      return;
+    }
+    // Only code text has line breaks to type.
+    if (!this.characters().some((c) => c.char === '\n')) return;
+    this.resetIdleTimer();
+    this.typing.emit((this.currentText() ?? '') + '\n');
   }
 
   private resetIdleTimer(): void {

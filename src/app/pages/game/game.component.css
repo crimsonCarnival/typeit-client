@@ -449,3 +449,17 @@ app-shortcuts-footer.dimmed {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+.zen-finish {
+  padding: 8px 14px;
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.zen-finish:hover {
+  background: var(--color-accent);
+}
