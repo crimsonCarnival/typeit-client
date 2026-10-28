@@ -744,6 +744,8 @@ app-root {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+  /* iOS zooms the page when a focused field is under 16px. */
+  font-size: 16px;
 }
 
 /* Show hint only when ready but NOT focused and NOT typing */
@@ -1665,4 +1667,22 @@ input:checked+.slider:before {
 
 .mdc-tooltip--rich-actions .user-menu-login-btn {
   margin-top: 12px;
+}
+/* ---- Touch behaviour ---- */
+
+a,
+button,
+[role='button'],
+[role='switch'],
+[role='tab'] {
+  /* No 300ms double-tap-zoom delay and no grey flash on tap. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Keyboard shortcuts mean nothing without a keyboard. */
+@media (hover: none) and (pointer: coarse) {
+  .shortcuts-footer {
+    display: none;
+  }
 }

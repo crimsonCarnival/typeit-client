@@ -44,36 +44,10 @@
   color: var(--color-text);
 }
 
-.app-logo-word {
-  font-family: var(--font-display);
-  font-size: 30px;
-  line-height: 0.9;
-  letter-spacing: 0.03em;
-}
-
-.app-logo-accent {
-  font-family: inherit;
-  color: var(--color-accent);
-}
-
-.app-logo-caret {
+.app-logo-img {
   display: block;
-  width: 10px;
-  height: 24px;
-  margin-bottom: 1px;
-  background: var(--color-primary-hover);
-  animation: logo-blink 1.05s step-end infinite;
-}
-
-@keyframes logo-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-logo-caret {
-    animation: none;
-  }
+  height: 39px;
+  width: auto;
 }
 
 .app-nav {
@@ -177,10 +151,31 @@
     gap: 12px;
   }
 
+  /* Two rows: logo + account on top, the nav strip below. */
   .app-header-left {
-    gap: 16px;
-    min-width: 0;
-    max-width: 100%;
+    display: contents;
+  }
+
+  .app-logo {
+    order: 1;
+  }
+
+  .app-logo-img {
+    height: 32px;
+  }
+
+  .app-header-right {
+    order: 2;
+  }
+
+  .app-nav {
+    order: 3;
+    flex: 1 0 100%;
+  }
+
+  .focus-label {
+    order: 1;
+    margin-right: auto;
   }
 
   /* Signed-in players get five links: scroll them instead of widening the page. */
@@ -198,5 +193,23 @@
 
   .app-main {
     padding: 12px 8px;
+  }
+
+  /* Notched phones: keep content clear of the cut-outs and home bar. */
+  .app-header {
+    padding-top: calc(12px + env(safe-area-inset-top));
+    padding-left: calc(16px + env(safe-area-inset-left));
+    padding-right: calc(16px + env(safe-area-inset-right));
+  }
+
+  .app-main {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .invite-toast {
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    max-width: none;
   }
 }

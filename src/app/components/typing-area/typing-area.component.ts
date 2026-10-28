@@ -199,7 +199,14 @@ export class TypingAreaComponent {
   }
 
   focus(): void {
-    this.input()?.nativeElement.focus();
+    const input = this.input()?.nativeElement;
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    // The on-screen keyboard covers the lower half of a phone: bring the text
+    // to the top of what is left once it has opened.
+    if (matchMedia('(pointer: coarse)').matches) {
+      setTimeout(() => this.textDisplay()?.nativeElement.parentElement?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 300);
+    }
   }
 
   /**
