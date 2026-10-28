@@ -12,7 +12,14 @@
     </div>
   } @else {
     @if (race.status() !== 'online') {
-      <p class="notice" role="status">{{ race.status() === 'connecting' ? 'Connecting to the race server…' : 'Race server unavailable. Retrying…' }}</p>
+      <p class="notice" role="status">
+        @if (race.gaveUp()) {
+          Can't reach the race server right now.
+          <button type="button" class="link-btn" (click)="race.retry()">Try again</button>
+        } @else {
+          {{ race.status() === 'connecting' ? 'Connecting to the race server…' : 'Race server unavailable. Retrying…' }}
+        }
+      </p>
     }
     @if (race.error()) {
       <p class="notice error" role="alert">{{ race.error() }}</p>

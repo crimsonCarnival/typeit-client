@@ -12,6 +12,8 @@ const SOCKET_PATH = '/ws/race';
 const PROGRESS_INTERVAL_MS = 200;
 const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 15000;
+// Give up after this many failed attempts in a row; `retry()` starts over.
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 const ERROR_MESSAGES: Record<string, string> = {
   'room-not-found': 'No race with that code.',
@@ -40,6 +42,7 @@ export class RaceService {
 
   private ws: WebSocket | null = null;
   private reconnectDelay = RECONNECT_BASE_MS;
+  private failedAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private lastProgressAt = 0;
   private pendingProgress: ReturnType<typeof setTimeout> | null = null;
@@ -47,6 +50,8 @@ export class RaceService {
   private clockOffset = 0;
 
   readonly status = signal<'offline' | 'connecting' | 'online'>('offline');
+  /** True once automatic reconnecting stopped; the lobby offers a manual retry. */
+  readonly gaveUp = signal(false);
   readonly room = signal<RaceRoom | null>(null);
   readonly openRooms = signal<OpenRace[]>([]);
   readonly invite = signal<RaceInvite | null>(null);
@@ -105,12 +110,26 @@ export class RaceService {
     const ws = this.ws;
     this.ws = null;
     ws?.close();
+    this.failedAttempts = 0;
+    this.gaveUp.set(false);
     this.status.set('offline');
     this.room.set(null);
   }
 
+  /** Starts a fresh round of connection attempts (e.g. from a "Retry" button). */
+  retry(): void {
+    if (this.ws || !this.auth.isAuthenticated()) return;
+    this.failedAttempts = 0;
+    this.reconnectDelay = RECONNECT_BASE_MS;
+    this.connect();
+  }
+
   private scheduleReconnect(): void {
     if (this.reconnectTimer) return;
+    if (++this.failedAttempts > MAX_RECONNECT_ATTEMPTS) {
+      this.gaveUp.set(true);
+      return;
+    }
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.connect();
@@ -128,6 +147,8 @@ export class RaceService {
     switch (msg.type) {
       case 'ready':
         this.status.set('online');
+        this.gaveUp.set(false);
+        this.failedAttempts = 0;
         this.reconnectDelay = RECONNECT_BASE_MS;
         this.myId.set(msg.userId);
         this.clockOffset = msg.serverNow - Date.now();
