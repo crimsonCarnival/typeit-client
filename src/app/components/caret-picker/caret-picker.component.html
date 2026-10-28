@@ -1,12 +1,26 @@
-<div class="caret-picker" [class.disabled]="disabled()" title="Caret style">
-  @for (opt of options; track opt.value) {
-    <button
-      class="caret-btn"
-      [class.active]="caretStyle() === opt.value"
-      [title]="opt.title"
-      [attr.aria-label]="opt.title"
-      [attr.aria-pressed]="caretStyle() === opt.value"
-      (click)="select(opt.value)"
-    >{{ opt.icon }}</button>
-  }
+<div class="tb-section">
+  <span class="tb-label" aria-hidden="true">Caret</span>
+  <div class="tb-buttons" role="group" aria-label="Caret style">
+    @for (opt of options; track opt.value) {
+      <button
+        type="button"
+        class="tb-btn tb-icon"
+        [class.active]="caretStyle() === opt.value"
+        [disabled]="disabled()"
+        [attr.aria-label]="opt.title"
+        [attr.aria-pressed]="caretStyle() === opt.value"
+        [title]="opt.title"
+        (click)="select(opt.value)"
+      >
+        @switch (opt.value) {
+          @case ('line') { <span class="glyph glyph-line" aria-hidden="true"></span> }
+          @case ('block') { <span class="glyph glyph-block" aria-hidden="true"></span> }
+          @case ('underline') { <span class="glyph glyph-underline" aria-hidden="true"></span> }
+          @case ('off') {
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+          }
+        }
+      </button>
+    }
+  </div>
 </div>

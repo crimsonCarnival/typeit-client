@@ -1,17 +1,25 @@
-<div
-  id="sound-toggle"
-  class="toggle-icon"
-  [class.active]="!isMuted()"
-  [class.disabled]="disabled()"
-  (click)="onClick()"
-  aria-describedby="mute-tooltip"
-  data-tooltip-id="mute-tooltip"
->
-  <i class="fa-solid" [class.fa-volume-xmark]="isMuted()" [class.fa-volume-up]="!isMuted()"></i>
-</div>
-
-<div #tooltipEl id="mute-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
-  <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
-    {{ isMuted() ? 'Unmute sound' : 'Mute sound' }}
+<div class="tb-section">
+  <span class="tb-label" aria-hidden="true">Sound</span>
+  <div class="tb-buttons">
+    <button
+      type="button"
+      class="tb-btn tb-icon"
+      [class.on]="!isMuted()"
+      [disabled]="disabled()"
+      [attr.aria-pressed]="!isMuted()"
+      [attr.aria-label]="isMuted() ? 'Sound off' : 'Sound on'"
+      [title]="isMuted() ? 'Unmute sound (M)' : 'Mute sound (M)'"
+      (click)="onClick()"
+    >
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 5 6 9H3v6h3l5 4z"></path>
+        @if (isMuted()) {
+          <path d="m22 9-6 6M16 9l6 6"></path>
+        } @else {
+          <path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+          <path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
+        }
+      </svg>
+    </button>
   </div>
 </div>

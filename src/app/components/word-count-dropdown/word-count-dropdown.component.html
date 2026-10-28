@@ -1,67 +1,31 @@
 @if (gameMode() === 'words') {
-  <div
-    class="horizontal-wordcount-dropdown"
-    [class.open]="isOpen()"
-    [class.disabled]="isTyping()"
-  >
-    <div
-      class="wordcount-icon toggle-icon"
-      [class.active]="isOpen()"
-      (click)="toggleIcon($event)"
-      aria-describedby="word-count-tooltip"
-      data-tooltip-id="word-count-tooltip"
-    >
-      <i class="fa-solid fa-align-left"></i>
-      @if (!isOpen()) {
-        <span class="ctrl-label">Words</span>
-        <span class="control-value">{{ wordCount() }}</span>
-      }
-    </div>
-
-    <div #tooltipEl id="word-count-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
-      <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
-        Word count
-      </div>
-    </div>
-    <div class="wordcount-options" [class.hidden]="!isOpen()">
+  <div class="tb-section">
+    <span class="tb-label" aria-hidden="true">Words</span>
+    <div class="tb-buttons" role="group" aria-label="Word count">
       @for (count of PRESET_COUNTS; track count) {
-        <span
-          [class.active]="wordCount() === count"
-          (click)="handleCountSelect(count)"
-        >
-          {{ count }}
-        </span>
+        <button type="button" class="tb-btn" [class.active]="wordCount() === count" [attr.aria-pressed]="wordCount() === count" [disabled]="isTyping()" (click)="handleCountSelect(count)">{{ count }}</button>
       }
       @if (showCustomInput()) {
-        <form class="custom-wordcount-form" (submit)="handleCustomSubmit($event)">
+        <form (submit)="handleCustomSubmit($event)">
           <input
             #customInput
             type="number"
             min="5"
             max="500"
+            class="tb-input"
+            aria-label="Custom word count (5 to 500)"
+            placeholder="5-500"
             [value]="customValue()"
             (input)="onCustomInput($event)"
             (keydown)="handleCustomKeyDown($event)"
-            placeholder="5-500"
-            class="custom-wordcount-input"
-            (click)="stopPropagation($event)"
           />
         </form>
+      } @else if (isCustomCount()) {
+        <button type="button" class="tb-btn active" aria-pressed="true" aria-label="Custom word count, change" [disabled]="isTyping()" (click)="handleCustomClick($event)">{{ wordCount() }}</button>
       } @else {
-        <span
-          class="custom-option"
-          [class.active]="isCustomCount()"
-          (click)="handleCustomClick($event)"
-          aria-describedby="wordcount-settings-tooltip"
-          data-tooltip-id="wordcount-settings-tooltip"
-        >
-          {{ isCustomCount() ? wordCount() : '&#9881;' }}
-        </span>
-        <div #settingsTooltipEl id="wordcount-settings-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
-          <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
-            Settings
-          </div>
-        </div>
+        <button type="button" class="tb-btn tb-icon" aria-label="Custom word count" title="Custom word count" [disabled]="isTyping()" (click)="handleCustomClick($event)">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"></path></svg>
+        </button>
       }
     </div>
   </div>

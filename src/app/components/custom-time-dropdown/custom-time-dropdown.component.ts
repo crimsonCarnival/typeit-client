@@ -1,6 +1,4 @@
-import { Component, effect, ElementRef, input, output, signal, viewChild, AfterViewInit, OnDestroy } from '@angular/core';
-import { MDCTooltip } from '@material/tooltip';
-import { createTooltip, destroyTooltip } from '../../utils/tooltip.utils';
+import { Component, effect, ElementRef, input, output, signal, viewChild } from '@angular/core';
 
 const PRESET_TIMES = [30, 60, 90, 120];
 
@@ -17,17 +15,11 @@ export class CustomTimeDropdownComponent {
   readonly timeSelect = output<number>();
 
   readonly PRESET_TIMES = PRESET_TIMES;
-  readonly isOpen = signal(true);
   readonly customValue = signal('');
   readonly showCustomInput = signal(false);
   readonly isCustomTime = signal(false);
 
   private readonly customInput = viewChild<ElementRef<HTMLInputElement>>('customInput');
-  readonly tooltipEl = viewChild<ElementRef<HTMLElement>>('tooltipEl');
-  private tooltip?: MDCTooltip;
-
-  readonly settingsTooltipEl = viewChild<ElementRef<HTMLElement>>('settingsTooltipEl');
-  private settingsTooltip?: MDCTooltip;
 
   constructor() {
     effect(() => {
@@ -38,16 +30,6 @@ export class CustomTimeDropdownComponent {
         this.customInput()?.nativeElement.focus();
       }
     });
-  }
-
-  ngAfterViewInit() {
-    this.tooltip = createTooltip(this.tooltipEl()?.nativeElement);
-    this.settingsTooltip = createTooltip(this.settingsTooltipEl()?.nativeElement);
-  }
-
-  ngOnDestroy() {
-    destroyTooltip(this.tooltip, this.tooltipEl()?.nativeElement);
-    destroyTooltip(this.settingsTooltip, this.settingsTooltipEl()?.nativeElement);
   }
 
   handleTimeSelect(time: number): void {
@@ -81,16 +63,5 @@ export class CustomTimeDropdownComponent {
 
   onCustomInput(event: Event): void {
     this.customValue.set((event.target as HTMLInputElement).value);
-  }
-
-  toggleIcon(event: Event): void {
-    event.stopPropagation();
-    if (!this.disabled()) {
-      this.isOpen.update((value) => !value);
-    }
-  }
-
-  stopPropagation(event: Event): void {
-    event.stopPropagation();
   }
 }

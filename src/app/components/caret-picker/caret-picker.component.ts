@@ -11,11 +11,11 @@ export class CaretPickerComponent {
   readonly disabled = input(false);
   readonly caretChange = output<CaretStyle>();
 
-  readonly options: { value: CaretStyle; icon: string; title: string }[] = [
-    { value: 'line',      icon: '|',  title: 'Line caret'      },
-    { value: 'block',     icon: '█',  title: 'Block caret'     },
-    { value: 'underline', icon: '_',  title: 'Underline caret' },
-    { value: 'off',       icon: '✕',  title: 'No caret'        },
+  readonly options: { value: CaretStyle; title: string }[] = [
+    { value: 'line',      title: 'Line caret'      },
+    { value: 'block',     title: 'Block caret'     },
+    { value: 'underline', title: 'Underline caret' },
+    { value: 'off',       title: 'No caret'        },
   ];
 
   select(value: CaretStyle): void {

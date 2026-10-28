@@ -1,6 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, computed, effect, inject, signal, viewChild, ElementRef, OnDestroy } from '@angular/core';
-import { MDCTooltip } from '@material/tooltip';
-import { createTooltip, destroyTooltip } from '../../utils/tooltip.utils';
+import { AfterViewInit, Component, DestroyRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
@@ -44,7 +42,7 @@ const BOT_TICK_MS = 100;
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
 })
-export class GameComponent implements AfterViewInit, OnDestroy {
+export class GameComponent implements AfterViewInit {
   readonly auth = inject(AuthService);
   readonly game = inject(GameService);
 
@@ -56,7 +54,6 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   readonly typingArea = viewChild(TypingAreaComponent);
 
-  inputReady = false;
   isFocused = false;
 
   readonly race = inject(RaceService);
@@ -133,8 +130,8 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     return you >= bot ? 'You beat the bot.' : 'The bot won this one.';
   });
 
-  readonly richTooltipEl = viewChild<ElementRef<HTMLElement>>('richTooltipEl');
-  private richTooltip?: MDCTooltip;
+  /** Best WPM shown in the status line for signed-in players. */
+  readonly personalBest = computed(() => this.auth.user()?.stats?.bestWpm || null);
 
   constructor() {
     // Keep the game service in sync with auth transitions (mount + login/logout).
@@ -171,11 +168,6 @@ export class GameComponent implements AfterViewInit, OnDestroy {
       // ignore in non-browser environments
     }
 
-    this.richTooltip = createTooltip(this.richTooltipEl()?.nativeElement);
-  }
-
-  ngOnDestroy() {
-    destroyTooltip(this.richTooltip, this.richTooltipEl()?.nativeElement);
   }
 
   focusInput(): void {
@@ -184,7 +176,6 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   async handleCloseResults(): Promise<void> {
     await this.game.resetGame();
-    this.inputReady = false;
     this.isFocused = false;
     this.focusInput();
     void this.auth.refreshProfile();
@@ -192,7 +183,6 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   handleTimeSelect(time: number): void {
     this.game.setTimeMax(time);
-    this.inputReady = true;
   }
 
   // Refresh button and Esc reset do the same thing: a new paragraph plus a
@@ -232,14 +222,10 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   handleWrapperClick(event: Event): void {
     const target = event.target as HTMLElement;
+    // Clicks on controls keep their own focus; anywhere else focuses the text.
     const isInteractive =
-      target.closest('button') ||
-      target.closest('.toggle-icon') ||
-      target.closest('.horizontal-time-dropdown') ||
-      target.closest('.horizontal-mode-dropdown') ||
-      target.closest('.horizontal-wordcount-dropdown') ||
+      target.closest('button, a, input, select, textarea, label') ||
       target.closest('.horizontal-textsource-dropdown') ||
-      target.closest('.toggle-hints-btn') ||
       target.closest('.alert-card');
     if (!isInteractive) {
       this.focusInput();

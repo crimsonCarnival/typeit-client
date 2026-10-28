@@ -80,6 +80,120 @@
   --bg-color: var(--color-bg);
 }
 
+/* Game settings toolbar: shared by the toolbar components (sound, caret,
+   mode, words, modifiers, time). Values from redesign/Game.dc.html. */
+.tb-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 8px;
+}
+
+.tb-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #85818a;
+}
+
+.tb-buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tb-btn {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #cfcbd3;
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.tb-btn:hover:not(:disabled):not(.active) {
+  background: #26262b;
+  color: var(--color-text);
+}
+
+.tb-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.tb-btn.tb-icon {
+  padding: 0;
+  color: var(--color-text-subtle);
+}
+
+/* Beats the legacy global button:disabled grey further down. */
+.tb-btn:disabled {
+  background: transparent;
+  color: #cfcbd3;
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.tb-btn.active:disabled {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.tb-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .game-toolbar > * + * .tb-section::before {
+    display: none;
+  }
+}
+
+/* Lives here, not in game.component.css: emulated encapsulation would stop
+   it reaching the sections inside the child components. */
+/* Divider before every section except the first (empty hosts render none). */
+.game-toolbar > * + * .tb-section {
+  position: relative;
+  margin-left: 5px;
+}
+
+.game-toolbar > * + * .tb-section::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.tb-input {
+  width: 72px;
+  height: 44px;
+  padding: 0 10px;
+  border: 1.5px solid #34343a;
+  border-radius: var(--radius-sm);
+  background: #0c0c0e;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 19px;
+}
+
+.tb-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
 * {
   font-family: 'Hapna Demibold';
   margin: 0;
@@ -475,20 +589,6 @@ h2 {
    intentionally removed — see the .toggle-icon rules above which give
    gray to inactive and red only to .active state (fix #5). */
 
-.shortcuts-footer kbd {
-  background: #222;
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid #555;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-}
-
-.shortcuts-footer kbd {
-  background: #333;
-  border-color: #666;
-}
 
 .paragraph-instructions {
   margin-left: auto;
@@ -603,64 +703,6 @@ app-root {
   }
 }
 
-.shortcuts-footer {
-  position: fixed;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  z-index: 10;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-}
-
-.shortcuts-footer .hotkey-hint {
-  font-size: 1.1em;
-  color: #888;
-  opacity: 0.9;
-}
-
-.shortcuts-footer .hotkey-items {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-}
-
-.shortcuts-footer .hotkey-hint.hidden {
-  display: none;
-}
-
-.shortcuts-footer .hotkey-items.hidden {
-  display: none;
-}
-
-.hotkey-item {
-  display: inline-block;
-}
-
-.toggle-hints-btn {
-  cursor: pointer;
-  user-select: none;
-  transition: opacity 0.2s ease;
-  flex-shrink: 0;
-}
-
-.toggle-hints-btn kbd {
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.toggle-hints-btn:hover {
-  opacity: 0.7;
-}
-
-.shortcuts-footer .hotkey-hint {
-  color: #bbb;
-}
-
 .content {
   margin-bottom: 5px;
   margin-right: auto;
@@ -673,13 +715,9 @@ app-root {
   left: 0;
   right: 0;
   height: 15px;
-  background: linear-gradient(var(--bg-color, #fff), transparent);
+  background: linear-gradient(var(--color-surface), transparent);
   pointer-events: none;
   z-index: 1;
-}
-
-.typing-text::before {
-  background: linear-gradient(var(--bg-color, #2a2a2a), transparent);
 }
 
 .typing-text::after {
@@ -689,13 +727,9 @@ app-root {
   left: 0;
   right: 0;
   height: 25px;
-  background: linear-gradient(transparent, var(--bg-color, #fff));
+  background: linear-gradient(transparent, var(--color-surface));
   pointer-events: none;
   z-index: 1;
-}
-
-.typing-text::after {
-  background: linear-gradient(transparent, var(--bg-color, #2a2a2a));
 }
 
 abbr {
@@ -710,39 +744,31 @@ ul li {
   margin-top: 10px;
 }
 
-/* fix #3 – base upcoming-word colour is #ddd; the per-line opacity is set
-   in typing-area.component.css so they reach ~#949494+ on #1e1e1e */
+/* Text panel typography (redesign/Typing.dc.html): untyped text is faint,
+   typed text bright, mistakes red with a thick underline. */
 .typing-text p {
   width: 100%;
-  letter-spacing: 1px;
   word-break: normal;
   overflow-wrap: break-word;
   white-space: pre-wrap;
-  line-height: 1.6;
-  font-size: 28px;
+  line-height: 1.75;
+  font-size: 30px;
+  word-spacing: 0.22em;
   transform: translateY(0);
   transition: transform 0.15s ease-out;
   will-change: transform;
-  color: #e0e0e0;   /* raised from #ddd to ensure legible base */
+  color: var(--color-text-faint);
 }
 
 .typing-text p span.correct {
-  font-weight: 600;
-  color: #333;
-}
-
-.typing-text p span.correct {
-  color: #ddd;
+  color: var(--color-text);
 }
 
 .typing-text p span.incorrect {
-  color: #ff6b6b;
-  background: #ffc0cb;
-  border-radius: 4px;
-}
-
-.typing-text p span.active {
-  color: #90caf9;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 7px;
 }
 
 /* =========================================================
@@ -760,11 +786,12 @@ ul li {
 .typing-text.focused[data-caret="line"] p span.active::before {
   content: '';
   position: absolute;
-  left: -1px;
-  top: 5%;
-  height: 90%;
-  width: 2px;
-  background: #90caf9;
+  left: -2px;
+  top: 8%;
+  height: 84%;
+  width: 3px;
+  background: var(--color-accent);
+  box-shadow: 0 0 14px rgba(255, 59, 79, 0.85);
   border-radius: 1px;
   animation: blink 0.9s step-end infinite;
   transition: opacity 0.3s ease;
@@ -772,13 +799,13 @@ ul li {
 
 /* --- BLOCK (solid background behind character) --- */
 .typing-text.focused[data-caret="block"] p span.active {
-  background: rgba(144, 202, 249, 0.35);
+  background: rgba(255, 59, 79, 0.35);
   border-radius: 2px;
-  outline: 1px solid rgba(144, 202, 249, 0.55);
+  outline: 1px solid rgba(255, 59, 79, 0.6);
   animation: blink-block 0.9s step-end infinite;
 }
 @keyframes blink-block {
-  0%, 100% { background: rgba(144, 202, 249, 0.35); }
+  0%, 100% { background: rgba(255, 59, 79, 0.35); }
   50%       { background: transparent; }
 }
 
@@ -789,8 +816,9 @@ ul li {
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 2px;
-  background: #90caf9;
+  height: 3px;
+  background: var(--color-accent);
+  box-shadow: 0 0 10px rgba(255, 59, 79, 0.7);
   border-radius: 1px;
   animation: blink 0.9s step-end infinite;
 }
@@ -812,6 +840,14 @@ ul li {
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-text p span.active,
+  .typing-text p span.active::before,
+  .typing-text p span.active::after {
+    animation: none !important;
+  }
 }
 
 .content button {
@@ -1113,10 +1149,6 @@ input:checked+.slider:before {
   color: #777;
 }
 
-body {
-  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg');
-}
-
 /* fix #9 – more opaque wrapper background to suppress texture grain */
 .wrapper {
   width: 1280px;
@@ -1126,22 +1158,6 @@ body {
   color: #e0e0e0;
 }
 
-/* Content box — darker fill so grain behind is less visible */
-.content-box {
-  background: rgba(25, 25, 25, 0.92);
-  border-radius: 8px;
-  border: 1px solid rgba(188, 5, 23, 0.35);
-}
-
-.typing-text p span.incorrect {
-  background: #ff6b6b;
-  color: #ffe0e0;
-  border-color: #2a2a2a;
-}
-
-.typing-text p span.active {
-  color: #90caf9;
-}
 
 .content button {
   background: #bc0517;
@@ -1380,10 +1396,6 @@ body {
     width: 100%;
   }
 
-  .shortcuts-footer {
-    gap: 8px;
-    font-size: 0.9em;
-  }
 }
 
 @media (max-width: 480px) {
@@ -1401,18 +1413,9 @@ body {
   }
 
   .typing-text p {
-    font-size: 16px;
+    font-size: 21px;
   }
 
-  .shortcuts-footer {
-    gap: 6px;
-    font-size: 0.85em;
-  }
-
-  .shortcuts-footer kbd {
-    font-size: 10px;
-    padding: 1px 4px;
-  }
 }
 
 /* ============ Results panel (full-screen) ============ */

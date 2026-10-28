@@ -1,6 +1,4 @@
-import { Component, input, output, viewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { MDCTooltip } from '@material/tooltip';
-import { createTooltip, destroyTooltip } from '../../utils/tooltip.utils';
+import { Component, input, output } from '@angular/core';
 import { GameMode } from '../../models/models';
 
 @Component({
@@ -8,34 +6,14 @@ import { GameMode } from '../../models/models';
   templateUrl: './mode-dropdown.component.html',
   styleUrl: './mode-dropdown.component.css',
 })
-export class ModeDropdownComponent implements AfterViewInit, OnDestroy {
+export class ModeDropdownComponent {
   readonly gameMode = input<GameMode>('phrases');
   readonly isTyping = input(false);
   readonly modeChange = output<GameMode>();
 
-  readonly tooltipEl = viewChild<ElementRef<HTMLElement>>('tooltipEl');
-  private tooltip?: MDCTooltip;
-
-  isOpen = true;
-
-  ngAfterViewInit() {
-    this.tooltip = createTooltip(this.tooltipEl()?.nativeElement);
-  }
-
-  ngOnDestroy() {
-    destroyTooltip(this.tooltip, this.tooltipEl()?.nativeElement);
-  }
-
   handleModeSelect(mode: GameMode): void {
     if (!this.isTyping()) {
       this.modeChange.emit(mode);
-    }
-  }
-
-  toggleOpen(event: Event): void {
-    event.stopPropagation();
-    if (!this.isTyping()) {
-      this.isOpen = !this.isOpen;
     }
   }
 }

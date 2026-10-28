@@ -1,19 +1,25 @@
-<div
-  class="toggle-icon refresh-icon"
-  [class.disabled]="disabled()"
+<button
+  type="button"
+  class="refresh-btn"
+  aria-label="New text"
+  title="New text (Esc)"
+  [disabled]="disabled()"
   (click)="handleClick()"
-  aria-describedby="refresh-tooltip"
-  data-tooltip-id="refresh-tooltip"
 >
-  <i
-    class="fas fa-sync-alt"
-    [class.animate-spin]="isSpinning"
+  <svg
+    aria-hidden="true"
+    [class.spin]="isSpinning"
     (animationend)="handleAnimationEnd()"
-  ></i>
-</div>
-
-<div #tooltipEl id="refresh-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
-  <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
-    New text
-  </div>
-</div>
+    width="26"
+    height="26"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+    <path d="M3 3v5h5"></path>
+  </svg>
+</button>

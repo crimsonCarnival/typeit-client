@@ -1,6 +1,4 @@
-import { Component, DestroyRef, effect, inject, output, signal, viewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { MDCTooltip } from '@material/tooltip';
-import { createTooltip, destroyTooltip } from '../../utils/tooltip.utils';
+import { Component, DestroyRef, effect, inject, output, signal } from '@angular/core';
 import { ls } from '../../utils/storage';
 
 @Component({
@@ -16,9 +14,6 @@ export class ShortcutsFooterComponent {
   readonly restartSame = output<void>();
 
   readonly isVisible = signal(ls.get('shortcutsVisible') !== 'false');
-
-  readonly tooltipEl = viewChild<ElementRef<HTMLElement>>('tooltipEl');
-  private tooltip?: MDCTooltip;
 
   constructor() {
     effect(() => {
@@ -57,14 +52,6 @@ export class ShortcutsFooterComponent {
 
     document.addEventListener('keydown', handleKeyPress);
     this.destroyRef.onDestroy(() => document.removeEventListener('keydown', handleKeyPress));
-  }
-
-  ngAfterViewInit() {
-    this.tooltip = createTooltip(this.tooltipEl()?.nativeElement);
-  }
-
-  ngOnDestroy() {
-    destroyTooltip(this.tooltip, this.tooltipEl()?.nativeElement);
   }
 
   toggleVisible(): void {

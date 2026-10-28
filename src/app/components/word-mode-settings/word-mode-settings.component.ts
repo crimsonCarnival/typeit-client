@@ -1,6 +1,4 @@
-import { Component, input, output, viewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { MDCTooltip } from '@material/tooltip';
-import { createTooltip, destroyTooltip } from '../../utils/tooltip.utils';
+import { Component, input, output } from '@angular/core';
 import { GameMode } from '../../models/models';
 
 @Component({
@@ -15,26 +13,6 @@ export class WordModeSettingsComponent {
   readonly gameMode = input<GameMode>('phrases');
   readonly punctuationToggle = output<void>();
   readonly numbersToggle = output<void>();
-
-  readonly tooltipEl = viewChild<ElementRef<HTMLElement>>('tooltipEl');
-  private tooltip?: MDCTooltip;
-
-  isOpen = true;
-
-  ngAfterViewInit() {
-    this.tooltip = createTooltip(this.tooltipEl()?.nativeElement);
-  }
-
-  ngOnDestroy() {
-    destroyTooltip(this.tooltip, this.tooltipEl()?.nativeElement);
-  }
-
-  toggleIcon(event: Event): void {
-    event.stopPropagation();
-    if (!this.disabled()) {
-      this.isOpen = !this.isOpen;
-    }
-  }
 
   onPunctuation(): void {
     if (!this.disabled()) {

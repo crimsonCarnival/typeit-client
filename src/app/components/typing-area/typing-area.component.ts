@@ -5,6 +5,7 @@ import { Character, CaretStyle } from '../../models/models';
   selector: 'app-typing-area',
   templateUrl: './typing-area.component.html',
   styleUrl: './typing-area.component.css',
+  host: { '(document:keydown)': 'onDocumentKeydown($event)' },
 })
 export class TypingAreaComponent {
   readonly characters = input<Character[]>([]);
@@ -116,6 +117,21 @@ export class TypingAreaComponent {
 
   focus(): void {
     this.input()?.nativeElement.focus();
+  }
+
+  /**
+   * "Click or start typing": a printable key pressed while nothing else has
+   * focus focuses the hidden input, and the browser then delivers that key
+   * to it, so the keystroke isn't lost. M is left alone: unfocused, it is
+   * the mute shortcut (shortcuts-footer).
+   */
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (this.isFocused || event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key.toLowerCase() === 'm') return;
+    const active = document.activeElement as HTMLElement | null;
+    const busy = active && active !== document.body && (active.matches('input, textarea, select, [contenteditable]') || !!active.closest('[role="dialog"]'));
+    if (busy) return;
+    this.focus();
   }
 
   blur(): void {

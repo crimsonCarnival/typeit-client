@@ -1,43 +1,9 @@
 @if (gameMode() === 'words') {
-  <div
-    class="horizontal-wordmode-settings"
-    [class.open]="isOpen"
-    [class.disabled]="disabled()"
-  >
-    <div
-      class="wordmode-icon"
-      (click)="toggleIcon($event)"
-      aria-describedby="wordmode-tooltip"
-      data-tooltip-id="wordmode-tooltip"
-    >
-      <i class="fas fa-font"></i>
-      @if (!isOpen) {
-        @if (punctuationEnabled()) {
-          <span class="control-value">.,?!</span>
-        }
-        @if (numbersEnabled()) {
-          <span class="control-value">123</span>
-        }
-      }
-    </div>
-    <div #tooltipEl id="wordmode-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
-      <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
-        Word mode settings
-      </div>
-    </div>
-    <div class="wordmode-options" [class.hidden]="!isOpen">
-      <span
-        [class.active]="punctuationEnabled()"
-        (click)="onPunctuation()"
-      >
-        .,?!
-      </span>
-      <span
-        [class.active]="numbersEnabled()"
-        (click)="onNumbers()"
-      >
-        123
-      </span>
+  <div class="tb-section">
+    <span class="tb-label" aria-hidden="true">Modifiers</span>
+    <div class="tb-buttons" role="group" aria-label="Modifiers">
+      <button type="button" class="tb-btn mono" [class.active]="punctuationEnabled()" [attr.aria-pressed]="punctuationEnabled()" aria-label="Punctuation" title="Punctuation" [disabled]="disabled()" (click)="onPunctuation()">.?!</button>
+      <button type="button" class="tb-btn mono" [class.active]="numbersEnabled()" [attr.aria-pressed]="numbersEnabled()" aria-label="Numbers" title="Numbers" [disabled]="disabled()" (click)="onNumbers()">123</button>
     </div>
   </div>
 }

@@ -1,21 +1,15 @@
 <div class="shortcuts-footer">
-  <div class="hotkey-items" [class.hidden]="!isVisible()" id="hotkey-items">
+  @if (isVisible()) {
     <span class="hotkey-item"><kbd>Esc</kbd> New text</span>
     <span class="hotkey-item"><kbd>Tab</kbd> Restart same</span>
     <span class="hotkey-item"><kbd>M</kbd> Mute</span>
-  </div>
-  <div
-    class="toggle-hints-btn"
+  }
+  <button
+    type="button"
+    class="hotkey-item hotkey-toggle"
+    [attr.aria-expanded]="isVisible()"
     (click)="toggleVisible()"
-    aria-describedby="help-tooltip"
-    data-tooltip-id="help-tooltip"
   >
-    <kbd>?</kbd>
-  </div>
-
-  <div #tooltipEl id="help-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
-    <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
-      Keyboard shortcuts
-    </div>
-  </div>
+    <kbd>?</kbd> {{ isVisible() ? 'Hide shortcuts' : 'Shortcuts' }}
+  </button>
 </div>
