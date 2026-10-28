@@ -1,21 +1,57 @@
 @font-face {
   font-family: 'Hapna Demibold';
-  src: url('https://res.cloudinary.com/dzjid2tos/raw/upload/v1764109056/Hapna_Slab_Serif_DemiBold_dwvx3i.ttf');
+  src: url('/fonts/hapna-slab-demibold.ttf') format('truetype');
+  font-weight: 100 900;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'Kirsty Regular';
-  src: url('https://res.cloudinary.com/dzjid2tos/raw/upload/v1764109055/chinese_rocks_rg_y8h96e.ttf');
-  fontdisplay: swap;
+  src: url('/fonts/kirsty-regular.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
 }
 
+/* Redesign tokens — values from redesign/*.dc.html */
 :root {
-  --bg-color: #fff;
-}
+  --font-display: 'Kirsty Regular', 'Big Shoulders Display', Impact, sans-serif;
+  --font-body: 'Hapna Demibold', 'Zilla Slab', Rockwell, Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-:root {
-  --bg-color: #2a2a2a;
+  --color-bg: #0a0a0b;
+  --color-surface: rgba(16, 16, 18, 0.94);
+  --color-surface-solid: #141416;
+  --color-surface-raised: #1e1e22;
+  --color-track: #26262a;
+
+  --color-border: #26262a;
+  --color-border-strong: #4a474e;
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
+
+  --color-text: #f2efea;
+  --color-text-muted: #bdb9c1;
+  --color-text-subtle: #a9a5ad;
+  --color-text-faint: #6e6a74;
+
+  --color-primary: #c8102e;
+  --color-primary-hover: #e01535;
+  --color-primary-glow: rgba(200, 16, 46, 0.35);
+  --color-accent: #ff3b4f;
+  --color-accent-hover: #ff6b7a;
+
+  /* chart / stat series */
+  --color-wpm: #f5b700;
+  --color-accuracy: #2fd3a7;
+  --color-consistency: #a497ff;
+  --color-afk: #ff9a3c;
+  --color-pb: #ff5c8a;
+
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* legacy alias, used by typing-area fades */
+  --bg-color: var(--color-bg);
 }
 
 * {
@@ -461,10 +497,13 @@ body {
   align-items: flex-start;
   justify-content: center;
   min-height: 100vh;
-  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+  background-color: var(--color-bg);
+  background-image: url('/img/grunge-bg.jpg');
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--color-text);
   padding: 70px 10px 20px 10px;  /* was 50px, header is fixed at ~50px */
   box-sizing: border-box;
 }
