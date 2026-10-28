@@ -1,0 +1,31 @@
+<div
+  class="horizontal-mode-dropdown"
+  [class.open]="isOpen"
+  [class.disabled]="isTyping()"
+>
+  <div
+    class="mode-icon"
+    (click)="toggleOpen($event)"
+    aria-describedby="mode-tooltip"
+    data-tooltip-id="mode-tooltip"
+  >
+    <i class="fas fa-sliders-h"></i>
+    @if (!isOpen) {
+      <span class="control-value">{{ gameMode() === 'words' ? 'Words' : 'Phrases' }}</span>
+    }
+  </div>
+
+  <div #tooltipEl id="mode-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
+    <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
+      Select mode
+    </div>
+  </div>
+  <div class="mode-options" [class.hidden]="!isOpen">
+    <span [class.active]="gameMode() === 'phrases'" (click)="handleModeSelect('phrases')">
+      Phrases
+    </span>
+    <span [class.active]="gameMode() === 'words'" (click)="handleModeSelect('words')">
+      Words
+    </span>
+  </div>
+</div>

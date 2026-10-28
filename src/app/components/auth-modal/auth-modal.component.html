@@ -1,0 +1,120 @@
+<div class="auth-modal-overlay" (click)="handleOverlayClick($event)">
+  <div class="auth-modal">
+    <button class="auth-modal-close" (click)="closeModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <h2 class="auth-modal-title">
+      {{ mode === 'login' ? 'Welcome Back' : 'Create Account' }}
+    </h2>
+
+    @if (displayError()) {
+      <div class="auth-error">
+        {{ displayError() }}
+      </div>
+    }
+
+    <form class="auth-form" (submit)="handleSubmit($event)">
+      @if (mode === 'register') {
+        <div class="auth-field">
+          <label for="displayName">Display name</label>
+          <input
+            type="text"
+            id="displayName"
+            name="displayName"
+            [value]="displayName"
+            (input)="handleChange('displayName', $event)"
+            placeholder="How you want to be shown"
+            autocomplete="nickname"
+            [disabled]="isSubmitting()"
+          />
+        </div>
+        <div class="auth-field">
+          <label for="username">Account name</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            [value]="username"
+            (input)="handleChange('username', $event)"
+            placeholder="Choose an account name"
+            autocomplete="username"
+            [disabled]="isSubmitting()"
+          />
+        </div>
+      }
+
+      <div class="auth-field">
+        <label for="email">
+          {{ mode === 'login' ? 'Username or Email' : 'Email' }}
+        </label>
+        <input
+          type="{{ mode === 'register' ? 'email' : 'text' }}"
+          id="email"
+          name="email"
+          [value]="email"
+          (input)="handleChange('email', $event)"
+          [placeholder]="mode === 'login' ? 'Enter username or email' : 'Enter your email'"
+          [attr.autocomplete]="mode === 'register' ? 'email' : 'username'"
+          [disabled]="isSubmitting()"
+        />
+      </div>
+
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [value]="password"
+          (input)="handleChange('password', $event)"
+          placeholder="Enter your password"
+          [attr.autocomplete]="mode === 'register' ? 'new-password' : 'current-password'"
+          [disabled]="isSubmitting()"
+        />
+      </div>
+
+      @if (mode === 'register') {
+        <div class="auth-field">
+          <label for="confirmPassword">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            [value]="confirmPassword"
+            (input)="handleChange('confirmPassword', $event)"
+            placeholder="Confirm your password"
+            autocomplete="new-password"
+            [disabled]="isSubmitting()"
+          />
+        </div>
+      }
+
+      <button type="submit" class="auth-submit-btn" [disabled]="isSubmitting()">
+        {{
+          isSubmitting()
+            ? (mode === 'login' ? 'Logging in...' : 'Creating account...')
+            : (mode === 'login' ? 'Login' : 'Create Account')
+        }}
+      </button>
+    </form>
+
+    <div class="auth-switch">
+      @if (mode === 'login') {
+        Don't have an account?
+        <button type="button" (click)="switchMode()" [disabled]="isSubmitting()">
+          Sign up
+        </button>
+      } @else {
+        Already have an account?
+        <button type="button" (click)="switchMode()" [disabled]="isSubmitting()">
+          Login
+        </button>
+      }
+    </div>
+  </div>
+</div>
+

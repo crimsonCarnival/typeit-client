@@ -1,0 +1,27 @@
+<div class="account-page">
+  <div class="app-header">
+    <nav class="app-nav">
+      <a class="app-nav-link" routerLink="/">Game</a>
+      <a class="app-nav-link" routerLink="/profile">Profile</a>
+      <a class="app-nav-link active" routerLink="/stats">Statistics</a>
+    </nav>
+    <app-user-menu />
+  </div>
+
+  @if (loading()) {
+    <div class="page-loading">Loading&#8230;</div>
+  } @else {
+    <div class="profile-card stats-card-wide">
+      <h2 class="profile-title">Statistics</h2>
+      <app-stats-sections [stats]="user()?.stats ?? null" [overall]="overall()" [averages]="averages()" />
+    </div>
+
+    <div class="profile-card stats-card-wide">
+      @if (historyLoading()) {
+        <div class="history-loading">Loading history&#8230;</div>
+      } @else {
+        <app-session-history-chart [sessions]="sessions()" />
+      }
+    </div>
+  }
+</div>

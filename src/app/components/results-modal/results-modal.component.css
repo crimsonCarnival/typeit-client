@@ -1,0 +1,73 @@
+/* Tooltip icon in stat cells */
+.stat-tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #9ca3af;
+  font-size: 9px;
+  font-family: sans-serif;
+  font-weight: bold;
+  cursor: help;
+  margin-left: 5px;
+  vertical-align: middle;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.stat-tooltip-icon:hover {
+  background: rgba(188, 5, 23, 0.2);
+  border-color: rgba(188, 5, 23, 0.5);
+  color: #f5f5f5;
+}
+
+/* CSS-driven tooltip using data-tooltip attribute — mirrors MDC surface style */
+.stat-tooltip-icon[data-tooltip] {
+  position: relative;
+}
+
+.stat-tooltip-icon[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 18, 18, 0.96);
+  border: 1px solid #bc0517;
+  border-radius: 4px;
+  color: #fff;
+  font-family: 'Hapna Demibold', sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.5;
+  padding: 8px 12px;
+  width: max-content;
+  max-width: 260px;
+  white-space: normal;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease 0.1s;
+  z-index: 9000;
+}
+
+.stat-tooltip-icon[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+/* Subtle WPM category description text inside the WPM hero card */
+.hero-stat-tier-desc {
+  font-family: 'Kirsty Regular', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-top: 3px;
+  opacity: 0.85;
+  text-align: center;
+  white-space: nowrap;
+}

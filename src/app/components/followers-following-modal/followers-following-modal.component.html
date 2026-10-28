@@ -1,0 +1,46 @@
+<div class="follow-modal-overlay" (click)="handleOverlayClick($event)">
+  <div class="follow-modal">
+    <div class="follow-modal-header">
+      <h3>{{ title() }}</h3>
+      <button class="follow-modal-close" (click)="close.emit()" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="follow-modal-body">
+      @if (error()) {
+        <div class="follow-modal-empty">{{ error() }}</div>
+      }
+      @if (!error() && users() === null) {
+        <div class="follow-modal-empty">Loading&#8230;</div>
+      }
+      @if (!error() && users() !== null && users()!.length === 0) {
+        <div class="follow-modal-empty">No {{ title().toLowerCase() }} yet.</div>
+      }
+      @if (users() !== null && users()!.length > 0) {
+        <ul class="follow-list">
+          @for (u of users(); track u._id) {
+            <li>
+              <a class="follow-list-item" [routerLink]="['/user', u._id]" (click)="close.emit()">
+                @if (u.avatar) {
+                  <img [src]="u.avatar" [alt]="u.username" class="follow-avatar" />
+                } @else {
+                  <div class="follow-avatar follow-avatar-placeholder">
+                    {{ avatarText(u) }}
+                  </div>
+                }
+                <span class="follow-info">
+                  <b>{{ u.displayName || u.username }}</b>
+                  <small>&#64;{{ u.username }}</small>
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+</div>

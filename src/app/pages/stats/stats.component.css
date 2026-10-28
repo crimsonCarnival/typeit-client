@@ -1,0 +1,23 @@
+.history-loading {
+  color: #6b7280;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 40px 0;
+  margin-top: 32px;
+}
+
+.stats-card-wide {
+  max-width: 1600px;
+  width: 100%;
+}
+
+.profile-card + .profile-card {
+  margin-top: 32px;
+}
+
+.profile-title {
+  font-family: 'Kirsty Regular';
+  font-size: 30px;
+  color: #bc0517;
+  margin: 0 0 16px;
+}

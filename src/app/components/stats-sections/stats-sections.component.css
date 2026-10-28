@@ -1,0 +1,190 @@
+/* ================================================================
+   STATS SECTIONS COMPONENT STYLES
+   Migrated from global styles.css — dark mode only.
+   ================================================================ */
+
+:host {
+  display: contents;
+}
+
+/* ============ SECTION HEADER + TIME FORMAT TOGGLE ============ */
+.stats-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.time-format-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(188, 5, 23, 0.12);
+  border: 1px solid rgba(188, 5, 23, 0.4);
+  color: #e5e7eb;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.time-format-toggle-btn:hover {
+  background: rgba(188, 5, 23, 0.25);
+  border-color: #bc0517;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.time-format-toggle-btn:active {
+  transform: translateY(0);
+}
+
+/* Emoji icon inside the toggle button */
+.time-format-toggle-btn .toggle-icon {
+  font-size: 14px;
+}
+
+.time-format-toggle-btn strong {
+  color: #f87171;
+  font-weight: 600;
+}
+
+/* ============ STATS ROWS ============ */
+.stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.stats-row .stats-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* ============ STATS CARDS ============ */
+.stats-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.stats-card-title {
+  display: block;
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.stats-card-value {
+  display: block;
+  font-family: 'Kirsty Regular';
+  font-size: 28px;
+  color: #f5f5f5;
+}
+
+.stats-card-label {
+  display: block;
+  font-size: 13px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.stats-card.empty .stats-card-empty {
+  color: #777;
+  font-size: 16px;
+}
+
+/* ============ CARD ROW LAYOUTS ============ */
+.stats-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-card-rows > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  color: #bbb;
+}
+
+.stats-card-rows b {
+  color: #bc0517;
+  font-family: 'Kirsty Regular';
+  font-size: 19px;
+}
+
+/* Grid layout for per-mode cards — 3-column */
+.stats-card-rows--grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 24px;
+}
+
+.stats-card-rows--grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stats-card-rows--grid b {
+  font-size: 22px;
+}
+
+/* ============ MODE / MODIFIER SUBSECTIONS ============ */
+.stats-mode-section {
+  margin-bottom: 20px;
+}
+
+.stats-mode-label {
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 18px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ============ PAGINATION ============ */
+.stats-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: -8px 0 28px;
+}
+
+.stats-pagination button {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  background: transparent;
+  color: #bc0517;
+  font-family: 'Kirsty Regular';
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.stats-pagination button:hover:not(:disabled) {
+  border-color: #bc0517;
+}
+
+.stats-pagination button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.stats-pagination span {
+  font-size: 13px;
+  color: #888;
+}

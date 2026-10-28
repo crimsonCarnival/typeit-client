@@ -1,0 +1,125 @@
+<div class="account-page">
+  <div class="app-header">
+    <nav class="app-nav">
+      <a class="app-nav-link" routerLink="/">Game</a>
+      <a class="app-nav-link active" routerLink="/profile">Profile</a>
+      <a class="app-nav-link" routerLink="/stats">Statistics</a>
+    </nav>
+    <app-user-menu />
+  </div>
+
+  @if (loading()) {
+    <div class="page-loading">Loading&#8230;</div>
+  } @else {
+    <div class="profile-card">
+      <div class="profile-card-header">
+        @if (user()?.avatar) {
+          <img [src]="user()?.avatar" [alt]="user()?.username" class="profile-avatar" />
+        } @else {
+          <div class="profile-avatar-placeholder">
+            {{ displayName() ? displayName().charAt(0).toUpperCase() : '?' }}
+          </div>
+        }
+        <div class="profile-info">
+          <h2>{{ displayName() }}</h2>
+          <span class="profile-account">&#64;{{ user()?.username }}</span>
+          @if (user()?.bio && !editing()) {
+            <p class="profile-bio">{{ user()?.bio }}</p>
+          }
+          <span class="profile-email">{{ user()?.email }}</span>
+          <span class="profile-joined">
+            @if (joined()) {
+              Joined {{ joined() }}
+            }
+            @if (age()) {
+              &#8226; {{ age() }} on TypeIt
+            }
+          </span>
+        </div>
+
+        <div class="profile-actions">
+          <button
+            class="profile-btn profile-btn-secondary"
+            (click)="editing.update((value) => !value)"
+          >
+            {{ editing() ? 'Cancel' : 'Edit profile' }}
+          </button>
+        </div>
+      </div>
+
+      @if (editing()) {
+        <form class="profile-edit-form" (submit)="handleSave($event)">
+          <div class="profile-edit-field">
+            <label for="edit-display-name">Display name</label>
+            <input
+              type="text"
+              id="edit-display-name"
+              [value]="editDisplayName()"
+              (input)="onEditDisplayName($event)"
+              maxlength="30"
+            />
+          </div>
+          <div class="profile-edit-field">
+            <label for="edit-bio">Bio</label>
+            <textarea
+              id="edit-bio"
+              [value]="editBio()"
+              (input)="onEditBio($event)"
+              maxlength="160"
+              rows="3"
+              placeholder="Tell people about yourself"
+            ></textarea>
+          </div>
+          @if (editError()) {
+            <div class="profile-edit-error">{{ editError() }}</div>
+          }
+          <button class="profile-btn" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Saving\u2026' : 'Save' }}
+          </button>
+        </form>
+      }
+
+      <div class="profile-counts">
+        <button (click)="modal.set('followers')">
+          <b>{{ user()?.followersCount || 0 }}</b> Followers
+        </button>
+        <button (click)="modal.set('following')">
+          <b>{{ user()?.followingCount || 0 }}</b> Following
+        </button>
+      </div>
+
+      <div class="stats-section-header">
+        <h3 class="profile-section-title" style="margin-bottom: 0;">Personal bests</h3>
+        <button
+          type="button"
+          class="time-format-toggle-btn"
+          (click)="toggleTimeFormat()"
+        >
+          <span class="toggle-icon">⏱️</span>
+          <span class="toggle-text">Time Format: <strong>{{ formatMode() === 'formatted' ? 'Breakdown (1 m 24 s)' : 'Full Seconds (84s)' }}</strong></span>
+        </button>
+      </div>
+      <div class="stats-card-grid">
+        @for (stat of personalBests(); track stat.label) {
+          <div class="stats-card">
+            <span class="stats-card-value">{{ stat.value }}</span>
+            <span class="stats-card-label">{{ stat.label }}</span>
+          </div>
+        }
+      </div>
+
+      <p class="profile-stats-link">
+        View full statistics by time and word count on the
+        <a routerLink="/stats">Statistics</a> page.
+      </p>
+    </div>
+  }
+
+  @if (modal()) {
+    <app-followers-following-modal
+      [title]="modal() === 'followers' ? 'Followers' : 'Following'"
+      [userId]="user()?.id || ''"
+      (close)="modal.set(null)"
+    />
+  }
+</div>

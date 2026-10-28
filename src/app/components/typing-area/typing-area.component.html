@@ -1,0 +1,28 @@
+<div
+  class="typing-text"
+  [class.blurred]="!isFocused"
+  [class.focused]="isFocused"
+  [class.cursor-idle]="cursorIdle()"
+  [attr.data-caret]="caretStyle()"
+  (click)="onContainerClick()"
+>
+  @if (!isFocused) {
+    <div class="focus-overlay">
+      <span>Click here to start</span>
+    </div>
+  }
+  <p #textDisplay translate="no">
+    @for (char of characters(); track $index) {
+      <span [class]="charClass(char, $index)">{{ char.char }}</span>
+    }
+  </p>
+  <input
+    #input
+    type="text"
+    class="input-field hidden-input"
+    [value]="currentText()"
+    (input)="onInput($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+  />
+</div>

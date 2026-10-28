@@ -1,0 +1,66 @@
+@if (gameMode() === 'phrases') {
+  <div
+    class="horizontal-textsource-dropdown"
+    [class.disabled]="disabled()"
+  >
+    <!-- Source toggle -->
+    <div class="textsource-options">
+      <span
+        [class.active]="textSource() === 'default'"
+        (click)="setSource('default')"
+      >Default</span>
+      <span
+        [class.active]="textSource() === 'generated'"
+        (click)="setSource('generated')"
+      >Generated</span>
+      <span
+        [class.active]="textSource() === 'lorem'"
+        (click)="setSource('lorem')"
+      >Lorem</span>
+    </div>
+
+    <!-- Controls for 'generated' source -->
+    @if (textSource() === 'generated') {
+      <div class="textsource-controls">
+        <div class="textsource-unit-options">
+          <span [class.active]="generatorUnit() === 'sentence'"  (click)="setUnit('sentence')">Sentences</span>
+          <span [class.active]="generatorUnit() === 'paragraph'" (click)="setUnit('paragraph')">Paragraphs</span>
+          <span [class.active]="generatorUnit() === 'article'"   (click)="setUnit('article')">Article</span>
+        </div>
+        <div class="textsource-stepper">
+          <button class="stepper-btn" (click)="adjustCount(-1)" [disabled]="generatorCount() <= 1">-</button>
+          <span class="stepper-value">{{ generatorCount() }}</span>
+          <button class="stepper-btn" (click)="adjustCount(1)"  [disabled]="generatorCount() >= 10">+</button>
+        </div>
+
+        <!-- Custom vocabulary modal toggle -->
+        <div class="vocab-toggle" (click)="vocabModalOpen = true">
+          <i class="fas fa-book-open"></i>
+          <span>Vocabulary</span>
+        </div>
+      </div>
+    }
+
+    <!-- Controls for 'lorem' source -->
+    @if (textSource() === 'lorem') {
+      <div class="textsource-controls textsource-lorem">
+        <span class="lorem-label">Min Words</span>
+        <div class="textsource-stepper">
+          <button class="stepper-btn" (click)="adjustLoremMin(-5)" [disabled]="loremMin() <= 5">-</button>
+          <span class="stepper-value">{{ loremMin() }}</span>
+          <button class="stepper-btn" (click)="adjustLoremMin(5)">+</button>
+        </div>
+        <span class="lorem-sep">to Max</span>
+        <div class="textsource-stepper">
+          <button class="stepper-btn" (click)="adjustLoremMax(-5)" [disabled]="loremMax() <= loremMin()">-</button>
+          <span class="stepper-value">{{ loremMax() }}</span>
+          <button class="stepper-btn" (click)="adjustLoremMax(5)">+</button>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (vocabModalOpen) {
+  <app-vocab-modal (close)="vocabModalOpen = false"></app-vocab-modal>
+}

@@ -1,0 +1,77 @@
+@if (isTyping()) {
+  <div class="time-control-wrapper">
+    <div class="time header-time">
+      <span><b>{{ timeLeft() }}</b>s</span>
+    </div>
+  </div>
+} @else {
+  <div class="time-control-wrapper">
+    <div
+      class="horizontal-time-dropdown"
+      [class.open]="isOpen()"
+      [class.disabled]="disabled()"
+    >
+      <div
+        class="time-icon"
+        [class.active]="isOpen()"
+        [class.disabled]="disabled()"
+        (click)="toggleIcon($event)"
+        aria-describedby="time-tooltip"
+        data-tooltip-id="time-tooltip"
+      >
+        <i class="fa-solid fa-clock"></i>
+        @if (!isOpen()) {
+          <span class="ctrl-label">Secs</span>
+          <span class="control-value">{{ timeMax() }}</span>
+        }
+      </div>
+
+      <div #tooltipEl id="time-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
+        <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
+          Time limit (seconds)
+        </div>
+      </div>
+      <div class="time-options" [class.hidden]="!isOpen()">
+        @for (time of PRESET_TIMES; track time) {
+          <span
+            [class.active]="timeMax() === time"
+            (click)="handleTimeSelect(time)"
+          >
+            {{ time }}
+          </span>
+        }
+        @if (showCustomInput()) {
+          <form class="custom-time-form" (submit)="handleCustomSubmit($event)">
+            <input
+              #customInput
+              type="number"
+              min="10"
+              max="600"
+              [value]="customValue()"
+              (input)="onCustomInput($event)"
+              (keydown)="handleCustomKeyDown($event)"
+              placeholder="10-600"
+              class="custom-time-input"
+              (click)="stopPropagation($event)"
+            />
+          </form>
+        } @else {
+          <span
+          class="custom-option"
+          [class.active]="isCustomTime()"
+          (click)="handleCustomClick($event)"
+          aria-describedby="time-settings-tooltip"
+          data-tooltip-id="time-settings-tooltip"
+        >
+          {{ isCustomTime() ? timeMax() : '&#9881;' }}
+        </span>
+        <div #settingsTooltipEl id="time-settings-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
+          <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
+            Settings
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+}

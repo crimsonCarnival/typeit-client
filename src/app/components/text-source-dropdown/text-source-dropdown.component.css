@@ -1,0 +1,162 @@
+
+
+.horizontal-textsource-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: 14px;
+  cursor: pointer;
+}
+
+.horizontal-textsource-dropdown.disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.textsource-options {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.textsource-options span {
+  font-family: 'Kirsty Regular';
+  font-size: 14px;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.textsource-options span:hover {
+  color: #bc0517;
+  border-color: rgba(188, 5, 23, 0.4);
+  background: rgba(188, 5, 23, 0.06);
+}
+
+.textsource-options span.active {
+  color: #fff;
+  background: #bc0517;
+  border-color: #bc0517;
+}
+
+.textsource-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.textsource-unit-options {
+  display: flex;
+  gap: 5px;
+}
+
+.textsource-unit-options span {
+  font-family: 'Kirsty Regular';
+  font-size: 13px;
+  color: #aaa;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.textsource-unit-options span:hover {
+  color: #bc0517;
+  border-color: rgba(188, 5, 23, 0.4);
+  background: rgba(188, 5, 23, 0.06);
+}
+
+.textsource-unit-options span.active {
+  color: #fff;
+  background: #bc0517;
+  border-color: #bc0517;
+}
+
+.textsource-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ccc;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.stepper-btn:hover:not(:disabled) {
+  border-color: #bc0517;
+  color: #bc0517;
+  background: rgba(188, 5, 23, 0.08);
+}
+
+.stepper-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.stepper-value {
+  font-family: 'Kirsty Regular';
+  font-size: 15px;
+  color: #f5f5f5;
+  min-width: 22px;
+  text-align: center;
+}
+
+.textsource-lorem {
+  gap: 6px;
+}
+
+.lorem-label {
+  font-family: 'Kirsty Regular';
+  font-size: 13px;
+  color: #888;
+}
+
+.lorem-sep {
+  font-family: 'Kirsty Regular';
+  font-size: 14px;
+  color: #666;
+}
+
+.vocab-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Kirsty Regular';
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  user-select: none;
+  margin-left: 6px;
+}
+
+.vocab-toggle:hover {
+  color: #bc0517;
+  border-color: rgba(188, 5, 23, 0.35);
+  background: rgba(188, 5, 23, 0.06);
+}

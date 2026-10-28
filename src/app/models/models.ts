@@ -1,0 +1,163 @@
+export interface StatsBucket {
+  games?: number;
+  highScore?: number;
+  bestWpm?: number;
+  bestAccuracy?: number;
+  totalTimeTyping?: number;
+  afkTime?: number;
+  afkPeriods?: number;
+}
+
+export interface UserStats {
+  gamesPlayed?: number;
+  highScore?: number;
+  bestWpm?: number;
+  bestAccuracy?: number;
+  totalTimeTyping?: number;
+  incompleteSessions?: number;
+  afkTime?: number;
+  afkPeriods?: number;
+  byTime?: Record<string, StatsBucket | undefined>;
+  byWords?: Record<string, StatsBucket | undefined>;
+  byMode?: Record<string, StatsBucket | undefined>;
+  byModifier?: Record<string, StatsBucket | undefined>;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  displayName: string;
+  email?: string;
+  avatar?: string;
+  bio?: string;
+  role?: string;
+  timezone?: string;
+  stats?: UserStats;
+  followersCount: number;
+  followingCount: number;
+  createdAt?: string;
+}
+
+export interface Character {
+  char: string;
+  status: string;
+}
+
+export type GameMode = 'phrases' | 'words';
+export type CaretStyle = 'line' | 'block' | 'underline' | 'off';
+
+export interface GameState {
+  currentText: string;
+  text: string;
+  currentIndex: number;
+  mistakes: number;
+  successes: number;
+  accuracy: number;
+  score: number;
+  completionPercentage: number;
+  isTyping: boolean;
+  isFinished: boolean;
+  timeMax: number;
+  timeLeft: number;
+  gameMode: GameMode;
+  wordCount: number;
+  isMuted: boolean;
+  punctuationEnabled: boolean;
+  numbersEnabled: boolean;
+  lastWpm: number;
+  lastCpm: number;
+  totalWords: number;
+  // Text source (phrases mode only)
+  textSource: 'default' | 'generated' | 'lorem';
+  generatorUnit: 'sentence' | 'paragraph' | 'article';
+  generatorCount: number;
+  loremMin: number;
+  loremMax: number;
+  caretStyle: CaretStyle;
+}
+
+export interface AfkEvent {
+  timestamp: number;
+  afkIndex: number;
+}
+
+export interface PerformancePoint {
+  timestamp: number;
+  wpm: number;
+  rawWpm: number;
+  accuracy: number;
+  currentIndex: number;
+  mistakes: number;
+  highestWpm: number;
+  consistency: number;
+  backspaces: number;
+  afkPeriods?: AfkEvent[];
+}
+
+export interface Results {
+  score: number;
+  wpm: number;
+  rawWpm: number;
+  highestWpm: number;
+  cpm: number;
+  accuracy: number;
+  successes: number;
+  mistakes: number;
+  missed: number;
+  totalWords: number;
+  elapsedTime: number;
+  consistency: number;
+  afkTime?: string;
+  afkCount?: number;
+}
+
+export interface Punishment {
+  count: number;
+}
+
+export interface PublicProfile {
+  id: string;
+  displayName: string;
+  username: string;
+  avatar?: string;
+  bio?: string;
+  stats?: UserStats;
+  createdAt?: string;
+  followersCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+  isOwner: boolean;
+}
+
+export interface FollowListUser {
+  _id: string;
+  username: string;
+  displayName?: string;
+  avatar?: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export interface SessionSummary {
+  sessionId: string;
+  endTime: number;              // Unix ms
+  wpm: number;
+  cpm: number;
+  rawWpm?: number;
+  accuracy: number;
+  score: number;
+  consistency?: number;
+  gameMode: string;
+  wordCount: number;
+  timeMax: number;
+  completionPercentage: number;
+  migrated: boolean;
+}
+
+export interface SessionHistoryResponse {
+  sessions: SessionSummary[];
+}

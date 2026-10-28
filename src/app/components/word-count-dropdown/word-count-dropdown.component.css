@@ -1,0 +1,123 @@
+
+.horizontal-wordcount-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 14px;
+  cursor: pointer;
+}
+
+.horizontal-wordcount-dropdown.control-hidden {
+  display: none;
+}
+
+.horizontal-wordcount-dropdown .wordcount-icon i {
+  font-size: 22px;
+  color: #bc0517;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.horizontal-wordcount-dropdown.open .wordcount-icon i {
+  transform: rotate(90deg);
+  color: #a00412;
+}
+
+.horizontal-wordcount-dropdown.disabled {
+  pointer-events: none;
+}
+
+.wordcount-options {
+  display: flex;
+  gap: 8px;
+  margin-left: 10px;
+  opacity: 1;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.wordcount-options.hidden {
+  opacity: 0;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+
+.wordcount-options span {
+  font-family: 'Kirsty Regular';
+  font-size: 15px;
+  color: #333;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.wordcount-options span:hover {
+  color: #bc0517;
+  border-color: #bc0517;
+  background: rgba(188, 5, 23, 0.05);
+}
+
+.wordcount-options span.active {
+  color: #fff;
+  background: #bc0517;
+  border-color: #bc0517;
+}
+
+.custom-wordcount-form {
+  display: inline-flex;
+}
+
+.custom-wordcount-input {
+  font-family: 'Kirsty Regular';
+  font-size: 14px;
+  width: 60px;
+  padding: 4px 6px;
+  border: 1px solid #bc0517;
+  border-radius: 4px;
+  background: rgba(188, 5, 23, 0.05);
+  color: #333;
+  text-align: center;
+  outline: none;
+}
+
+.custom-wordcount-input:focus {
+  box-shadow: 0 0 0 2px rgba(188, 5, 23, 0.2);
+}
+
+.custom-wordcount-input::placeholder {
+  color: #999;
+  font-size: 12px;
+}
+
+.custom-wordcount-input::-webkit-outer-spin-button,
+.custom-wordcount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.custom-wordcount-input[type=number] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.custom-wordcount-input {
+  background: rgba(188, 5, 23, 0.1);
+  color: #ddd;
+  border-color: #bc0517;
+}
+
+.custom-wordcount-input::placeholder {
+  color: #777;
+}
+
+.wordcount-options span {
+  color: #ddd;
+}
+
+.wordcount-options span:hover {
+  color: #bc0517;
+  border-color: #bc0517;
+  background: rgba(188, 5, 23, 0.2);
+}

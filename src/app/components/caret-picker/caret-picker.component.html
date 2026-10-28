@@ -1,0 +1,12 @@
+<div class="caret-picker" [class.disabled]="disabled()" title="Caret style">
+  @for (opt of options; track opt.value) {
+    <button
+      class="caret-btn"
+      [class.active]="caretStyle() === opt.value"
+      [title]="opt.title"
+      [attr.aria-label]="opt.title"
+      [attr.aria-pressed]="caretStyle() === opt.value"
+      (click)="select(opt.value)"
+    >{{ opt.icon }}</button>
+  }
+</div>

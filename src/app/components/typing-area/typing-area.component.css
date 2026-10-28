@@ -1,0 +1,117 @@
+/* ============================================================
+   Line-based focus dimming
+   ============================================================ */
+
+.typing-text p span.cur-line {
+  font-weight: 700;
+}
+
+/* fix #3: immediate prev/next lines — raise opacity for WCAG AA contrast */
+.typing-text p span.prev-line,
+.typing-text p span.next-line {
+  filter: blur(0px);    /* no blur on adjacent line — keep it legible */
+  opacity: 0.75;        /* ~#aaa on #1e1e1e → contrast ≈ 5.2:1 */
+}
+
+/* blur-1 = one line away (same as prev/next) */
+.typing-text p span.blur-1 {
+  filter: blur(0.5px);
+  opacity: 0.65;        /* ~#949494 → still above 4.5:1 threshold */
+}
+
+.typing-text p span.blur-2 {
+  filter: blur(1.5px);
+  opacity: 0.38;
+}
+
+.typing-text p span.blur-3 {
+  filter: blur(3px);
+  opacity: 0.15;
+}
+
+/* ============================================================
+   Typing area container
+   ============================================================ */
+
+.typing-text {
+  height: 230px;
+  min-height: 230px;
+  max-height: 230px;
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding: 22px 28px;
+  border-radius: 10px;
+  cursor: default;
+  user-select: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.typing-text.blurred p {
+  filter: blur(4px);
+  transition: filter 0.2s ease;
+}
+
+/* ============================================================
+   "Click here to start" overlay  — fix #6
+   ============================================================ */
+
+.typing-text .focus-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.typing-text .focus-overlay span {
+  font-family: 'Kirsty Regular';
+  font-size: 18px;
+  color: #fff;                          /* white text on red — clear contrast */
+  background: #bc0517;                  /* solid brand-red — no more gray blob */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 11px 28px;
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 0 24px rgba(188, 5, 23, 0.55),
+              0 4px 18px rgba(0, 0, 0, 0.45);
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.typing-text .focus-overlay span:hover {
+  background: #a0041a;
+  box-shadow: 0 0 32px rgba(188, 5, 23, 0.75),
+              0 6px 24px rgba(0, 0, 0, 0.55);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .typing-text {
+    height: 110px;
+    min-height: 110px;
+    max-height: 110px;
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .typing-text {
+    height: 90px;
+    min-height: 90px;
+    max-height: 90px;
+    padding: 10px 12px;
+  }
+}

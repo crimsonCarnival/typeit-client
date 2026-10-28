@@ -1,0 +1,289 @@
+
+.profile-card-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-avatar-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #bc0517;
+  color: #fff;
+  font-family: 'Kirsty Regular';
+  font-size: 30px;
+}
+
+.profile-info h2 {
+  font-family: 'Kirsty Regular';
+  font-size: 26px;
+  color: #e5e7eb;
+  margin: 0 0 4px;
+}
+
+.profile-email {
+  display: block;
+  color: #888;
+  font-size: 14px;
+}
+
+.profile-joined {
+  display: block;
+  color: #666;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.profile-section-title {
+  font-family: 'Kirsty Regular';
+  color: #e5e7eb;
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.profile-stats-link {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #888;
+}
+
+.profile-stats-link a {
+  color: #bc0517;
+  text-decoration: none;
+}
+
+.profile-stats-link a:hover {
+  text-decoration: underline;
+}
+
+.stats-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.stats-row .stats-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.stats-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.stats-card-value {
+  display: block;
+  font-family: 'Kirsty Regular';
+  font-size: 28px;
+  color: #f5f5f5;
+}
+
+.stats-card-label {
+  display: block;
+  font-size: 13px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.stats-card.empty .stats-card-empty {
+  color: #777;
+  font-size: 16px;
+}
+
+.profile-account {
+  display: block;
+  color: #bc0517;
+  font-size: 15px;
+  margin-top: 2px;
+}
+
+.profile-bio {
+  margin: 8px 0 4px;
+  color: #ccc;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.profile-bio {
+  color: #bbb;
+}
+
+.profile-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.profile-btn {
+  display: inline-block;
+  padding: 8px 18px;
+  border: 1px solid #bc0517;
+  border-radius: 6px;
+  background: #bc0517;
+  color: #fff;
+  font-family: 'Kirsty Regular';
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.profile-btn:hover {
+  opacity: 0.85;
+}
+
+.profile-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.profile-counts {
+  display: flex;
+  gap: 24px;
+  margin: 16px 0 24px;
+}
+
+.profile-counts button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  color: #999;
+  font-family: 'Kirsty Regular';
+  transition: color 0.2s ease;
+}
+
+.profile-counts button:hover {
+  color: #bc0517;
+}
+
+.profile-counts b {
+  color: #f5f5f5;
+  font-size: 17px;
+  margin-right: 4px;
+}
+
+.profile-edit-form {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 18px;
+  margin-bottom: 8px;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-edit-field label {
+  font-size: 13px;
+  color: #999;
+  font-family: 'Hapna Demibold';
+}
+
+.profile-edit-field input,
+.profile-edit-field textarea {
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f5f5;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.profile-edit-field input:focus,
+.profile-edit-field textarea:focus {
+  outline: none;
+  border-color: #bc0517;
+}
+
+.profile-edit-field input,
+.profile-edit-field textarea {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.profile-edit-field input::placeholder,
+.profile-edit-field textarea::placeholder {
+  color: #777;
+}
+
+.profile-edit-error {
+  color: #c62828;
+  font-size: 13px;
+}
+
+.profile-edit-form .profile-btn {
+  align-self: flex-start;
+}
+
+.stats-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.time-format-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(188, 5, 23, 0.12);
+  border: 1px solid rgba(188, 5, 23, 0.4);
+  color: #e5e7eb;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.time-format-toggle-btn:hover {
+  background: rgba(188, 5, 23, 0.25);
+  border-color: #bc0517;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.time-format-toggle-btn:active {
+  transform: translateY(0);
+}
+
+.time-format-toggle-btn .toggle-icon {
+  font-size: 14px;
+}
+
+.time-format-toggle-btn strong {
+  color: #f87171;
+  font-weight: 600;
+}

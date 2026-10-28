@@ -1,0 +1,72 @@
+
+.horizontal-mode-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 14px;
+  cursor: pointer;
+}
+
+.horizontal-mode-dropdown .mode-icon i {
+  font-size: 22px;
+  color: #bc0517;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.horizontal-mode-dropdown.open .mode-icon i {
+  transform: rotate(90deg);
+  color: #a00412;
+}
+
+.horizontal-mode-dropdown.disabled {
+  pointer-events: none;
+}
+
+.mode-options {
+  display: flex;
+  gap: 8px;
+  margin-left: 10px;
+  opacity: 1;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.mode-options.hidden {
+  opacity: 0;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+
+.mode-options span {
+  font-family: 'Kirsty Regular';
+  font-size: 15px;
+  color: #333;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.mode-options span:hover {
+  color: #bc0517;
+  border-color: #bc0517;
+  background: rgba(188, 5, 23, 0.05);
+}
+
+.mode-options span.active {
+  color: #fff;
+  background: #bc0517;
+  border-color: #bc0517;
+}
+
+.mode-options span {
+  color: #ddd;
+}
+
+.mode-options span:hover {
+  color: #bc0517;
+  border-color: #bc0517;
+  background: rgba(188, 5, 23, 0.2);
+}

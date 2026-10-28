@@ -1,0 +1,137 @@
+<div class="stats-section-header">
+  <h3 class="profile-section-title" style="margin-bottom: 0;">Overall</h3>
+  <button
+    type="button"
+    class="time-format-toggle-btn"
+    (click)="toggleTimeFormat()"
+  >
+    <span class="toggle-icon">⏱️</span>
+    <span class="toggle-text">Time Format: <strong>{{ formatMode() === 'formatted' ? 'Breakdown (1 m 24 s)' : 'Full Seconds (84s)' }}</strong></span>
+  </button>
+</div>
+<div class="stats-row">
+  @for (item of overall(); track item.label) {
+    <div class="stats-card">
+      <span class="stats-card-value">{{ item.value }}</span>
+      <span class="stats-card-label">{{ item.label }}</span>
+    </div>
+  }
+</div>
+
+@if (averages().length > 0) {
+  <h3 class="profile-section-title">Recent Averages</h3>
+  <div class="stats-row">
+    @for (item of averages(); track item.label) {
+      <div class="stats-card">
+        <span class="stats-card-value">{{ item.value }}</span>
+        <span class="stats-card-label">{{ item.label }}</span>
+      </div>
+    }
+  </div>
+}
+
+<h3 class="profile-section-title">By time</h3>
+<div class="stats-row">
+  @for (item of visibleTime(); track item.key) {
+    <div class="stats-card" [class.empty]="isEmpty(item.data)">
+      <span class="stats-card-title">{{ item.label }}</span>
+      @if (isEmpty(item.data)) {
+        <span class="stats-card-empty" style="text-align: center; display: block; width: 100%;">No games yet</span>
+      } @else {
+        <div class="stats-card-rows">
+          @for (row of bucketRows(item.data); track row.label) {
+            <div>
+              <span>{{ row.label }}</span>
+              <b>{{ row.value }}</b>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+@if (timePages() > 1) {
+  <div class="stats-pagination">
+    <button type="button" (click)="prevPage(timePage)" [disabled]="timePage() === 0">
+      &#8249; Prev
+    </button>
+    <span>Page {{ timePage() + 1 }} of {{ timePages() }}</span>
+    <button type="button" (click)="nextPage(timePage, timePages())" [disabled]="timePage() === timePages() - 1">
+      Next &#8250;
+    </button>
+  </div>
+}
+
+<h3 class="profile-section-title">By word count</h3>
+<div class="stats-row">
+  @for (item of visibleWords(); track item.key) {
+    <div class="stats-card" [class.empty]="isEmpty(item.data)">
+      <span class="stats-card-title">{{ item.label }}</span>
+      @if (isEmpty(item.data)) {
+        <span class="stats-card-empty" style="text-align: center; display: block; width: 100%;">No games yet</span>
+      } @else {
+        <div class="stats-card-rows">
+          @for (row of bucketRows(item.data); track row.label) {
+            <div>
+              <span>{{ row.label }}</span>
+              <b>{{ row.value }}</b>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+@if (wordsPages() > 1) {
+  <div class="stats-pagination">
+    <button type="button" (click)="prevPage(wordsPage)" [disabled]="wordsPage() === 0">
+      &#8249; Prev
+    </button>
+    <span>Page {{ wordsPage() + 1 }} of {{ wordsPages() }}</span>
+    <button type="button" (click)="nextPage(wordsPage, wordsPages())" [disabled]="wordsPage() === wordsPages() - 1">
+      Next &#8250;
+    </button>
+  </div>
+}
+
+<h3 class="profile-section-title">By game mode</h3>
+@for (item of modeItems(); track item.key) {
+  <div class="stats-mode-section">
+    <h4 class="stats-mode-label">{{ item.label }}</h4>
+    <div class="stats-card" [class.empty]="isEmpty(item.data)">
+      @if (isEmpty(item.data)) {
+        <span class="stats-card-empty" style="text-align: center; display: block; width: 100%;">No games yet</span>
+      } @else {
+        <div class="stats-card-rows stats-card-rows--grid">
+          @for (row of bucketRows(item.data); track row.label) {
+            <div>
+              <span>{{ row.label }}</span>
+              <b>{{ row.value }}</b>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<h3 class="profile-section-title">By modifiers</h3>
+@for (item of modifierItems(); track item.key) {
+  <div class="stats-mode-section">
+    <h4 class="stats-mode-label">{{ item.label }}</h4>
+    <div class="stats-card" [class.empty]="isEmpty(item.data)">
+      @if (isEmpty(item.data)) {
+        <span class="stats-card-empty" style="text-align: center; display: block; width: 100%;">No games yet</span>
+      } @else {
+        <div class="stats-card-rows stats-card-rows--grid">
+          @for (row of bucketRows(item.data); track row.label) {
+            <div>
+              <span>{{ row.label }}</span>
+              <b>{{ row.value }}</b>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

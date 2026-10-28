@@ -1,0 +1,9 @@
+<div class="history-chart-container">
+  <h3>Performance History</h3>
+  @if (sessions().length === 0) {
+    <p class="history-empty">Complete a game to see your history here.</p>
+  }
+  <div class="history-chart-wrap" [hidden]="sessions().length === 0">
+    <canvas #canvas></canvas>
+  </div>
+</div>

@@ -1,0 +1,77 @@
+<div class="alert-card">
+  <div class="results-panel">
+    <div class="results-panel-header">
+      <div class="results-title-group">
+        <h2>Results</h2>
+        <span class="results-config-caption">{{ configCaption() }}</span>
+      </div>
+      <button class="results-close-btn" (click)="close.emit()" aria-label="Close results">&#10005;</button>
+    </div>
+
+    <div class="results-hero">
+      @for (stat of heroStats(); track stat.label) {
+        <div class="hero-stat" 
+             [class.hero-stat-main]="stat.highlight"
+             [style.background]="stat.highlight && stat.wpmTier ? stat.wpmTier.bg : null"
+             [style.border-color]="stat.highlight && stat.wpmTier ? stat.wpmTier.borderColor : null">
+          <span class="hero-stat-value" [style.color]="stat.highlight && stat.wpmTier ? stat.wpmTier.color : null">{{ stat.value }}</span>
+          <span class="hero-stat-label">
+            {{ stat.label }}
+            @if (stat.tooltip) {
+              <span class="stat-tooltip-icon" [attr.data-tooltip]="stat.tooltip">?</span>
+            }
+          </span>
+          @if (stat.highlight && stat.wpmTier) {
+            <span class="hero-stat-tier-desc" [style.color]="stat.wpmTier.color" [title]="stat.wpmTier.desc">
+              {{ stat.wpmTier.category }} • {{ stat.wpmTier.label }}
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="results-main">
+      @if (performance().length > 0) {
+        <div class="results-chart-section">
+          <app-performance-chart [performance]="performance()" />
+          <div class="chart-time-stats">
+            <div class="time-stat">
+              <span class="time-label">Elapsed</span>
+              <span class="time-value">{{ elapsed() }}s</span>
+            </div>
+            <div class="time-stat">
+              <span class="time-label">Remaining</span>
+              <span class="time-value">{{ gameState()?.timeLeft ?? 0 }}s</span>
+            </div>
+            <div class="time-stat">
+              <span class="time-label">AFK Time</span>
+              <span class="time-value">{{ afkTime() }}s. ({{ afkCount() }}x)</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="results-stats-grid">
+        @for (stat of stats(); track stat.label) {
+          <div class="stat-cell">
+            <span class="stat-label">
+              {{ stat.label }}
+              @if (stat.tooltip) {
+                <span class="stat-tooltip-icon" [attr.data-tooltip]="stat.tooltip">?</span>
+              }
+            </span>
+            <span class="stat-value">{{ stat.value }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (!isAuthenticated()) {
+      <div class="results-message">
+        <p>Want to save your score to your profile?</p>
+        <button class="login-link-btn" (click)="loginClick.emit()">Sign in now</button>
+      </div>
+    }
+
+  </div>
+</div>

@@ -1,0 +1,2132 @@
+@font-face {
+  font-family: 'Hapna Demibold';
+  src: url('https://res.cloudinary.com/dzjid2tos/raw/upload/v1764109056/Hapna_Slab_Serif_DemiBold_dwvx3i.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kirsty Regular';
+  src: url('https://res.cloudinary.com/dzjid2tos/raw/upload/v1764109055/chinese_rocks_rg_y8h96e.ttf');
+  fontdisplay: swap;
+}
+
+:root {
+  --bg-color: #fff;
+}
+
+:root {
+  --bg-color: #2a2a2a;
+}
+
+* {
+  font-family: 'Hapna Demibold';
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* App Header */
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px 24px;
+  background: rgba(20, 20, 20, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+h2 {
+  font-family: 'Kirsty Regular';
+}
+
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.result-label {
+  flex: 1;
+  text-align: left;
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+}
+
+.result-value {
+  min-width: 80px;
+  text-align: right;
+  font-family: 'Kirsty Regular';
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.alert-content {
+  background: #bc0517 url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+  border: 0.5px solid #121212;
+}
+
+.results-chart {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.performance-chart-container h3 {
+  font-family: 'Kirsty Regular';
+  color: #e5e7eb;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.chart-time-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 10px;
+}
+
+.time-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.time-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 1px;
+}
+
+.time-value {
+  font-family: 'Kirsty Regular';
+  font-size: 18px;
+  color: #e5e7eb;
+}
+
+#close-alert {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg');
+  color: #e0e0e0;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  font-family: 'Kirsty Regular';
+  font-size: 1.1rem;
+}
+
+#close-alert {
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+}
+
+:root {
+  --bg-color: #fff;
+}
+
+:root {
+  --bg-color: #2a2a2a;
+}
+
+* {
+  font-family: 'Hapna Demibold';
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* App Header (duplicate - overridden by first definition) */
+
+/* .app-header duplicate removed */
+
+/* dark .app-header styles consolidated in first definition below line 40 */
+
+h2 {
+  font-family: 'Kirsty Regular';
+}
+
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.result-label {
+  flex: 1;
+  text-align: left;
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+}
+
+.result-value {
+  min-width: 80px;
+  text-align: right;
+  font-family: 'Kirsty Regular';
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.alert-content {
+  background: #bc0517 url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+  border: 0.5px solid #121212;
+}
+
+.results-chart {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.performance-chart-container h3 {
+  font-family: 'Kirsty Regular';
+  color: #e5e7eb;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.chart-time-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 10px;
+}
+
+.time-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.time-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 1px;
+}
+
+.time-value {
+  font-family: 'Kirsty Regular';
+  font-size: 18px;
+  color: #e5e7eb;
+}
+
+#close-alert {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg');
+  color: #e0e0e0;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  font-family: 'Kirsty Regular';
+  font-size: 1.1rem;
+}
+
+#close-alert {
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+}
+
+:root {
+  --bg-color: #fff;
+}
+
+:root {
+  --bg-color: #2a2a2a;
+}
+
+* {
+  font-family: 'Hapna Demibold';
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* App Header duplicate removed - styles consolidated above */
+
+/* Unauthenticated Notice */
+
+h2 {
+  font-family: 'Kirsty Regular';
+}
+
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.result-label {
+  flex: 1;
+  text-align: left;
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+}
+
+/* Result Values - White */
+
+.result-value {
+  min-width: 80px;
+  text-align: right;
+  font-family: 'Kirsty Regular';
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+/* Specific overrides to ensure consistency */
+
+.result-value.accuracy-value,
+.result-value.completion-value {
+  font-family: 'Kirsty Regular' !important;
+  color: #fff !important;
+  font-size: 1.2rem !important;
+  font-weight: normal !important;
+}
+
+.accuracy-row .result-label,
+.completion-row .result-label {
+  font-family: 'Kirsty Regular' !important;
+  color: #bc0517 !important;
+  font-size: 1.2rem !important;
+  font-weight: normal !important;
+  letter-spacing: 0.5px !important;
+}
+
+.alert-content h2 {
+  margin-bottom: 20px;
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 30px;
+}
+
+/* Removed specific dark mode override since it's the same color now */
+
+/* Removed unused .theme-label (no HTML/JS references) */
+
+/* fix #5 — toggle icons:
+   • inactive/muted → neutral gray (#888)
+   • active/unmuted → brand red (#bc0517)
+   This removes the blanket red override that made muted look like an error. */
+
+.toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-icon i {
+  font-size: 22px;
+  color: #888;                    /* neutral gray = inactive/muted state */
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.toggle-icon.active i {
+  color: #bc0517;                 /* brand red = active/on state */
+}
+
+.toggle-icon:hover i {
+  transform: scale(1.05);
+}
+
+/* Disabled state */
+
+.toggle-icon.disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.toggle-icon.disabled i {
+  transform: none;
+  opacity: 0.4;
+}
+
+/* Refresh button */
+
+/* Click-based spin animation */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Special Characters Toggle */
+
+.special-chars-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.special-chars-svg {
+  width: 22px;
+  height: 22px;
+  color: #777;
+  transition: color 0.2s ease;
+}
+
+.special-chars-icon.active .special-chars-svg {
+  color: #bc0517;
+}
+
+.special-chars-icon:hover .special-chars-svg {
+  transform: scale(1.05);
+}
+
+.special-chars-svg {
+  color: #aaa;
+}
+
+.special-chars-icon.active .special-chars-svg {
+  color: #bc0517;
+}
+
+/* Locked state for theme-switch bar - NO opacity change, just disable clicks */
+
+/* Keep icons visible and highlighted during typing */
+
+/* Removed unused .toggle-label */
+
+/* NOTE: the blanket .toggle-icon i { color: #bc0517 } override has been
+   intentionally removed — see the .toggle-icon rules above which give
+   gray to inactive and red only to .active state (fix #5). */
+
+.shortcuts-footer kbd {
+  background: #222;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.shortcuts-footer kbd {
+  background: #333;
+  border-color: #666;
+}
+
+.paragraph-instructions {
+  margin-left: auto;
+  font-size: 14px;
+  color: gray;
+}
+
+/* fix #7: reduce excessive top padding on wide viewports */
+body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 70px 10px 20px 10px;  /* was 50px, header is fixed at ~50px */
+  box-sizing: border-box;
+}
+
+app-root {
+  width: 100%;
+}
+
+/* Current configuration shown when a control's options are collapsed */
+
+.control-value {
+  font-family: 'Kirsty Regular';
+  font-size: 16px;
+  color: #bbb;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+/* fix #5: small inline label shown beside icons ("Words", "Secs") */
+.ctrl-label {
+  font-family: 'Hapna Demibold';
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-left: 4px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Word Mode Settings (Punctuation, Numbers) */
+
+/* ============ Text-source dropdown (phrases mode txtgen) ============ */
+
+/* Source toggle: Default | Generated | Lorem */
+
+/* Controls panel (unit + stepper / lorem range) */
+
+/* Unit sub-toggle: Sentences | Paragraphs | Article */
+
+/* Count / word-range steppers */
+
+/* Lorem mode layout */
+
+/* Vocabulary panel */
+
+/* Hide number input spinners */
+
+.hidden-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Show hint only when ready but NOT focused and NOT typing */
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+/* Focused state - ready to type */
+
+/* Active typing state - pulsing icon */
+
+@keyframes typingPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
+.shortcuts-footer {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 10;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.shortcuts-footer .hotkey-hint {
+  font-size: 1.1em;
+  color: #888;
+  opacity: 0.9;
+}
+
+.shortcuts-footer .hotkey-items {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.shortcuts-footer .hotkey-hint.hidden {
+  display: none;
+}
+
+.shortcuts-footer .hotkey-items.hidden {
+  display: none;
+}
+
+.hotkey-item {
+  display: inline-block;
+}
+
+.toggle-hints-btn {
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-hints-btn kbd {
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.toggle-hints-btn:hover {
+  opacity: 0.7;
+}
+
+.shortcuts-footer .hotkey-hint {
+  color: #bbb;
+}
+
+.content {
+  margin-bottom: 5px;
+  margin-right: auto;
+}
+
+.typing-text::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 15px;
+  background: linear-gradient(var(--bg-color, #fff), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.typing-text::before {
+  background: linear-gradient(var(--bg-color, #2a2a2a), transparent);
+}
+
+.typing-text::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 25px;
+  background: linear-gradient(transparent, var(--bg-color, #fff));
+  pointer-events: none;
+  z-index: 1;
+}
+
+.typing-text::after {
+  background: linear-gradient(transparent, var(--bg-color, #2a2a2a));
+}
+
+abbr {
+  text-decoration: none;
+}
+
+.typing-text::-webkit-scrollbar {
+  width: 0;
+}
+
+ul li {
+  margin-top: 10px;
+}
+
+/* fix #3 – base upcoming-word colour is #ddd; the per-line opacity is set
+   in typing-area.component.css so they reach ~#949494+ on #1e1e1e */
+.typing-text p {
+  width: 100%;
+  letter-spacing: 1px;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 28px;
+  transform: translateY(0);
+  transition: transform 0.15s ease-out;
+  will-change: transform;
+  color: #e0e0e0;   /* raised from #ddd to ensure legible base */
+}
+
+.typing-text p span.correct {
+  font-weight: 600;
+  color: #333;
+}
+
+.typing-text p span.correct {
+  color: #ddd;
+}
+
+.typing-text p span.incorrect {
+  color: #ff6b6b;
+  background: #ffc0cb;
+  border-radius: 4px;
+}
+
+.typing-text p span.active {
+  color: #90caf9;
+}
+
+/* =========================================================
+   Caret style variants — controlled via [data-caret] on .typing-text
+   line | block | underline | off
+   ========================================================= */
+
+/* shared base: position every caret pseudo-element */
+.typing-text p span {
+  position: relative;
+}
+
+/* --- LINE (default vertical bar) --- */
+.typing-text.focused:not([data-caret="block"]):not([data-caret="underline"]):not([data-caret="off"]) p span.active::before,
+.typing-text.focused[data-caret="line"] p span.active::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 5%;
+  height: 90%;
+  width: 2px;
+  background: #90caf9;
+  border-radius: 1px;
+  animation: blink 0.9s step-end infinite;
+  transition: opacity 0.3s ease;
+}
+
+/* --- BLOCK (solid background behind character) --- */
+.typing-text.focused[data-caret="block"] p span.active {
+  background: rgba(144, 202, 249, 0.35);
+  border-radius: 2px;
+  outline: 1px solid rgba(144, 202, 249, 0.55);
+  animation: blink-block 0.9s step-end infinite;
+}
+@keyframes blink-block {
+  0%, 100% { background: rgba(144, 202, 249, 0.35); }
+  50%       { background: transparent; }
+}
+
+/* --- UNDERLINE (thin horizontal bar below character) --- */
+.typing-text.focused[data-caret="underline"] p span.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: #90caf9;
+  border-radius: 1px;
+  animation: blink 0.9s step-end infinite;
+}
+
+/* --- OFF (no caret at all) --- */
+.typing-text.focused[data-caret="off"] p span.active::before,
+.typing-text.focused[data-caret="off"] p span.active::after {
+  display: none;
+}
+
+/* Hide caret on idle regardless of style */
+.typing-text.focused.cursor-idle p span.active::before,
+.typing-text.focused.cursor-idle p span.active::after,
+.typing-text.focused.cursor-idle[data-caret="block"] p span.active {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.content button {
+  background: #bc0517;
+  transition: transform 0.3s ease;
+}
+
+.content button:active {
+  transform: scale(0.97);
+}
+
+.result-details li p {
+  font-size: 16px;
+  margin: 0;
+}
+
+.result-details li span {
+  display: block;
+  font-size: 15px;
+  margin-right: 10px;
+}
+
+.result-details li p {
+  margin-top: 5px;
+  margin-left: 1px;
+}
+
+.result-details {
+  font-family: 'Kirsty Regular';
+}
+
+.score-container {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+}
+
+.score-container span#score {
+  font-size: 20px;
+  font-family: 'Kirsty Regular';
+}
+
+.input-field:disabled {
+  cursor: default;
+  background-color: #f5f5f5;
+  color: #999;
+}
+
+button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin: 3px;
+}
+
+.result-details li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.result-details li p,
+.result-details li span {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.result-details li .icon {
+  margin-right: 10px;
+}
+
+.score-container p {
+  font-family: 'Kirsty Regular';
+  display: flex;
+  align-items: center;
+}
+
+.alert-content {
+  background: #bc0517 url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+  border: 0.5px solid #121212;
+}
+
+.alert-content p {
+  margin: 10px 0;
+}
+
+#close-alert {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg');
+  color: #e0e0e0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#close-info-alert {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg');
+  color: #e0e0e0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#close-alert {
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+  color: #e0e0e0;
+}
+
+#close-info-alert {
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg');
+  color: #e0e0e0;
+}
+
+.results-message {
+  background: #fff9e6;
+  border: 1px solid #ffd700;
+  border-radius: 8px;
+  padding: 15px 20px;
+  margin-top: 20px;
+  text-align: center;
+  color: #333;
+}
+
+.results-message p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.login-link-btn {
+  background-color: #c41e3a;
+  color: #e0e0e0;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.login-link-btn:hover {
+  opacity: 0.8;
+}
+
+.results-message {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+/* Performance Chart */
+
+.performance-chart-container {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.performance-chart-container h3 {
+  font-family: 'Kirsty Regular';
+  color: #121212;
+  font-size: 18px;
+  margin: 0 0 12px 0;
+  text-align: center;
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+
+.performance-chart-container {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.performance-chart-container h3 {
+  color: #fbbf24;
+}
+
+.hidden {
+  display: none;
+}
+
+.top-controls {
+  display: flex;
+  align-items: center;
+}
+
+/* Removed unused .completion-percentage styles (replaced by .progress-bar-container) */
+
+.header-time {
+  margin-left: 8px;
+}
+
+.header-time.hidden {
+  visibility: hidden;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 12px;
+  height: 22px;
+}
+
+.slider:before {
+  position: absolute;
+  content: '';
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+}
+
+input:checked+.slider {
+  background-color: #bc0517;
+}
+
+input:checked+.slider:before {
+  transform: translateX(18px);
+}
+
+.slider.round {
+  border-radius: 12px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+:root {
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg');
+  color: #ddd;
+}
+
+.percentage {
+  color: #bc0517;
+}
+
+.wrapper {
+  width: 1280px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+/* Removed dark styles for legacy .time-selector */
+
+.input-field {
+  background-color: #555;
+  border: 1px solid #bc0517;
+  color: #ddd;
+}
+
+.input-field::placeholder,
+.input-field::-webkit-input-placeholder,
+.input-field::-moz-placeholder,
+.input-field::-ms-input-placeholder {
+  color: #aaa;
+}
+
+.input-field:disabled {
+  background-color: #444;
+  color: #777;
+}
+
+body {
+  background-image: url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg');
+}
+
+/* fix #9 – more opaque wrapper background to suppress texture grain */
+.wrapper {
+  width: 1280px;
+  max-width: 100%;
+  background: transparent;
+  background-size: cover;
+  color: #e0e0e0;
+}
+
+/* Content box — darker fill so grain behind is less visible */
+.content-box {
+  background: rgba(25, 25, 25, 0.92);
+  border-radius: 8px;
+  border: 1px solid rgba(188, 5, 23, 0.35);
+}
+
+.typing-text p span.incorrect {
+  background: #ff6b6b;
+  color: #ffe0e0;
+  border-color: #2a2a2a;
+}
+
+.typing-text p span.active {
+  color: #90caf9;
+}
+
+.content button {
+  background: #bc0517;
+  color: #e0e0e0;
+}
+
+/* Removed additional dark styles for legacy .time-selector */
+
+.alert-content {
+  background: rgba(30, 30, 30, 0.8) url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg') no-repeat center center;
+  background-size: cover;
+  color: #e0e0e0;
+  border: 0.5px solid #e0e0e0;
+}
+
+.alert-content button {
+  background-color: #bc0517;
+  color: #121212;
+}
+
+/* Removed unused .dark-mode-toggle dark styles */
+
+.paragraph-instructions {
+  margin-left: auto;
+  font-size: 14px;
+  color: gray;
+}
+
+.paragraph-instructions.hotkeys-tooltip {
+  background: transparent;
+  color: #333;
+  padding: 10px 16px;
+  border-radius: 6px;
+  display: inline-flex;
+  gap: 20px;
+  font-size: 12px;
+  box-shadow: none;
+}
+
+.paragraph-instructions.hotkeys-tooltip {
+  background: transparent;
+  color: #e0e0e0;
+}
+
+.hotkeys-tooltip .hotkey-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hotkeys-tooltip kbd {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  color: #333;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.hotkeys-tooltip kbd {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.accuracy-row {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.accuracy-row .result-label,
+.accuracy-row .result-value {
+  font-size: 1.2em !important;
+  display: block;
+  font-weight: bold;
+  font-family: 'Kirsty';
+  margin: 0;
+  line-height: 1.1;
+}
+
+.accuracy-row .result-label {
+  color: #bc0517;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 2px;
+}
+
+.accuracy-row .result-value {
+  color: #e0e0e0;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.accuracy-row .result-value {
+  color: #e0e0e0;
+}
+
+.completion-row {
+  margin-top: 6px;
+  text-align: center;
+  padding-top: 6px;
+}
+
+.completion-row .result-label,
+.completion-row .result-value {
+  display: block;
+  font-weight: bold;
+  font-family: 'Kirsty';
+  margin: 0;
+  line-height: 1.1;
+}
+
+.completion-row .result-label {
+  font-size: 1.4em;
+  color: #bc0517;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 2px;
+}
+
+.accuracy-row .result-label,
+.accuracy-row .result-value,
+.completion-row .result-label,
+.completion-row .result-value {
+  display: block;
+  font-weight: bold;
+  font-family: 'Kirsty';
+  margin: 0;
+  line-height: 1.1;
+}
+
+.accuracy-row .result-label {
+  color: #bc0517;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+.accuracy-row .result-value {
+  color: #e0e0e0;
+  letter-spacing: 0.5px;
+}
+
+.accuracy-row .result-value {
+  color: #e0e0e0;
+}
+
+.completion-row .result-label {
+  color: #bc0517;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 2px;
+}
+
+.completion-row .result-value {
+  color: #e0e0e0;
+  letter-spacing: 0.5px;
+}
+
+.completion-row .result-value {
+  color: #e0e0e0;
+}
+
+.accuracy-row .result-value,
+.completion-row .result-value {
+  margin-bottom: 22px;
+}
+
+.completion-row .result-value {
+  font-size: 1.3em;
+  color: #e0e0e0;
+  letter-spacing: 0.5px;
+}
+
+.completion-row .result-value {
+  color: #e0e0e0;
+}
+
+/* ==================== AUTH MODAL STYLES ==================== */
+
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.auth-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.auth-modal {
+  background: #1e1e1e;
+  border: 1px solid #333;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.auth-modal-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.auth-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-modal-close svg {
+  width: 20px;
+  height: 20px;
+  color: #666;
+}
+
+.auth-modal-close svg {
+  color: #999;
+}
+
+.auth-modal-title {
+  font-family: 'Kirsty Regular';
+  font-size: 28px;
+  color: #121212;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.auth-modal-title {
+  color: #fff;
+}
+
+.auth-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  border-left: 3px solid #c62828;
+}
+
+.auth-error {
+  background: rgba(198, 40, 40, 0.2);
+  color: hsl(1, 83%, 63%);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field label {
+  font-size: 14px;
+  color: #555;
+  font-weight: 500;
+}
+
+.auth-field label {
+  color: #aaa;
+}
+
+.auth-field input {
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: 'Hapna Demibold';
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: #fff;
+  color: #121212;
+}
+
+.auth-field input {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #fff;
+}
+
+.auth-field input:focus {
+  outline: none;
+  border-color: #bc0517;
+  box-shadow: 0 0 0 3px rgba(188, 5, 23, 0.1);
+}
+
+.auth-field input:focus {
+  box-shadow: 0 0 0 3px rgba(188, 5, 23, 0.2);
+}
+
+.auth-field input::placeholder {
+  color: #999;
+}
+
+.auth-field input::placeholder {
+  color: #666;
+}
+
+.auth-field input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-submit-btn {
+  background: #bc0517;
+  color: #fff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: 'Hapna Demibold';
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  margin-top: 8px;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  background: #a00414;
+}
+
+.auth-submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.auth-switch {
+  color: #999;
+}
+
+.auth-switch button {
+  background: none;
+  border: none;
+  color: #bc0517;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'Hapna Demibold';
+  text-decoration: underline;
+  padding: 0;
+}
+
+.auth-switch button:hover {
+  color: #a00414;
+}
+
+.auth-switch button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ==================== USER MENU STYLES ==================== */
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Time Stats below Chart */
+
+.chart-time-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 15px;
+}
+
+.time-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.time-label {
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 1rem;
+}
+
+.time-value {
+  font-family: 'Kirsty Regular';
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+/* ==================== RESPONSIVE STYLES ==================== */
+
+@media (max-width: 768px) {
+  body {
+    padding: 60px 8px 8px 8px;
+  }
+
+  .app-header {
+    padding: 8px 16px;
+  }
+
+  .wrapper {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+  }
+
+  .wrapper {
+    width: 100%;
+  }
+
+  .shortcuts-footer {
+    gap: 8px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 54px 4px 4px 4px;
+  }
+
+  .app-header {
+    padding: 6px 10px;
+  }
+
+  .wrapper {
+    padding: 10px 10px;
+    border-radius: 6px;
+  }
+
+  .toggle-icon i {
+    font-size: 18px;
+  }
+
+  .typing-text p {
+    font-size: 16px;
+  }
+
+  .shortcuts-footer {
+    gap: 6px;
+    font-size: 0.85em;
+  }
+
+  .shortcuts-footer kbd {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+}
+
+/* ============ Results panel (full-screen) ============ */
+
+.alert-card {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow-y: auto;
+  background: rgba(16, 16, 22, 0.6) url('https://res.cloudinary.com/dzjid2tos/image/upload/v1770239967/bg_mdzfbw_eflczt.jpg') center center / cover no-repeat;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.alert-card {
+  background: rgba(16, 16, 22, 0.6) url('https://res.cloudinary.com/dzjid2tos/image/upload/v1764104223/bg_foak2b.jpg') center center / cover no-repeat;
+}
+
+.results-panel {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px 28px 28px;
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.results-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.results-panel-header h2 {
+  font-family: 'Kirsty Regular';
+  font-size: 34px;
+  color: #bc0517;
+  margin: 0;
+}
+
+.results-close-btn {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 16px;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.results-close-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+.results-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.results-config-caption {
+  font-family: 'Kirsty Regular';
+  font-size: 14px;
+  color: #9ca3af;
+  letter-spacing: 0.3px;
+}
+
+/* Headline metrics band */
+
+.results-hero {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.hero-stat {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 88px;
+  transition: all 0.2s ease;
+}
+
+.hero-stat-main {
+  background: rgba(188, 5, 23, 0.15);
+  border-color: rgba(188, 5, 23, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.hero-stat-value {
+  font-family: 'Kirsty Regular';
+  font-size: 42px;
+  color: #f5f5f5;
+  line-height: 1.1;
+}
+
+.hero-stat-main .hero-stat-value {
+  font-size: 52px;
+}
+
+.hero-stat-label {
+  font-family: 'Kirsty Regular';
+  font-size: 13px;
+  color: #9ca3af;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.hero-stat-label,
+.results-config-caption {
+  color: #a3a3a3;
+}
+
+/* Chart section - adapts to viewport height */
+
+.results-chart-section {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1;
+  min-height: min-content;
+}
+
+.results-chart-section .performance-chart-container {
+  height: clamp(300px, 50vh, 500px);
+  background: transparent;
+  border: none;
+  padding: 0;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.results-chart-section .performance-chart-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.chart-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-family: 'Kirsty Regular';
+}
+
+/* Chart + stats side by side */
+
+.results-main {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.results-main .results-chart-section {
+  flex: 1 1 70%;
+  min-width: 0;
+}
+
+.results-main .results-chart-section+.results-stats-grid {
+  flex: 1 1 30%;
+  min-width: 0;
+  align-content: stretch;
+  gap: 8px;
+}
+
+.results-main .results-chart-section+.results-stats-grid .stat-cell {
+  padding: 10px 14px;
+}
+
+.results-main .results-chart-section+.results-stats-grid .stat-label,
+.results-main .results-chart-section+.results-stats-grid .stat-value {
+  font-size: 24px;
+}
+
+/* Stats - compact two-column grid */
+
+.results-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 16px;
+}
+
+.stat-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-label {
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 28px;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-family: 'Kirsty Regular';
+  color: #f5f5f5;
+  font-size: 28px;
+}
+
+/* Guest prompt */
+
+.results-panel .results-message {
+  background: rgba(188, 5, 23, 0.12);
+  border: 1px solid rgba(188, 5, 23, 0.4);
+  border-radius: 8px;
+  padding: 12px 20px;
+  text-align: center;
+  color: #f5f5f5;
+}
+
+.results-panel .results-message p {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+}
+
+/* Close button */
+
+.results-panel-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+#close-alert {
+  margin-top: 0;
+  padding: 10px 28px;
+  background: #bc0517;
+  background-image: none;
+  color: #f5f5f5;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Kirsty Regular';
+  font-size: 1.05rem;
+  transition: opacity 0.2s ease;
+}
+
+#close-alert {
+  background: #bc0517;
+  background-image: none;
+  color: #f5f5f5;
+}
+
+#close-alert:hover {
+  opacity: 0.85;
+}
+
+/* Time stats under the chart */
+
+.results-panel .chart-time-stats {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Narrow screens: single-column stats */
+
+@media (max-width: 640px) {
+  .results-panel {
+    padding: 20px 16px 24px;
+    gap: 12px;
+  }
+
+  .results-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .results-main {
+    flex-direction: column;
+  }
+
+  .results-hero {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .results-chart-section .performance-chart-container {
+    height: 300px;
+  }
+
+  .results-panel-header h2 {
+    font-size: 28px;
+  }
+}
+
+/* ============ Profile & Stats pages ============ */
+
+.account-page {
+  min-height: 100vh;
+  padding: 70px 32px 60px;
+}
+
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #888;
+  font-family: 'Kirsty Regular';
+  font-size: 18px;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-right: auto;
+}
+
+.app-nav-link {
+  color: #e5e7eb;
+  text-decoration: none;
+  font-family: 'Kirsty Regular';
+  font-size: 16px;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.app-nav-link:hover {
+  opacity: 1;
+}
+
+.app-nav-link.active {
+  opacity: 1;
+  color: #bc0517;
+}
+
+.profile-card {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 32px 36px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.profile-card {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stats-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: -8px 0 28px;
+}
+
+.stats-pagination button {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: transparent;
+  color: #bc0517;
+  font-family: 'Kirsty Regular';
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.stats-pagination button {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.stats-pagination button:hover:not(:disabled) {
+  border-color: #bc0517;
+}
+
+.stats-pagination button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.stats-pagination span {
+  font-size: 13px;
+  color: #888;
+}
+
+.stats-card-title {
+  display: block;
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.stats-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-card-rows>div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  color: #bbb;
+}
+
+.stats-card-rows b {
+  color: #bc0517;
+  font-family: 'Kirsty Regular';
+  font-size: 19px;
+}
+
+/* Grid layout for per-mode cards — spreads stats in a 3-column grid */
+
+.stats-card-rows--grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 24px;
+}
+
+.stats-card-rows--grid>div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stats-card-rows--grid b {
+  font-size: 22px;
+}
+
+/* Mode/modifier subsection: label above a full-width card */
+
+.stats-mode-section {
+  margin-bottom: 20px;
+}
+
+.stats-mode-label {
+  font-family: 'Kirsty Regular';
+  color: #bc0517;
+  font-size: 18px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ============ Profile identity & social ============ */
+
+.profile-btn-secondary {
+  background: transparent;
+  color: #bc0517;
+}
+
+.profile-btn-secondary {
+  color: #ef5350;
+  border-color: #ef5350;
+}
+
+/* ============ Followers / Following modal ============ */
+
+/* ============ Stats Section Header & Time Format Toggle ============ */
+
+/* ============ MDC Tooltip Overrides ============ */
+
+/* Raise z-index above control bar and all stacking contexts (MDC default is 9) */
+.mdc-tooltip {
+  z-index: 9999 !important;
+}
+
+.mdc-tooltip__surface {
+  background-color: rgba(18, 18, 18, 0.95) !important;
+  border: 1px solid #bc0517 !important;
+  color: #fff !important;
+  font-family: 'Hapna Demibold', sans-serif !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  padding: 8px 12px !important;
+}
+
+.mdc-tooltip--rich .mdc-tooltip__surface {
+  background-color: rgba(18, 18, 18, 0.98) !important;
+  border: 1px solid #bc0517 !important;
+  border-radius: 8px !important;
+  padding: 16px !important;
+}
+
+.mdc-tooltip__content {
+  color: #ddd !important;
+  font-size: 14px !important;
+}
+
+.mdc-tooltip--rich-actions .user-menu-login-btn {
+  margin-top: 12px;
+}

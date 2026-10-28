@@ -1,0 +1,19 @@
+<div
+  class="toggle-icon refresh-icon"
+  [class.disabled]="disabled()"
+  (click)="handleClick()"
+  aria-describedby="refresh-tooltip"
+  data-tooltip-id="refresh-tooltip"
+>
+  <i
+    class="fas fa-sync-alt"
+    [class.animate-spin]="isSpinning"
+    (animationend)="handleAnimationEnd()"
+  ></i>
+</div>
+
+<div #tooltipEl id="refresh-tooltip" class="mdc-tooltip" role="tooltip" aria-hidden="true" data-hide-delay="100" data-show-delay="150">
+  <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
+    New text
+  </div>
+</div>

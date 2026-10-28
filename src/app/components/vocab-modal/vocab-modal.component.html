@@ -1,0 +1,54 @@
+<div class="auth-modal-overlay" (click)="handleOverlayClick($event)">
+  <div class="auth-modal">
+    <button class="auth-modal-close" (click)="closeModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <h2 class="auth-modal-title">Custom Vocabulary</h2>
+
+    <div class="auth-form">
+      <div class="auth-field">
+        <label for="vocabNouns">Nouns</label>
+        <input
+          type="text"
+          id="vocabNouns"
+          name="vocabNouns"
+          [(ngModel)]="nouns"
+          placeholder="e.g., cat, tree, mountain"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="auth-field">
+        <label for="vocabAdjectives">Adjectives</label>
+        <input
+          type="text"
+          id="vocabAdjectives"
+          name="vocabAdjectives"
+          [(ngModel)]="adjectives"
+          placeholder="e.g., quick, brilliant, vast"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="auth-field">
+        <label for="vocabTemplates">Templates</label>
+        <input
+          type="text"
+          id="vocabTemplates"
+          name="vocabTemplates"
+          [(ngModel)]="templates"
+          placeholder="e.g., The {a} {n} ran away."
+          autocomplete="off"
+        />
+      </div>
+
+      <button type="button" class="auth-submit-btn" (click)="applyVocabulary()">
+        Apply & Regenerate
+      </button>
+    </div>
+  </div>
+</div>
