@@ -46,6 +46,12 @@
   --color-afk: #ff9a3c;
   --color-pb: #ff5c8a;
 
+  /* error-map heat scale: fewer -> more errors (stops at 0, 40, 70, 100%) */
+  --color-heat-0: #1d3447;
+  --color-heat-1: #2a7f8e;
+  --color-heat-2: #c9772e;
+  --color-heat-3: #ff3b4f;
+
   /* achievement rarity */
   --color-rarity-common: #8e8a94;
   --color-rarity-rare: #a497ff;

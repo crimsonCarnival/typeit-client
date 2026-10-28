@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Achievement, ApiResponse, DailyOverview, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
+import { Achievement, ApiResponse, DailyOverview, ErrorMap, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
 
 /**
  * Game HTTP service. Mirrors the React typeIt.api wrapper: every method
@@ -40,6 +40,14 @@ export class GameApiService {
 
   getAchievements(): Promise<ApiResponse<{ achievements: Achievement[] }>> {
     return this.call(this.http.get<ApiResponse<{ achievements: Achievement[] }>>(`${this.base}/achievements`));
+  }
+
+  getErrorMap(runs: number): Promise<ApiResponse<ErrorMap>> {
+    return this.call(this.http.get<ApiResponse<ErrorMap>>(`${this.base}/error-map`, { params: { runs: String(runs) } }));
+  }
+
+  startDrill(target: string): Promise<ApiResponse<any>> {
+    return this.call(this.http.post<ApiResponse<any>>(`${this.base}/game/drill`, { target }));
   }
 
   getDaily(): Promise<ApiResponse<DailyOverview>> {

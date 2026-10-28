@@ -1,0 +1,172 @@
+<div class="error-map">
+  <div>
+    <h1 class="title">Error map</h1>
+    <p class="subtitle">Where your fingers slip, key by key.</p>
+  </div>
+
+  @if (!auth.loading() && !auth.isAuthenticated()) {
+    <div class="state">
+      <p class="state-title">Your error map needs an account</p>
+      <p>Signed-in runs record which keys you miss and what you hit instead.</p>
+      <button type="button" class="btn-primary" (click)="auth.openAuthModal('register')">Create free account</button>
+    </div>
+  } @else if (error()) {
+    <div class="state" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" class="btn-ghost" (click)="load()">Try again</button>
+    </div>
+  } @else if (!map()) {
+    <div class="state" aria-busy="true"><p>Loading your error map&#8230;</p></div>
+  } @else if (!hasData()) {
+    <div class="state">
+      <p class="state-title">No key data yet</p>
+      <p>Finish a few tests while signed in and your weak keys will show up here.</p>
+    </div>
+  } @else if (map(); as m) {
+    <div class="layout">
+      <section class="panel board" aria-label="Error heatmap">
+        <div class="board-head">
+          <div class="segmented" role="tablist" aria-label="View">
+            <button type="button" role="tab" class="segmented-btn" [class.active]="view() === 'keys'" [attr.aria-selected]="view() === 'keys'" (click)="setView('keys')">Keys</button>
+            <button type="button" role="tab" class="segmented-btn" [class.active]="view() === 'digraphs'" [attr.aria-selected]="view() === 'digraphs'" (click)="setView('digraphs')">Digraphs</button>
+          </div>
+          <div class="legend" aria-hidden="true">
+            <span>Fewer</span><span class="legend-bar"></span><span>More errors</span>
+          </div>
+        </div>
+
+        @if (view() === 'keys') {
+          <div class="keyboard">
+            @for (row of keyRows; track $index) {
+              <div class="key-row" [style.--row-indent.px]="$index * 26">
+                @for (k of row; track k) {
+                  <button
+                    type="button"
+                    class="key"
+                    [class.selected]="isSelected(k)"
+                    [style.background]="isSelected(k) ? 'var(--color-accent)' : keyBackground(k)"
+                    [attr.aria-pressed]="isSelected(k)"
+                    [attr.aria-label]="k.toUpperCase() + ', ' + (keyStats(k)?.errors ?? 0) + ' errors'"
+                    (click)="selected.set(k)"
+                  >
+                    <span class="key-char">{{ k }}</span>
+                    <span class="key-count">{{ keyStats(k)?.errors ?? '–' }}</span>
+                  </button>
+                }
+              </div>
+            }
+            <div class="key-row space-row">
+              <button
+                type="button"
+                class="key key-space"
+                [class.selected]="isSelected(' ')"
+                [style.background]="isSelected(' ') ? 'var(--color-accent)' : keyBackground(' ')"
+                [attr.aria-pressed]="isSelected(' ')"
+                [attr.aria-label]="'Space, ' + (keyStats(' ')?.errors ?? 0) + ' errors'"
+                (click)="selected.set(' ')"
+              >
+                Space &#183; {{ keyStats(' ')?.errors ?? 0 }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          @if (m.digraphs.length === 0) {
+            <p class="muted">No digraph errors in these runs.</p>
+          } @else {
+            <div class="pairs">
+              @for (p of m.digraphs; track p.pair) {
+                <button
+                  type="button"
+                  class="key key-pair"
+                  [class.selected]="selectedPair()?.pair === p.pair"
+                  [style.background]="selectedPair()?.pair === p.pair ? 'var(--color-accent)' : pairBackground(p.errors)"
+                  [attr.aria-pressed]="selectedPair()?.pair === p.pair"
+                  [attr.aria-label]="p.pair + ', ' + p.errors + ' errors'"
+                  (click)="selected.set(p.pair)"
+                >
+                  <span class="pair-char">{{ p.pair }}</span>
+                  <span class="key-count">{{ p.errors }}</span>
+                </button>
+              }
+            </div>
+          }
+        }
+
+        <p class="board-foot">
+          Based on your last
+          <label class="runs-select">
+            <span class="visually-hidden">Runs to include</span>
+            <select (change)="onRunsChange($event)">
+              @for (n of runOptions; track n) {
+                <option [value]="n" [selected]="n === runs()">{{ n }}</option>
+              }
+            </select>
+          </label>
+          runs ({{ m.runs }} with key data) &#183; {{ m.totalPresses.toLocaleString() }} key presses.
+          {{ view() === 'keys' ? 'Select a key to see what you hit instead.' : 'Select a pair to drill it.' }}
+        </p>
+      </section>
+
+      <aside class="panel detail" aria-label="Detail" aria-live="polite">
+        @if (view() === 'keys') {
+          @if (detail(); as d) {
+            <div class="detail-head">
+              <span class="detail-key">{{ keyLabel(d.key) === 'Space' ? '␣' : keyLabel(d.key) }}</span>
+              <div class="detail-names">
+                <span class="detail-title">Key {{ keyLabel(d.key) }}</span>
+                <span class="muted">{{ d.errors }} errors &#183; {{ d.errorRate }}% error rate</span>
+              </div>
+            </div>
+
+            @if (typedInstead().length) {
+              <div class="detail-section">
+                <span class="section-label">Typed instead</span>
+                @for (t of typedInstead(); track t.label) {
+                  <div class="instead-row">
+                    <span class="instead-key">{{ t.label }}</span>
+                    <div class="instead-bar"><div class="instead-fill" [style.width.%]="t.percent"></div></div>
+                    <span class="instead-pct">{{ t.percent }}%</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="muted">No errors on this key in these runs.</p>
+            }
+
+            @if (weakestPairs().length) {
+              <div class="detail-section">
+                <span class="section-label">Weakest pairs</span>
+                <div class="chips">
+                  @for (p of weakestPairs(); track p.pair) {
+                    <span class="chip">{{ p.pair }} <b>{{ p.errors }}</b></span>
+                  }
+                </div>
+              </div>
+            }
+
+            <button type="button" class="btn-primary drill-btn" [disabled]="drilling()" (click)="drill(d.key)">
+              {{ drilling() ? 'Starting' : 'Drill this key' }}
+            </button>
+          } @else {
+            <p class="muted">No errors recorded. Clean typing!</p>
+          }
+        } @else {
+          @if (selectedPair(); as p) {
+            <div class="detail-head">
+              <span class="detail-key detail-pair">{{ p.pair }}</span>
+              <div class="detail-names">
+                <span class="detail-title">Pair {{ p.pair.toUpperCase() }}</span>
+                <span class="muted">{{ p.errors }} errors on the second key of this pair</span>
+              </div>
+            </div>
+            <button type="button" class="btn-primary drill-btn" [disabled]="drilling()" (click)="drill(p.pair)">
+              {{ drilling() ? 'Starting' : 'Drill this pair' }}
+            </button>
+          } @else {
+            <p class="muted">No pairs to drill yet.</p>
+          }
+        }
+      </aside>
+    </div>
+  }
+</div>

@@ -4,6 +4,11 @@
       <span class="daily-banner-tag">Daily challenge</span>
       <span>One scored attempt. Settings are locked; Esc abandons the run.</span>
     </div>
+  } @else if (gameState().drillTarget) {
+    <div class="daily-banner" role="status">
+      <span class="daily-banner-tag">Drill &#183; {{ gameState().drillTarget === ' ' ? 'Space' : gameState().drillTarget!.toUpperCase() }}</span>
+      <span>Practice text built around your weak spot. Drill runs are saved but not ranked; Esc returns to normal tests.</span>
+    </div>
   }
 
   <div class="theme-switch" [class.locked]="gameState().isTyping" [class.daily-locked]="!!gameState().dailyDate">

@@ -73,6 +73,7 @@ const defaultState = (isAuthenticated: boolean): GameState => {
     loremMax: ls.int('loremMax', 60),
     caretStyle: (ls.get('caretStyle') as GameState['caretStyle']) || 'line',
     dailyDate: null,
+    drillTarget: null,
   };
 };
 
@@ -186,6 +187,7 @@ export class GameService {
       isTyping: false,
       isFinished: false,
       dailyDate: null,
+      drillTarget: null,
     }));
   }
 
@@ -230,6 +232,7 @@ export class GameService {
       punctuationEnabled: data.punctuationEnabled ?? prev.punctuationEnabled,
       numbersEnabled: data.numbersEnabled ?? prev.numbersEnabled,
       dailyDate: data.dailyDate ?? null,
+      drillTarget: null,
       isTyping: false,
       isFinished: false,
     }));
@@ -1056,6 +1059,21 @@ export class GameService {
       this.resetInternalState();
       this.sessionId = (response.data as { sessionId: string }).sessionId;
       this.applyServerText(response.data);
+    }
+    return response;
+  }
+
+  /**
+   * Loads a practice text focused on one key or digraph (from the error map).
+   * Drill runs are saved but never ranked.
+   */
+  async startDrill(target: string): Promise<ApiResponse<unknown>> {
+    const response = await this.gameApi.startDrill(target);
+    if (response.success && response.data) {
+      this.resetInternalState();
+      this.sessionId = (response.data as { sessionId: string }).sessionId;
+      this.applyServerText(response.data);
+      this.gameStateSignal.update(prev => ({ ...prev, drillTarget: target }));
     }
     return response;
   }

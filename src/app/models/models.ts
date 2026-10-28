@@ -76,6 +76,8 @@ export interface GameState {
   caretStyle: CaretStyle;
   /** 'YYYY-MM-DD' while playing that day's daily challenge, else null. */
   dailyDate: string | null;
+  /** Key or digraph being drilled (practice text, never ranked), else null. */
+  drillTarget: string | null;
 }
 
 export interface AfkEvent {
@@ -247,4 +249,19 @@ export interface Achievement {
   value: number;
   unlocked: boolean;
   unlockedAt: string | null;
+}
+
+export interface ErrorMapKey {
+  key: string;
+  presses: number;
+  errors: number;
+  errorRate: number;
+  typedInstead: { typed: string; count: number }[];
+}
+
+export interface ErrorMap {
+  runs: number;
+  totalPresses: number;
+  keys: ErrorMapKey[];
+  digraphs: { pair: string; errors: number }[];
 }
