@@ -147,7 +147,15 @@ export class TypingAreaComponent {
 
   onInput(event: Event): void {
     this.resetIdleTimer();
-    this.typing.emit((event.target as HTMLInputElement).value);
+    const el = event.target as HTMLInputElement;
+    this.typing.emit(el.value);
+    // When the parent rejects an edit (anti-spam guard, race not started yet)
+    // the bound value doesn't change, so Angular never rewrites the input and
+    // the rejected characters would linger. Re-sync after change detection.
+    setTimeout(() => {
+      const accepted = typeof this.currentText() === 'string' ? this.currentText() : '';
+      if (el.value !== accepted) el.value = accepted;
+    });
   }
 
   private resetIdleTimer(): void {
