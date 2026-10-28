@@ -11,7 +11,7 @@
     </div>
   }
 
-  <div class="theme-switch" [class.locked]="gameState().isTyping" [class.daily-locked]="!!gameState().dailyDate">
+  <div class="theme-switch" [class.locked]="gameState().isTyping" [class.daily-locked]="!!gameState().dailyDate || !!gameState().race">
     <div class="toggle-container">
       <div class="controls-row">
         <app-sound-toggle
@@ -99,7 +99,51 @@
     </div>
   </div>
 
-  @if (botLanes(); as lanes) {
+  @if (gameState().race) {
+    <div class="race-view">
+      <div class="race-cards">
+        @for (p of raceStandings(); track p.userId) {
+          <div class="race-card" [class.me]="p.userId === race.myId()">
+            <span class="race-avatar" aria-hidden="true">{{ p.displayName.charAt(0).toUpperCase() }}</span>
+            <div class="race-name">
+              <span>{{ p.displayName }}{{ p.userId === race.myId() ? ' (you)' : '' }}</span>
+              <span class="race-place">
+                @if (p.place) {
+                  {{ p.place === 1 ? '1st' : p.place === 2 ? '2nd' : p.place === 3 ? '3rd' : p.place + 'th' }}
+                } @else if (!p.connected) {
+                  Left
+                } @else {
+                  Racing
+                }
+              </span>
+            </div>
+            <div class="race-stat"><span class="race-wpm">{{ p.wpm }}</span><span>WPM</span></div>
+            <div class="race-stat"><span class="race-acc">{{ p.accuracy }}%</span><span>ACC</span></div>
+          </div>
+        }
+      </div>
+
+      @if (raceLanes(); as lanes) {
+        <app-race-lanes [lanes]="lanes" />
+      }
+
+      @if (raceStartsIn() > 0) {
+        <div class="race-countdown" role="status" aria-live="assertive">Starts in {{ raceStartsIn() }}</div>
+      }
+
+      @if (raceFinished()) {
+        <div class="race-result" role="status">
+          <span class="race-result-title">{{ raceWinnerLabel() }}</span>
+          <span class="race-result-note">Only runs that pass verification can win.</span>
+          <button type="button" class="race-btn" (click)="backToLobby()">Back to race lobby</button>
+        </div>
+      } @else {
+        <div class="race-foot">
+          <span><kbd>Esc</kbd> Leave race</span>
+        </div>
+      }
+    </div>
+  } @else if (botLanes(); as lanes) {
     <div class="bot-race">
       <div class="bot-race-head">
         <span class="daily-banner-tag">Bot race &#183; {{ gameState().botWpm }} WPM</span>

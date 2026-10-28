@@ -85,6 +85,7 @@ const defaultState = (isAuthenticated: boolean): GameState => {
     dailyDate: null,
     practice: null,
     botWpm: null,
+    race: null,
   };
 };
 
@@ -199,6 +200,7 @@ export class GameService {
       isFinished: false,
       dailyDate: null,
       practice: null,
+      race: null,
     }));
   }
 
@@ -244,6 +246,9 @@ export class GameService {
       numbersEnabled: data.numbersEnabled ?? prev.numbersEnabled,
       dailyDate: data.dailyDate ?? null,
       practice: data.practice ? { ...data.practice, label: practiceLabel(data.practice) } : null,
+      // The start time only comes from the race socket; keep it while the
+      // server session is still the race's.
+      race: data.raceCode && prev.race?.code === data.raceCode ? prev.race : null,
       isTyping: false,
       isFinished: false,
     }));
@@ -339,8 +344,9 @@ export class GameService {
     if (this.initialAuth === null) {
       this.initialAuth = isAuth;
       this.isAuthenticated = isAuth;
-      // Keep a bot chosen on another page (e.g. Learn) before the game first initialised.
-      this.gameStateSignal.set({ ...defaultState(isAuth), botWpm: this.gameState().botWpm });
+      // Keep a bot or race chosen on another page before the game first initialised.
+      const { botWpm, race } = this.gameState();
+      this.gameStateSignal.set({ ...defaultState(isAuth), botWpm, race });
       this.init();
       return;
     }
@@ -661,15 +667,22 @@ export class GameService {
 
       const targetText = gs.text || '';
 
-      // Start tracking on first keystroke.
+      // Live race: nobody types before the shared start.
+      if (gs.race && Date.now() < gs.race.startAt) {
+        this.gameStateSignal.update(prev => ({ ...prev, currentText: this.currentText }));
+        return;
+      }
+
+      // Start tracking on first keystroke. In a race the clock runs from the
+      // shared start for everyone, matching the server's timing.
       if (!gs.isTyping && newIndex > 0) {
-        this.startTime = Date.now();
+        this.startTime = gs.race ? gs.race.startAt : Date.now();
         this.gameStateSignal.update(prev => ({ ...prev, isTyping: true }));
         this.startTimer();
         this.lastKeystrokeTime = Date.now();
         // Lets the server time the run on its own clock (needed to rank it).
         // Fire-and-forget: a failed call only makes this run unranked.
-        if (this.isAuthenticated && this.sessionId) {
+        if (this.isAuthenticated && this.sessionId && !gs.race) {
           void this.gameApi.beginGame();
         }
       }
@@ -1099,6 +1112,25 @@ export class GameService {
       }
     }
     return response;
+  }
+
+  /**
+   * Loads the race the server just started: its session already holds the
+   * race text and start time. `startAt` is on the local clock.
+   */
+  async startRace(code: string, startAt: number): Promise<void> {
+    this.resetInternalState();
+    this.gameStateSignal.update(prev => ({ ...prev, race: { code, startAt }, botWpm: null }));
+    const response = await this.gameApi.getGameState();
+    if (response.success && response.data) {
+      this.sessionId = response.data.sessionId;
+      this.applyServerText(response.data);
+    }
+  }
+
+  /** Leaves race mode locally (the race socket handles the server side). */
+  clearRace(): void {
+    this.gameStateSignal.update(prev => ({ ...prev, race: null }));
   }
 
   /** Milliseconds since the first keystroke of the current run (0 before it). */

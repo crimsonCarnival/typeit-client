@@ -18,6 +18,9 @@ import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
 import { RaceLane, RaceLanesComponent } from '../../components/race-lanes/race-lanes.component';
 import { botCharsAt } from '../../utils/pace-bot';
+import { RaceService } from '../../services/race.service';
+import { RacePlayer } from '../../models/models';
+import { Router } from '@angular/router';
 
 const BOT_TICK_MS = 100;
 
@@ -55,6 +58,49 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   inputReady = false;
   isFocused = false;
+
+  readonly race = inject(RaceService);
+  private readonly router = inject(Router);
+  private readonly now = signal(Date.now());
+
+  /** Seconds until a live race starts, or 0 once it has. */
+  readonly raceStartsIn = computed(() => {
+    const race = this.gameState().race;
+    return race ? Math.max(0, Math.ceil((race.startAt - this.now()) / 1000)) : 0;
+  });
+
+  /** Lanes for every racer; the player's own lane is red, others take avatar colours. */
+  readonly raceLanes = computed<RaceLane[] | null>(() => {
+    const room = this.race.room();
+    if (!this.gameState().race || !room?.text) return null;
+    const length = room.text.length;
+    return room.players.map((p, i) => ({
+      id: p.userId,
+      label: `${p.displayName}${p.finishedAt ? ', finished' : ''}`,
+      initial: p.displayName.charAt(0).toUpperCase(),
+      progress: p.index / length,
+      color: p.userId === this.race.myId() ? 'var(--color-primary)' : `var(--color-avatar-${(i % 7) + 2})`,
+      me: p.userId === this.race.myId(),
+    }));
+  });
+
+  /** Racers by current position (finish order first, then progress). */
+  readonly raceStandings = computed<RacePlayer[]>(() => {
+    const players = [...(this.race.room()?.players ?? [])];
+    return players.sort((a, b) =>
+      (a.place ?? 99) - (b.place ?? 99) || b.index - a.index
+    );
+  });
+
+  readonly raceFinished = computed(() => this.race.room()?.state === 'finished');
+
+  readonly raceWinnerLabel = computed(() => {
+    const room = this.race.room();
+    if (!room?.winnerId) return 'No verified winner';
+    if (room.winnerId === this.race.myId()) return 'You won!';
+    const winner = room.players.find((p) => p.userId === room.winnerId);
+    return `${winner?.displayName ?? 'Someone'} won`;
+  });
 
   /** Run time the bot has raced so far; frozen when the run finishes. */
   private readonly botElapsedMs = signal(0);
@@ -97,11 +143,19 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     });
 
     // Advance the bot while a run is in progress; reset it between runs.
+    // The same tick drives the race countdown.
     const tick = setInterval(() => {
+      this.now.set(Date.now());
       const gs = this.gameState();
       if (!gs.botWpm || gs.isFinished) return;
       this.botElapsedMs.set(gs.isTyping ? this.game.getElapsedMs() : 0);
     }, BOT_TICK_MS);
+
+    // Report live progress to the race (throttled in RaceService).
+    effect(() => {
+      const gs = this.gameState();
+      if (gs.race && gs.isTyping) this.race.sendProgress(gs.currentIndex, gs.accuracy);
+    });
     inject(DestroyRef).onDestroy(() => clearInterval(tick));
   }
 
@@ -144,8 +198,20 @@ export class GameComponent implements AfterViewInit, OnDestroy {
   // Refresh button and Esc reset do the same thing: a new paragraph plus a
   // blurred input, so the "Click here to start" overlay is shown either way.
   handleReset(): void {
+    // Esc mid-race leaves the race (the run is abandoned).
+    if (this.gameState().race) this.leaveRace();
     this.game.generateNewParagraph();
     this.typingArea()?.blur();
+  }
+
+  leaveRace(): void {
+    this.race.leave();
+    this.game.clearRace();
+  }
+
+  backToLobby(): void {
+    this.leaveRace();
+    void this.router.navigate(['/race']);
   }
 
   handleModeChange(mode: GameMode): void {

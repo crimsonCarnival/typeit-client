@@ -80,6 +80,8 @@ export interface GameState {
   practice: PracticeState | null;
   /** Target speed of the client-side pace bot, or null when not racing one. */
   botWpm: number | null;
+  /** Live race in progress: its code and the start time on the local clock. */
+  race: { code: string; startAt: number } | null;
 }
 
 export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list';
@@ -302,4 +304,57 @@ export interface LearnOverview {
   commonWords: { runs: number; bestWpm: number };
   lists: WordList[];
   maxLists: number;
+}
+
+export type RaceState = 'lobby' | 'countdown' | 'racing' | 'finished';
+
+export interface RacePlayer {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  ready: boolean;
+  connected: boolean;
+  index: number;
+  wpm: number;
+  accuracy: number;
+  finishedAt: number | null;
+  place: number | null;
+  /** Whether the finished run passed verification (null until finished). */
+  ranked: boolean | null;
+}
+
+export interface RaceRoom {
+  code: string;
+  name: string;
+  hostId: string;
+  isPrivate: boolean;
+  wordCount: number;
+  state: RaceState;
+  startAt: number | null;
+  serverNow: number;
+  text: string | null;
+  winnerId: string | null;
+  players: RacePlayer[];
+}
+
+export interface RaceFriend {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  online: boolean;
+}
+
+export interface RaceInvite {
+  code: string;
+  name: string;
+  from: { userId: string; displayName: string; username: string };
+}
+
+export interface OpenRace {
+  code: string;
+  name: string;
+  wordCount: number;
+  players: number;
 }

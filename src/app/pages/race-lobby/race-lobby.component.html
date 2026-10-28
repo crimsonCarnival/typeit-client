@@ -1,0 +1,197 @@
+<div class="lobby">
+  <div>
+    <h1 class="title">Race lobby</h1>
+    <p class="subtitle">Race up to four friends on the same text.</p>
+  </div>
+
+  @if (!auth.loading() && !auth.isAuthenticated()) {
+    <div class="state">
+      <p class="state-title">Racing needs an account</p>
+      <p>Races are timed by the server and wins go on your profile.</p>
+      <button type="button" class="btn-primary" (click)="auth.openAuthModal('register')">Create free account</button>
+    </div>
+  } @else {
+    @if (race.status() !== 'online') {
+      <p class="notice" role="status">{{ race.status() === 'connecting' ? 'Connecting to the race server…' : 'Race server unavailable. Retrying…' }}</p>
+    }
+    @if (race.error()) {
+      <p class="notice error" role="alert">{{ race.error() }}</p>
+    }
+
+    <div class="layout">
+      <!-- Create / join, or the current room's settings -->
+      <section class="panel setup" aria-label="Room">
+        @if (!room() || room()!.state === 'finished') {
+          <div class="segmented" role="tablist" aria-label="Create or join">
+            <button type="button" role="tab" class="segmented-btn" [class.active]="tab() === 'create'" [attr.aria-selected]="tab() === 'create'" (click)="tab.set('create')">Create</button>
+            <button type="button" role="tab" class="segmented-btn" [class.active]="tab() === 'join'" [attr.aria-selected]="tab() === 'join'" (click)="tab.set('join')">Join</button>
+          </div>
+
+          @if (tab() === 'create') {
+            <form class="form" (submit)="create($event)">
+              <label class="field">
+                <span>Room name</span>
+                <input type="text" maxlength="40" [value]="roomName()" (input)="onInput('roomName', $event)" placeholder="Friday sprint" />
+              </label>
+              <div class="field" role="group" aria-label="Length">
+                <span>Length</span>
+                <div class="chips">
+                  @for (n of lengths; track n) {
+                    <button type="button" class="chip" [class.active]="wordCount() === n" [attr.aria-pressed]="wordCount() === n" (click)="wordCount.set(n)">{{ n }}{{ n === lengths[0] ? ' words' : '' }}</button>
+                  }
+                </div>
+              </div>
+              <div class="toggle-row">
+                <span id="private-label">Private room</span>
+                <button type="button" role="switch" class="switch" [class.on]="isPrivate()" [attr.aria-checked]="isPrivate()" aria-labelledby="private-label" (click)="isPrivate.set(!isPrivate())">
+                  <span class="switch-knob"></span>
+                </button>
+              </div>
+              <p class="hint">{{ isPrivate() ? 'Only people with the code can join.' : 'Listed under Join for anyone to find.' }}</p>
+              <button type="submit" class="btn-primary" [disabled]="race.status() !== 'online'">Create room</button>
+            </form>
+          } @else {
+            <form class="form" (submit)="join($event)">
+              <label class="field">
+                <span>Invite code</span>
+                <input class="code-input" type="text" maxlength="9" [value]="joinCode()" (input)="onInput('joinCode', $event)" placeholder="TYPE-7QK2" autocapitalize="characters" />
+              </label>
+              <button type="submit" class="btn-primary" [disabled]="race.status() !== 'online'">Join</button>
+            </form>
+            <div class="open-rooms">
+              <div class="open-head">
+                <span class="field-label">Open races</span>
+                <button type="button" class="link-btn" (click)="race.listOpen()">Refresh</button>
+              </div>
+              @if (race.openRooms().length === 0) {
+                <p class="hint">No public races waiting right now.</p>
+              } @else {
+                <ul class="open-list">
+                  @for (r of race.openRooms(); track r.code) {
+                    <li>
+                      <span class="open-name">{{ r.name }}</span>
+                      <span class="hint">{{ r.players }}/{{ maxPlayers }} &#183; {{ r.wordCount }} words</span>
+                      <button type="button" class="btn-outline small" (click)="race.join(r.code)">Join</button>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        } @else if (room(); as r) {
+          <div class="form">
+            <div class="field">
+              <span class="field-label">Room</span>
+              <span class="room-name">{{ r.name }}</span>
+              <span class="hint">{{ r.wordCount }} words &#183; {{ r.isPrivate ? 'Private' : 'Public' }}</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Invite code</span>
+              <div class="code-row">
+                <span class="code">{{ r.code }}</span>
+                <button type="button" class="btn-outline" (click)="copyCode()">{{ copied() ? 'Copied' : 'Copy' }}</button>
+              </div>
+            </div>
+            <button type="button" class="btn-outline" (click)="race.leave()">Leave room</button>
+          </div>
+        }
+      </section>
+
+      <!-- Waiting room -->
+      <section class="panel waiting" aria-labelledby="waiting-title">
+        <div class="waiting-head">
+          <h2 id="waiting-title" class="section-title">Waiting room</h2>
+          @if (room(); as r) {
+            <span class="hint">{{ r.players.length }} of {{ maxPlayers }} players &#183; {{ r.wordCount }} words</span>
+          }
+        </div>
+
+        @if (!room()) {
+          <p class="hint">Create a room or join one with a code. Everyone readies up, then the server starts the countdown.</p>
+        } @else if (room(); as r) {
+          <ul class="players">
+            @for (p of r.players; track p.userId; let i = $index) {
+              <li class="player" [class.me]="isMe(p)">
+                <span class="avatar" aria-hidden="true" [style.background]="avatarColor(i, p)">{{ initial(p.displayName) }}</span>
+                <span class="player-name">
+                  {{ p.displayName }}
+                  @if (p.userId === r.hostId) {
+                    <span class="tag">Host</span>
+                  }
+                </span>
+                @if (r.state === 'finished') {
+                  <span class="badge">{{ p.place ? '#' + p.place : 'DNF' }}</span>
+                } @else if (p.ready) {
+                  <span class="badge ready">Ready</span>
+                } @else {
+                  <span class="badge">Not ready</span>
+                }
+              </li>
+            }
+            @if (inLobby()) {
+              @for (slot of emptySlots(); track slot) {
+                <li class="player empty">+ Invite a friend</li>
+              }
+            }
+          </ul>
+
+          @if (r.state === 'lobby' && race.me(); as me) {
+            <button type="button" class="btn-primary ready-btn" [class.is-ready]="me.ready" (click)="race.setReady(!me.ready)">
+              {{ me.ready ? 'Not ready' : "I'm ready" }}
+            </button>
+            @if (r.players.length < 2) {
+              <p class="hint">Waiting for at least one more racer.</p>
+            }
+          }
+
+          @if (r.state === 'countdown') {
+            <div class="countdown" aria-live="polite">
+              <div class="countdown-main">
+                <span class="countdown-ring">{{ startsIn() }}</span>
+                <div class="countdown-text">
+                  <span class="countdown-title">Race starts in {{ startsIn() }}</span>
+                  <span class="hint">Everyone is ready. Cancel to keep waiting.</span>
+                </div>
+              </div>
+              <div class="countdown-actions">
+                <button type="button" class="btn-outline" (click)="race.cancelCountdown()">Cancel</button>
+                @if (race.isHost()) {
+                  <button type="button" class="btn-primary" (click)="race.startNow()">Start now</button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (r.state === 'racing') {
+            <p class="notice" role="status">Race in progress&#8230;</p>
+          }
+        }
+      </section>
+
+      <!-- Friends -->
+      <section class="panel friends" aria-labelledby="friends-title">
+        <h2 id="friends-title" class="section-title">Friends</h2>
+        @if (friends().length === 0) {
+          <p class="hint">Friends are people you follow who follow you back. Find players on the Rankings page.</p>
+        } @else {
+          <ul class="friend-list">
+            @for (f of friends(); track f.userId) {
+              <li class="friend" [class.offline]="!f.online">
+                <span class="avatar small" aria-hidden="true" [style.background]="'var(--color-avatar-' + (($index % 7) + 2) + ')'">{{ initial(f.displayName) }}</span>
+                <div class="friend-name">
+                  <span>{{ f.displayName }}</span>
+                  <span class="presence" [class.online]="f.online">{{ f.online ? 'Online' : 'Offline' }}</span>
+                </div>
+                @if (f.online && room()?.state === 'lobby') {
+                  <button type="button" class="btn-outline small" [disabled]="invited().has(f.userId)" (click)="invite(f)">
+                    {{ invited().has(f.userId) ? 'Invited' : 'Invite' }}
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</div>

@@ -88,6 +88,46 @@
   padding: 20px 10px;
 }
 
+.invite-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 40px);
+  padding: 14px 16px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-solid);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  color: var(--color-text);
+}
+
+.invite-accept {
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 18px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.invite-dismiss {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+}
+
 @media (max-width: 768px) {
   .app-header {
     padding: 12px 16px;
