@@ -26,6 +26,7 @@ export class PublicProfileComponent {
   readonly error = signal('');
   readonly loading = signal(true);
   readonly modal = signal<'followers' | 'following' | null>(null);
+  readonly copied = signal(false);
   followingPending = false;
 
   private readonly userId = toSignal(
@@ -75,6 +76,16 @@ export class PublicProfileComponent {
         cancelled = true;
       };
     });
+  }
+
+  async copyLink(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      this.copied.set(true);
+      setTimeout(() => this.copied.set(false), 1500);
+    } catch {
+      // Clipboard can be blocked; the URL is in the address bar.
+    }
   }
 
   async handleFollowToggle(): Promise<void> {

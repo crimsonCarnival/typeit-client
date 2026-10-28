@@ -584,6 +584,20 @@ h2 {
 }
 
 /* fix #7: reduce excessive top padding on wide viewports */
+/* The UI is not selectable text. Form fields and anything marked
+   .selectable (e.g. a race invite code) stay selectable. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 body {
   display: flex;
   align-items: flex-start;
