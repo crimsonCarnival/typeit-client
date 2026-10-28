@@ -65,7 +65,7 @@ export class LearnComponent {
     this.busy.set(id);
     const res = await start();
     this.busy.set(null);
-    if (res.success) void this.router.navigate(['/play']);
+    if (res.success) void this.router.navigate(['/play/practice']);
     else this.error.set(res.error || 'Could not start');
   }
 
@@ -100,7 +100,7 @@ export class LearnComponent {
 
   raceBot(): void {
     this.game.setBot(this.botWpm());
-    void this.router.navigate(['/play']);
+    void this.router.navigate(['/play/bot-race']);
   }
 
   openLists(): void {

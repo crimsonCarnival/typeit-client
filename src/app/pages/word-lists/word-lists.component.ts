@@ -90,7 +90,7 @@ export class WordListsComponent {
 
   async practice(list: WordList): Promise<void> {
     const res = await this.game.startPractice('list', list.id, `List · ${list.name}`);
-    if (res.success) void this.router.navigate(['/play']);
+    if (res.success) void this.router.navigate(['/play/practice']);
     else this.loadError.set(res.error || 'Could not start practice');
   }
 

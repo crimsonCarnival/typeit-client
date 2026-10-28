@@ -156,7 +156,7 @@ export class ErrorMapComponent {
     this.drilling.set(true);
     const res = await this.game.startWeakKeys();
     this.drilling.set(false);
-    if (res.success) void this.router.navigate(['/play']);
+    if (res.success) void this.router.navigate(['/play/practice']);
     else this.error.set(res.error || 'Could not start the practice run');
   }
 
@@ -165,7 +165,7 @@ export class ErrorMapComponent {
     this.drilling.set(true);
     const res = await this.game.startDrill(target);
     this.drilling.set(false);
-    if (res.success) void this.router.navigate(['/play']);
+    if (res.success) void this.router.navigate(['/play/practice']);
     else this.error.set(res.error || 'Could not start the drill');
   }
 }

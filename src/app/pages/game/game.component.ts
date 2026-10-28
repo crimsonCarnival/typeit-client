@@ -64,7 +64,8 @@ export class GameComponent implements AfterViewInit {
 
   readonly race = inject(RaceService);
   private readonly router = inject(Router);
-  private readonly urlParams = inject(ActivatedRoute).snapshot.queryParamMap;
+  private readonly route = inject(ActivatedRoute);
+  private readonly urlParams = this.route.snapshot.queryParamMap;
   private readonly now = signal(Date.now());
   private urlApplied = false;
 
@@ -86,6 +87,18 @@ export class GameComponent implements AfterViewInit {
       punct: gs.punctuationEnabled ? 1 : null,
       nums: gs.numbersEnabled ? 1 : null,
     });
+  });
+
+  /**
+   * The URL path segment that reflects the current session type:
+   * /play/daily, /play/practice, /play/bot-race, or /play for a normal run.
+   */
+  private readonly sessionPath = computed(() => {
+    const gs = this.gameState();
+    if (gs.dailyDate) return '/play/daily';
+    if (gs.practice) return '/play/practice';
+    if (gs.botWpm) return '/play/bot-race';
+    return '/play';
   });
 
   /** Seconds until a live race starts, or 0 once it has. */
@@ -223,8 +236,15 @@ export class GameComponent implements AfterViewInit {
 
     effect(() => {
       const query = this.settingsQuery();
-      if (!this.urlApplied || !query) return;
-      untracked(() => void this.router.navigate([], { queryParams: JSON.parse(query), replaceUrl: true }));
+      const path = this.sessionPath();
+      if (!this.urlApplied) return;
+      if (query) {
+        // Normal run: keep /play with settings as query params.
+        untracked(() => void this.router.navigate([path], { queryParams: JSON.parse(query), replaceUrl: true }));
+      } else {
+        // Typed session: use the sub-path, no query params.
+        untracked(() => void this.router.navigate([path], { queryParams: {}, replaceUrl: true }));
+      }
     });
 
     // Advance the bot while a run is in progress; reset it between runs.

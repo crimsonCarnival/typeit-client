@@ -6,9 +6,19 @@ const raceMatcher: UrlMatcher = (segments: UrlSegment[]) =>
     ? { consumed: segments, ...(segments[1] && { posParams: { code: segments[1] } }) }
     : null;
 
+/** Matches /play, /play/daily, /play/practice, /play/bot-race */
+const PLAY_SESSION_TYPES = new Set(['daily', 'practice', 'bot-race']);
+const playMatcher: UrlMatcher = (segments: UrlSegment[]) => {
+  if (segments[0]?.path !== 'play') return null;
+  if (segments.length === 1) return { consumed: segments };
+  if (segments.length === 2 && PLAY_SESSION_TYPES.has(segments[1].path))
+    return { consumed: segments, posParams: { sessionType: segments[1] } };
+  return null;
+};
+
 export const routes: Routes = [
   { path: '', pathMatch: 'full', loadComponent: () => import('./pages/landing/landing.component').then((m) => m.LandingComponent) },
-  { path: 'play', loadComponent: () => import('./pages/game/game.component').then((m) => m.GameComponent) },
+  { matcher: playMatcher, loadComponent: () => import('./pages/game/game.component').then((m) => m.GameComponent) },
   { path: 'results', loadComponent: () => import('./pages/results/results.component').then((m) => m.ResultsComponent) },
   { path: 'daily', loadComponent: () => import('./pages/daily/daily.component').then((m) => m.DailyComponent) },
   // /race and /race/:code share one component instance, so opening a room

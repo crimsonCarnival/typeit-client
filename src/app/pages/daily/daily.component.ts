@@ -87,7 +87,7 @@ export class DailyComponent {
     const res = await this.game.startDaily();
     this.starting.set(false);
     if (res.success) {
-      void this.router.navigate(['/play']);
+      void this.router.navigate(['/play/daily']);
     } else {
       this.startError.set(res.error || 'Could not start the challenge');
       void this.load();
@@ -104,7 +104,7 @@ export class DailyComponent {
     this.ghostError.set('');
     const res = await this.game.raceDailyGhost();
     this.startingGhost.set(false);
-    if (res.success) void this.router.navigate(['/play']);
+    if (res.success) void this.router.navigate(['/play/daily']);
     else this.ghostError.set(res.error || 'Could not start the ghost race');
   }
 
