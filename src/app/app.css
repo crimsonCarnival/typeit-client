@@ -96,6 +96,21 @@
 
   .app-header-left {
     gap: 16px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Signed-in players get five links: scroll them instead of widening the page. */
+  .app-nav {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .app-nav-link {
+    flex: none;
+    padding: 0 10px;
+    font-size: 17px;
   }
 
   .app-main {
