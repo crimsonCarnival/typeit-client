@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Achievement, ApiResponse, LiveStats, DailyOverview, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
+import { Achievement, ApiResponse, GhostTimeline, LiveStats, Replay, DailyOverview, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
 
 /**
  * Game HTTP service. Mirrors the React typeIt.api wrapper: every method
@@ -72,6 +72,22 @@ export class GameApiService {
 
   getDaily(): Promise<ApiResponse<DailyOverview>> {
     return this.call(this.http.get<ApiResponse<DailyOverview>>(`${this.base}/daily`));
+  }
+
+  getReplay(resultId: string): Promise<ApiResponse<Replay>> {
+    return this.call(this.http.get<ApiResponse<Replay>>(`${this.base}/replays/${encodeURIComponent(resultId)}`));
+  }
+
+  /** Your best ranked run for these settings as a ghost (null data when there is none). */
+  getPbGhost(gameMode: string, timeMax: number): Promise<ApiResponse<{ resultId: string; wpm: number; timeline: GhostTimeline } | null>> {
+    return this.call(this.http.get<ApiResponse<{ resultId: string; wpm: number; timeline: GhostTimeline } | null>>(`${this.base}/replays/ghost/pb`, {
+      params: { gameMode, timeMax: String(timeMax) },
+    }));
+  }
+
+  /** Practice run on a day's text against its winner's ghost. */
+  startDailyGhost(date?: string): Promise<ApiResponse<{ state: any; ghost: { label: string; wpm: number; timeline: GhostTimeline } }>> {
+    return this.call(this.http.post<ApiResponse<{ state: any; ghost: { label: string; wpm: number; timeline: GhostTimeline } }>>(`${this.base}/daily/ghost`, date ? { date } : {}));
   }
 
   startDaily(): Promise<ApiResponse<any>> {

@@ -22,6 +22,7 @@ export const practiceLabel = (p: { kind: PracticeKind; id: string | null }): str
     case 'lesson': return 'Lesson';
     case 'common-words': return 'Common words';
     case 'list': return 'Custom list';
+    case 'ghost': return `Ghost race · ${p.id ?? 'daily'}`;
   }
 };
 

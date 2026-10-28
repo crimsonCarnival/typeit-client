@@ -90,6 +90,14 @@
         (rulesChange)="handleRulesChange($event)"
       />
     }
+    @if (isAuthenticated() && !gameState().dailyDate && !gameState().race && !ghost()) {
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Ghost</span>
+        <div class="tb-buttons">
+          <button type="button" class="tb-btn" title="Race your best verified run for this mode and time limit" [disabled]="gameState().isTyping" (click)="racePb()">Race my PB</button>
+        </div>
+      </div>
+    }
     <app-custom-time-dropdown
       [timeMax]="gameState().timeMax"
       [timeLeft]="gameState().timeLeft"
@@ -108,6 +116,9 @@
     }
   </div>
 
+  @if (ghostError()) {
+    <p class="status-line" role="status">{{ ghostError() }}</p>
+  }
   <p class="status-line">
     @if (gameState().gameMode === 'words') {
       Words <b>{{ gameState().wordCount }}</b>
@@ -160,6 +171,16 @@
           <span><kbd>Esc</kbd> Leave race</span>
         </div>
       }
+    </div>
+  } @else if (ghost(); as g) {
+    <div class="bot-race">
+      <div class="bot-race-head">
+        <span class="daily-banner-tag">Ghost race &#183; {{ g.label }}</span>
+        @if (ghostOutcome(); as outcome) {
+          <span class="bot-race-outcome" role="status">{{ outcome }}</span>
+        }
+        <button type="button" class="bot-race-stop" (click)="game.stopGhost()">Stop racing</button>
+      </div>
     </div>
   } @else if (gameState().botWpm) {
     <div class="bot-race">

@@ -360,3 +360,13 @@
     margin-left: 0;
   }
 }
+
+.replay-link {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+}
+
+.replay-link:hover {
+  color: var(--color-accent);
+}

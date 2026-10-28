@@ -25,6 +25,9 @@
         </div>
       </div>
       <div class="actions">
+        @if (results()?.resultId; as rid) {
+          <a class="btn btn-outline" [routerLink]="['/replay', rid]">Watch replay</a>
+        }
         <button type="button" class="btn btn-outline" (click)="retry()">Retry same <kbd>Tab</kbd></button>
         <button type="button" class="btn btn-primary" (click)="next()">Next test <kbd class="on-red">Esc</kbd></button>
       </div>
@@ -52,7 +55,7 @@
     }
 
     @if (botOutcome(); as outcome) {
-      <div class="save-banner neutral" role="status"><p>Bot race: {{ outcome }}</p></div>
+      <div class="save-banner neutral" role="status"><p>{{ outcome }}</p></div>
     }
 
     <div class="hero">

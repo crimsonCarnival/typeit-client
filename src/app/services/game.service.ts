@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { GameApiService } from './game-api.service';
 import { TextGeneratorService } from './text-generator.service';
-import { ApiResponse, Character, GameState, PerformancePoint, PracticeKind, Results, TypingRules } from '../models/models';
+import { ApiResponse, Character, GameState, PerformancePoint, PracticeKind, Results, RunGhost, TypingRules } from '../models/models';
 import { ls } from '../utils/storage';
 import { GameAudioService, GameSound } from './game/game-audio.service';
 import { KeystrokeLog, inputKeys } from './game/keystroke-log';
@@ -37,6 +37,9 @@ export class GameService {
   readonly characters = signal<Character[]>([]);
   readonly results = signal<Results | null>(null);
   readonly performance = signal<PerformancePoint[]>([]);
+  /** A recorded run raced as a ghost cursor (your PB or a daily winner), or null. */
+  readonly ghost = signal<RunGhost | null>(null);
+
   /** Why the last run has no results (e.g. the server couldn't be reached). */
   readonly scoreError = signal<string | null>(null);
 
@@ -84,6 +87,8 @@ export class GameService {
   /** Applies server-provided fresh text (no resume). */
   private applyNewText(data: any): void {
     this.resetInternalState();
+    // A daily ghost belongs to that day's text only.
+    if (this.ghost()?.kind === 'daily') this.ghost.set(null);
     if (data.sessionId) this.sessionId = data.sessionId;
     const rules = this.rulesFrom(data);
     this.engine = new TypingEngine(data.text || '', rules);
@@ -636,6 +641,33 @@ export class GameService {
   /** Milliseconds since the run started (0 before it). */
   getElapsedMs(): number {
     return this.startTime ? Date.now() - this.startTime : 0;
+  }
+
+  /**
+   * Races your best ranked run for the current mode and time limit. Resolves
+   * to an error message when there is no such run yet.
+   */
+  async racePb(): Promise<string | null> {
+    const gs = this.gameState();
+    const res = await this.gameApi.getPbGhost(gs.gameMode, gs.timeMax);
+    if (!res.success) return res.error || 'Could not load your best run';
+    if (!res.data) return `No verified ${gs.gameMode} run at ${gs.timeMax}s yet`;
+    this.ghost.set({ kind: 'pb', label: `PB · ${res.data.wpm} WPM`, wpm: res.data.wpm, timeline: res.data.timeline });
+    return null;
+  }
+
+  /** Practice run on a day's text against its winner's ghost. */
+  async raceDailyGhost(date?: string): Promise<ApiResponse<unknown>> {
+    const res = await this.gameApi.startDailyGhost(date);
+    if (res.success && res.data) {
+      this.applyServerText(res.data.state);
+      this.ghost.set({ kind: 'daily', ...res.data.ghost });
+    }
+    return res;
+  }
+
+  stopGhost(): void {
+    this.ghost.set(null);
   }
 
   /** Races a client-side pace bot on the next runs (null stops). Purely visual. */

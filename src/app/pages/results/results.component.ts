@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
 import { PerformanceChartComponent } from '../../components/performance-chart/performance-chart.component';
@@ -31,7 +31,7 @@ const SPEED_TIERS: { max: number; label: string }[] = [
  */
 @Component({
   selector: 'app-results',
-  imports: [PerformanceChartComponent],
+  imports: [PerformanceChartComponent, RouterLink],
   templateUrl: './results.component.html',
   styleUrl: './results.component.css',
   host: { '(document:keydown)': 'onKeydown($event)' },

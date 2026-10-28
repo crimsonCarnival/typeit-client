@@ -16,6 +16,7 @@ import { CaretPickerComponent } from '../../components/caret-picker/caret-picker
 import { RulesPatch, RulesPickerComponent } from '../../components/rules-picker/rules-picker.component';
 import { Ghost } from '../../components/typing-area/typing-area.component';
 import { botCharsAt } from '../../utils/pace-bot';
+import { ghostCharsAt } from '../../utils/ghost';
 import { RaceService } from '../../services/race.service';
 import { RacePlayer } from '../../models/models';
 import { Router } from '@angular/router';
@@ -83,8 +84,18 @@ export class GameComponent implements AfterViewInit {
     return `${winner?.displayName ?? 'Someone'} won`;
   });
 
-  /** Run time the bot has raced so far; frozen when the run finishes. */
+  /** Run time the bot or ghost has raced so far; frozen when the run finishes. */
   private readonly botElapsedMs = signal(0);
+
+  readonly ghost = this.game.ghost;
+  readonly ghostError = signal('');
+
+  /** Characters the recorded-run ghost has typed so far, on this text. */
+  private readonly ghostChars = computed(() => {
+    const g = this.ghost();
+    const length = this.gameState().text.length;
+    return g ? Math.min(length, ghostCharsAt(g.timeline, this.botElapsedMs())) : 0;
+  });
 
   /** Characters the pace bot has typed so far (0 when no bot is racing). */
   private readonly botChars = computed(() => {
@@ -118,11 +129,29 @@ export class GameComponent implements AfterViewInit {
           color: `var(--color-avatar-${(room.players.indexOf(p) % 7) + 2})`,
         }));
     }
+    const ghosts: Ghost[] = [];
     if (gs.botWpm) {
-      return [{ id: 'bot', label: `Bot · ${gs.botWpm} WPM`, index: this.botChars(), color: 'var(--color-avatar-2)' }];
+      ghosts.push({ id: 'bot', label: `Bot · ${gs.botWpm} WPM`, index: this.botChars(), color: 'var(--color-avatar-2)' });
     }
-    return [];
+    const g = this.ghost();
+    if (g) ghosts.push({ id: 'ghost', label: g.label, index: this.ghostChars(), color: 'var(--color-avatar-4)' });
+    return ghosts;
   });
+
+  /** Outcome against the recorded-run ghost once the run is over. */
+  readonly ghostOutcome = computed(() => {
+    const gs = this.gameState();
+    const g = this.ghost();
+    if (!g || !gs.isFinished) return null;
+    const length = gs.text.length;
+    return gs.currentIndex >= Math.min(length, this.ghostChars()) ? `You beat ${g.kind === 'pb' ? 'your PB ghost' : 'the ghost'}.` : `The ghost won this one.`;
+  });
+
+  async racePb(): Promise<void> {
+    this.ghostError.set('');
+    const err = await this.game.racePb();
+    if (err) this.ghostError.set(err);
+  }
 
   /** Outcome once the run is over, or null while racing. */
   readonly botOutcome = computed(() => {
@@ -160,7 +189,7 @@ export class GameComponent implements AfterViewInit {
     const tick = setInterval(() => {
       this.now.set(Date.now());
       const gs = this.gameState();
-      if (!gs.botWpm || gs.isFinished) return;
+      if ((!gs.botWpm && !this.ghost()) || gs.isFinished) return;
       this.botElapsedMs.set(gs.isTyping ? this.game.getElapsedMs() : 0);
     }, BOT_TICK_MS);
 
@@ -169,7 +198,7 @@ export class GameComponent implements AfterViewInit {
       const gs = this.gameState();
       if (!gs.isFinished || gs.race) return;
       untracked(() => {
-        this.game.lastBotOutcome.set(this.botOutcome());
+        this.game.lastBotOutcome.set(this.botOutcome() ?? this.ghostOutcome());
         void this.router.navigate(['/results']);
       });
     });

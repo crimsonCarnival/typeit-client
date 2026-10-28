@@ -132,7 +132,7 @@ export interface GameState {
   rules: TypingRules;
 }
 
-export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list';
+export type PracticeKind = 'drill' | 'lesson' | 'common-words' | 'list' | 'ghost';
 
 export interface PracticeState {
   kind: PracticeKind;
@@ -189,6 +189,8 @@ export interface Results {
   ranked?: boolean;
   integrityFlags?: string[];
   newAchievements?: string[];
+  /** Saved result id (signed-in runs), for the replay. */
+  resultId?: string;
 }
 
 export interface Punishment {
@@ -256,6 +258,8 @@ export interface RankingQuery {
 
 export interface RankingEntry {
   rank: number;
+  /** The run behind the entry (for its replay). */
+  resultId?: string | null;
   userId: string;
   username: string;
   displayName: string;
@@ -282,6 +286,7 @@ export interface DailySettings {
 
 export interface DailyLeader {
   rank: number;
+  resultId?: string | null;
   userId: string;
   username: string;
   displayName: string;
@@ -423,4 +428,36 @@ export interface OpenRace {
   name: string;
   wordCount: number;
   players: number;
+}
+
+/** Cursor positions over a run: [ms from the run's start, chars typed]. */
+export type GhostTimeline = [number, number][];
+
+/** A recorded run raced as a ghost cursor. */
+export interface RunGhost {
+  kind: 'pb' | 'daily';
+  label: string;
+  wpm: number;
+  timeline: GhostTimeline;
+}
+
+export interface Replay {
+  resultId: string;
+  player: { userId: string; username: string; displayName: string; avatar: string };
+  text: string;
+  keystrokes: [number, string][];
+  rules: Partial<TypingRules>;
+  leadMs: number;
+  timeMax: number;
+  gameMode: GameMode;
+  wordCount: number;
+  modifiers: string;
+  wpm: number;
+  rawWpm?: number;
+  accuracy: number;
+  consistency: number;
+  performance: PerformancePoint[];
+  ranked: boolean;
+  dailyDate: string | null;
+  createdAt: string;
 }

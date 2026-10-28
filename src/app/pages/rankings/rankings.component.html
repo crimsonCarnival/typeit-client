@@ -155,7 +155,13 @@
         </div>
       </div>
     </td>
-    <td class="num wpm">{{ e.wpm }}</td>
+    <td class="num wpm">
+      @if (e.resultId) {
+        <a class="replay-link" [routerLink]="['/replay', e.resultId]" [attr.aria-label]="'Watch ' + e.displayName + '\'s run'" title="Watch replay">{{ e.wpm }}</a>
+      } @else {
+        {{ e.wpm }}
+      }
+    </td>
     <td class="num accuracy">{{ e.accuracy.toFixed(1) }}%</td>
     <td class="num">{{ e.raceWins }}</td>
   </tr>
