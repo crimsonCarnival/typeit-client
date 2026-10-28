@@ -61,25 +61,6 @@
   box-sizing: border-box;
 }
 
-/* App Header */
-
-.app-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 10px 24px;
-  background: rgba(20, 20, 20, 0.55);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-}
-
 h2 {
   font-family: 'Kirsty Regular';
 }
@@ -192,9 +173,7 @@ h2 {
 
 /* App Header (duplicate - overridden by first definition) */
 
-/* .app-header duplicate removed */
 
-/* dark .app-header styles consolidated in first definition below line 40 */
 
 h2 {
   font-family: 'Kirsty Regular';
@@ -504,7 +483,7 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   color: var(--color-text);
-  padding: 70px 10px 20px 10px;  /* was 50px, header is fixed at ~50px */
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -1596,11 +1575,7 @@ body {
 
 @media (max-width: 768px) {
   body {
-    padding: 60px 8px 8px 8px;
-  }
-
-  .app-header {
-    padding: 8px 16px;
+    padding: 0;
   }
 
   .wrapper {
@@ -1621,11 +1596,7 @@ body {
 
 @media (max-width: 480px) {
   body {
-    padding: 54px 4px 4px 4px;
-  }
-
-  .app-header {
-    padding: 6px 10px;
+    padding: 0;
   }
 
   .wrapper {
@@ -1964,8 +1935,7 @@ body {
 /* ============ Profile & Stats pages ============ */
 
 .account-page {
-  min-height: 100vh;
-  padding: 70px 32px 60px;
+  padding: 32px 32px 60px;
 }
 
 .page-loading {
@@ -1976,31 +1946,6 @@ body {
   color: #888;
   font-family: 'Kirsty Regular';
   font-size: 18px;
-}
-
-.app-nav {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-right: auto;
-}
-
-.app-nav-link {
-  color: #e5e7eb;
-  text-decoration: none;
-  font-family: 'Kirsty Regular';
-  font-size: 16px;
-  opacity: 0.75;
-  transition: opacity 0.2s ease, color 0.2s ease;
-}
-
-.app-nav-link:hover {
-  opacity: 1;
-}
-
-.app-nav-link.active {
-  opacity: 1;
-  color: #bc0517;
 }
 
 .profile-card {

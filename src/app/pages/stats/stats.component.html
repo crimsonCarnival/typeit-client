@@ -1,13 +1,4 @@
 <div class="account-page">
-  <div class="app-header">
-    <nav class="app-nav">
-      <a class="app-nav-link" routerLink="/">Game</a>
-      <a class="app-nav-link" routerLink="/profile">Profile</a>
-      <a class="app-nav-link active" routerLink="/stats">Statistics</a>
-    </nav>
-    <app-user-menu />
-  </div>
-
   @if (loading()) {
     <div class="page-loading">Loading&#8230;</div>
   } @else {

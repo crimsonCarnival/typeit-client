@@ -1,14 +1,13 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { UserMenuComponent } from '../../components/user-menu/user-menu.component';
 import { FollowersFollowingModalComponent } from '../../components/followers-following-modal/followers-following-modal.component';
 import { membershipAge } from '../../utils/time';
 import { TimeDisplayService } from '../../services/time-display.service';
 
 @Component({
   selector: 'app-profile',
-  imports: [RouterLink, UserMenuComponent, FollowersFollowingModalComponent],
+  imports: [RouterLink, FollowersFollowingModalComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })

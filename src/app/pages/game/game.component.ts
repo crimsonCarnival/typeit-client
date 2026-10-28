@@ -4,7 +4,6 @@ import { createTooltip, destroyTooltip } from '../../utils/tooltip.utils';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
-import { UserMenuComponent } from '../../components/user-menu/user-menu.component';
 import { SoundToggleComponent } from '../../components/sound-toggle/sound-toggle.component';
 import { RefreshButtonComponent } from '../../components/refresh-button/refresh-button.component';
 import { ModeDropdownComponent } from '../../components/mode-dropdown/mode-dropdown.component';
@@ -14,7 +13,6 @@ import { CustomTimeDropdownComponent } from '../../components/custom-time-dropdo
 import { ShortcutsFooterComponent } from '../../components/shortcuts-footer/shortcuts-footer.component';
 import { TypingAreaComponent } from '../../components/typing-area/typing-area.component';
 import { ResultsModalComponent } from '../../components/results-modal/results-modal.component';
-import { AuthModalComponent } from '../../components/auth-modal/auth-modal.component';
 import { TextSourceDropdownComponent } from '../../components/text-source-dropdown/text-source-dropdown.component';
 import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
@@ -23,7 +21,6 @@ import { CaretPickerComponent } from '../../components/caret-picker/caret-picker
   selector: 'app-game',
   imports: [
     FormsModule,
-    UserMenuComponent,
     SoundToggleComponent,
     RefreshButtonComponent,
     ModeDropdownComponent,
@@ -33,7 +30,6 @@ import { CaretPickerComponent } from '../../components/caret-picker/caret-picker
     ShortcutsFooterComponent,
     TypingAreaComponent,
     ResultsModalComponent,
-    AuthModalComponent,
     TextSourceDropdownComponent,
     CaretPickerComponent,
   ],
@@ -41,7 +37,7 @@ import { CaretPickerComponent } from '../../components/caret-picker/caret-picker
   styleUrl: './game.component.css',
 })
 export class GameComponent implements AfterViewInit, OnDestroy {
-  private readonly auth = inject(AuthService);
+  readonly auth = inject(AuthService);
   readonly game = inject(GameService);
 
   readonly gameState = this.game.gameState;
@@ -54,8 +50,6 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   inputReady = false;
   isFocused = false;
-  authModalOpen = false;
-  authModalMode: 'login' | 'register' = 'login';
 
   readonly richTooltipEl = viewChild<ElementRef<HTMLElement>>('richTooltipEl');
   private richTooltip?: MDCTooltip;
@@ -98,16 +92,6 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     void this.auth.refreshProfile();
   }
 
-  openAuthModal(mode: 'login' | 'register'): void {
-    this.authModalMode = mode;
-    this.authModalOpen = true;
-  }
-
-  closeAuthModal(): void {
-    this.authModalOpen = false;
-    this.authModalMode = 'login';
-  }
-
   handleTimeSelect(time: number): void {
     this.game.setTimeMax(time);
     this.inputReady = true;
@@ -145,11 +129,8 @@ export class GameComponent implements AfterViewInit, OnDestroy {
       target.closest('.horizontal-mode-dropdown') ||
       target.closest('.horizontal-wordcount-dropdown') ||
       target.closest('.horizontal-textsource-dropdown') ||
-      target.closest('.auth-modal-overlay') ||
       target.closest('.toggle-hints-btn') ||
-      target.closest('.alert-card') ||
-      target.closest('.user-menu') ||
-      target.closest('.user-menu-guest');
+      target.closest('.alert-card');
     if (!isInteractive) {
       this.focusInput();
     }

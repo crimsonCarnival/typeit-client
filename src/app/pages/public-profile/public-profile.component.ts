@@ -5,14 +5,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth.service';
 import { UserApiService } from '../../services/user-api.service';
 import { PublicProfile } from '../../models/models';
-import { UserMenuComponent } from '../../components/user-menu/user-menu.component';
 import { FollowersFollowingModalComponent } from '../../components/followers-following-modal/followers-following-modal.component';
 import { StatsSectionsComponent } from '../../components/stats-sections/stats-sections.component';
 import { membershipAge } from '../../utils/time';
 
 @Component({
   selector: 'app-public-profile',
-  imports: [RouterLink, UserMenuComponent, FollowersFollowingModalComponent, StatsSectionsComponent],
+  imports: [RouterLink, FollowersFollowingModalComponent, StatsSectionsComponent],
   templateUrl: './public-profile.component.html',
   styleUrl: './public-profile.component.css',
 })
