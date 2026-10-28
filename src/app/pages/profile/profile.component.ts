@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth.service';
 import { FollowersFollowingModalComponent } from '../../components/followers-following-modal/followers-following-modal.component';
 import { membershipAge } from '../../utils/time';
 import { TimeDisplayService } from '../../services/time-display.service';
+import { UserStats } from '../../models/models';
 
 @Component({
   selector: 'app-profile',
@@ -33,18 +34,12 @@ export class ProfileComponent {
     return created ? new Date(created).toLocaleDateString() : '\u2014';
   });
 
-  readonly personalBests = computed(() => {
-    const s = this.user()?.stats || {};
-    return [
-      { label: 'Best WPM', value: s.bestWpm || 0 },
-      { label: 'High Score', value: s.highScore || 0 },
-      { label: 'Best Accuracy', value: `${s.bestAccuracy || 0}%` },
-      { label: 'Games Played', value: s.gamesPlayed || 0 },
-      { label: 'Total Time Typing', value: this.timeDisplay.format(s.totalTimeTyping || 0) },
-      { label: 'AFK Time', value: this.timeDisplay.format(s.afkTime || 0) },
-      { label: 'AFK Periods', value: s.afkPeriods || 0 },
-    ];
-  });
+  readonly s = computed<Partial<UserStats>>(() => this.user()?.stats ?? {});
+
+  /** Durations in the chosen time format (1m 24s or 84s). */
+  fmt(seconds: number): string {
+    return this.timeDisplay.format(seconds);
+  }
 
   readonly editing = signal(false);
   readonly editDisplayName = signal('');

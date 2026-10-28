@@ -1,109 +1,101 @@
-<div class="account-page">
+<div class="profile-page">
   @if (loading()) {
-    <div class="page-loading">Loading&#8230;</div>
+    <div class="state" aria-busy="true">Loading&#8230;</div>
   } @else {
-    <div class="profile-card">
-      <div class="profile-card-header">
+    <section class="identity" aria-label="Profile">
+      <div class="identity-band">
+        <span class="band-watermark" aria-hidden="true">{{ user()?.stats?.bestWpm || 0 }} WPM</span>
+      </div>
+      <div class="identity-body">
         @if (user()?.avatar) {
-          <img [src]="user()?.avatar" [alt]="user()?.username" class="profile-avatar" />
+          <img [src]="user()?.avatar" [alt]="user()?.username" class="avatar" />
         } @else {
-          <div class="profile-avatar-placeholder">
-            {{ displayName() ? displayName().charAt(0).toUpperCase() : '?' }}
-          </div>
+          <span class="avatar avatar-initial" aria-hidden="true">{{ displayName() ? displayName().charAt(0).toUpperCase() : '?' }}</span>
         }
-        <div class="profile-info">
-          <h2>{{ displayName() }}</h2>
-          <span class="profile-account">&#64;{{ user()?.username }}</span>
-          @if (user()?.bio && !editing()) {
-            <p class="profile-bio">{{ user()?.bio }}</p>
-          }
-          <span class="profile-email">{{ user()?.email }}</span>
-          <span class="profile-joined">
+        <div class="identity-info">
+          <h1 class="name">{{ displayName() }}</h1>
+          <p class="meta">
+            <span class="handle">&#64;{{ user()?.username }}</span>
+            <span>{{ user()?.email }}</span>
             @if (joined()) {
-              Joined {{ joined() }}
+              <span>Joined {{ joined() }}</span>
             }
             @if (age()) {
-              &#8226; {{ age() }} on TypeIt
+              <span>{{ age() }} on TypeIt</span>
             }
-          </span>
+          </p>
+          @if (user()?.bio && !editing()) {
+            <p class="bio">{{ user()?.bio }}</p>
+          }
         </div>
-
-        <div class="profile-actions">
-          <button
-            class="profile-btn profile-btn-secondary"
-            (click)="editing.update((value) => !value)"
-          >
+        <div class="identity-actions">
+          <button type="button" class="count-btn" (click)="modal.set('followers')">
+            <b>{{ user()?.followersCount || 0 }}</b> followers
+          </button>
+          <button type="button" class="count-btn" (click)="modal.set('following')">
+            <b>{{ user()?.followingCount || 0 }}</b> following
+          </button>
+          <button type="button" class="btn btn-outline" [attr.aria-expanded]="editing()" (click)="editing.update((value) => !value)">
+            @if (!editing()) {
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+            }
             {{ editing() ? 'Cancel' : 'Edit profile' }}
           </button>
         </div>
       </div>
 
       @if (editing()) {
-        <form class="profile-edit-form" (submit)="handleSave($event)">
-          <div class="profile-edit-field">
-            <label for="edit-display-name">Display name</label>
-            <input
-              type="text"
-              id="edit-display-name"
-              [value]="editDisplayName()"
-              (input)="onEditDisplayName($event)"
-              maxlength="30"
-            />
-          </div>
-          <div class="profile-edit-field">
-            <label for="edit-bio">Bio</label>
-            <textarea
-              id="edit-bio"
-              [value]="editBio()"
-              (input)="onEditBio($event)"
-              maxlength="160"
-              rows="3"
-              placeholder="Tell people about yourself"
-            ></textarea>
-          </div>
+        <form class="edit-form" (submit)="handleSave($event)">
+          <label class="field">
+            <span>Display name</span>
+            <input type="text" [value]="editDisplayName()" (input)="onEditDisplayName($event)" maxlength="30" />
+          </label>
+          <label class="field">
+            <span>Bio</span>
+            <textarea [value]="editBio()" (input)="onEditBio($event)" maxlength="160" rows="3" placeholder="Tell people about yourself"></textarea>
+          </label>
           @if (editError()) {
-            <div class="profile-edit-error">{{ editError() }}</div>
+            <p class="error" role="alert">{{ editError() }}</p>
           }
-          <button class="profile-btn" type="submit" [disabled]="saving()">
-            {{ saving() ? 'Saving\u2026' : 'Save' }}
-          </button>
+          <div class="edit-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="saving()">{{ saving() ? 'Saving' : 'Save' }}</button>
+          </div>
         </form>
       }
+    </section>
 
-      <div class="profile-counts">
-        <button (click)="modal.set('followers')">
-          <b>{{ user()?.followersCount || 0 }}</b> Followers
-        </button>
-        <button (click)="modal.set('following')">
-          <b>{{ user()?.followingCount || 0 }}</b> Following
-        </button>
-      </div>
-
-      <div class="stats-section-header">
-        <h3 class="profile-section-title" style="margin-bottom: 0;">Personal bests</h3>
-        <button
-          type="button"
-          class="time-format-toggle-btn"
-          (click)="toggleTimeFormat()"
-        >
-          <span class="toggle-icon">⏱️</span>
-          <span class="toggle-text">Time Format: <strong>{{ formatMode() === 'formatted' ? 'Breakdown (1 m 24 s)' : 'Full Seconds (84s)' }}</strong></span>
-        </button>
-      </div>
-      <div class="stats-card-grid">
-        @for (stat of personalBests(); track stat.label) {
-          <div class="stats-card">
-            <span class="stats-card-value">{{ stat.value }}</span>
-            <span class="stats-card-label">{{ stat.label }}</span>
-          </div>
-        }
-      </div>
-
-      <p class="profile-stats-link">
-        View full statistics by time and word count on the
-        <a routerLink="/stats">Statistics</a> page.
-      </p>
+    <div class="section-head">
+      <h2 class="section-title">Personal bests</h2>
+      <button type="button" class="format-toggle" (click)="toggleTimeFormat()" [attr.aria-label]="'Time format: ' + (formatMode() === 'formatted' ? '1m 24s' : '84s') + '. Switch format.'">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        Time format <b>{{ formatMode() === 'formatted' ? '1m 24s' : '84s' }}</b>
+      </button>
     </div>
+
+    <div class="best-grid">
+      <div class="card best"><span class="best-value wpm">{{ s().bestWpm || 0 }}</span><span class="best-label">Best WPM</span></div>
+      <div class="card best"><span class="best-value">{{ s().highScore || 0 }}</span><span class="best-label">High score</span></div>
+      <div class="card best"><span class="best-value acc">{{ s().bestAccuracy || 0 }}%</span><span class="best-label">Best accuracy</span></div>
+      <div class="card best"><span class="best-value">{{ s().gamesPlayed || 0 }}</span><span class="best-label">Games played</span></div>
+    </div>
+
+    <div class="time-grid">
+      <div class="card time"><span class="best-label">Total time typing</span><span class="time-value">{{ fmt(s().totalTimeTyping || 0) }}</span></div>
+      <div class="card time"><span class="best-label">AFK time</span><span class="time-value afk">{{ fmt(s().afkTime || 0) }}</span></div>
+      <div class="card time"><span class="best-label">AFK periods</span><span class="time-value">{{ s().afkPeriods || 0 }}</span></div>
+    </div>
+
+    <a class="card stats-link" routerLink="/stats">
+      <div class="stats-link-copy">
+        <span class="stats-link-title">Full statistics</span>
+        <span class="stats-link-text">Splits by time limit, word count, mode and modifiers, plus your performance history.</span>
+      </div>
+      <svg class="sparkline" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true">
+        <path class="area" d="M0 5 C 30 30, 50 45, 70 42 S 130 20, 160 12 S 220 0, 235 30 S 280 100, 300 100 S 360 80, 395 25 L 395 100 L 0 100 Z" />
+        <path class="line" d="M0 5 C 30 30, 50 45, 70 42 S 130 20, 160 12 S 220 0, 235 30 S 280 100, 300 100 S 360 80, 395 25" />
+      </svg>
+      <svg class="arrow" aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    </a>
   }
 
   @if (modal()) {
