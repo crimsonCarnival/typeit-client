@@ -9,6 +9,26 @@
   background: rgba(10, 10, 11, 0.7);
 }
 
+.app-header.focus {
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+}
+
+/* visibility (not display) keeps the header's height, so the text below
+   doesn't shift when a run starts; hidden links also leave the tab order. */
+.app-header.focus .app-nav,
+.app-header.focus app-user-menu {
+  visibility: hidden;
+}
+
+.focus-label {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
 .app-header-left {
   display: flex;
   align-items: center;

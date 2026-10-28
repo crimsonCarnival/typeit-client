@@ -70,6 +70,89 @@
   color: var(--color-text-subtle);
 }
 
+/* Focus mode (redesign/Typing.dc.html). min-height matches the toolbar +
+   status line it replaces, so the text panel doesn't move. */
+.run-head {
+  min-height: 142px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 4px 14px;
+}
+
+.run-stats {
+  display: flex;
+  align-items: flex-end;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+
+.run-timer {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.run-timer-value {
+  font-family: var(--font-display);
+  font-size: 88px;
+  line-height: 0.8;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.run-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.run-value {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 0.9;
+  color: var(--color-text);
+}
+
+.run-of {
+  font-family: inherit;
+  color: var(--color-text-faint);
+}
+
+.run-label,
+.run-settings {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.run-label {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+}
+
+.run-settings {
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: #85818a;
+}
+
+.content-box.typing {
+  border-color: #5a1622;
+  box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.12), 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+app-shortcuts-footer {
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+app-shortcuts-footer.dimmed {
+  opacity: 0.55;
+}
+
 .status-line {
   margin: 20px 4px 14px;
   font-family: var(--font-display);
@@ -328,6 +411,18 @@
 
   .status-line {
     font-size: 15px;
+  }
+
+  .run-timer-value {
+    font-size: 56px;
+  }
+
+  .run-value {
+    font-size: 30px;
+  }
+
+  .run-stats {
+    gap: 22px;
   }
 }
 

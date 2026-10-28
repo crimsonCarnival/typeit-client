@@ -1,10 +1,13 @@
-<header class="app-header">
+<header class="app-header" [class.focus]="focusMode()">
   <div class="app-header-left">
     <a class="app-logo" routerLink="/" aria-label="TypeIt home">
       <span class="app-logo-word">TYPE<span class="app-logo-accent">IT</span></span>
       <span class="app-logo-caret" aria-hidden="true"></span>
     </a>
 
+    @if (focusMode()) {
+      <span class="focus-label">Focus mode</span>
+    }
     <nav class="app-nav" aria-label="Primary">
       <a class="app-nav-link" routerLink="/play" routerLinkActive="active" ariaCurrentWhenActive="page">Play</a>
       <a class="app-nav-link" routerLink="/daily" routerLinkActive="active" ariaCurrentWhenActive="page">Daily</a>

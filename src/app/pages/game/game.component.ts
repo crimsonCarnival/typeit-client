@@ -130,6 +130,17 @@ export class GameComponent implements AfterViewInit {
     return you >= bot ? 'You beat the bot.' : 'The bot won this one.';
   });
 
+  /** Focus-mode timer as M:SS. */
+  readonly timeLeftLabel = computed(() => {
+    const t = Math.max(0, this.gameState().timeLeft);
+    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  });
+
+  readonly accuracyLabel = computed(() => Math.round(this.gameState().accuracy));
+
+  /** Words completed so far (each typed space finishes a word). */
+  readonly wordsDone = computed(() => (this.gameState().currentText.match(/ /g) ?? []).length);
+
   /** Best WPM shown in the status line for signed-in players. */
   readonly personalBest = computed(() => this.auth.user()?.stats?.bestWpm || null);
 
