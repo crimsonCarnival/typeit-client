@@ -26,7 +26,7 @@ export const formatTypingTime = (
   mode: TimeFormatMode = 'formatted'
 ): string => {
   if (seconds == null || Number.isNaN(seconds) || seconds < 0) {
-    return mode === 'formatted' ? '0 s' : '0s';
+    return '0s';
   }
 
   const rounded = Math.round(seconds);
@@ -35,7 +35,7 @@ export const formatTypingTime = (
   }
 
   if (rounded === 0) {
-    return '0 s';
+    return '0s';
   }
 
   const YEARS = 31536000;
@@ -64,12 +64,13 @@ export const formatTypingTime = (
   const s = rem;
 
   const parts: string[] = [];
-  if (y > 0) parts.push(`${y} y`);
-  if (mo > 0) parts.push(`${mo} mo`);
-  if (d > 0) parts.push(`${d} d`);
-  if (h > 0) parts.push(`${h} h`);
-  if (m > 0) parts.push(`${m} m`);
-  if (s > 0 || parts.length === 0) parts.push(`${s} s`);
+  // Compact units ("6m 5s"), as in the redesign and the time-format toggle.
+  if (y > 0) parts.push(`${y}y`);
+  if (mo > 0) parts.push(`${mo}mo`);
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0) parts.push(`${m}m`);
+  if (s > 0 || parts.length === 0) parts.push(`${s}s`);
 
   return parts.join(' ');
 };
