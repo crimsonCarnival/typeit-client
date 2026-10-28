@@ -19,6 +19,25 @@
       >Lorem</span>
     </div>
 
+    <!-- Passage pool for the default source -->
+    @if (textSource() === 'default') {
+      <div class="textsource-controls">
+        <div class="textsource-unit-options" role="group" aria-label="Text category">
+          @for (c of categories; track c.id) {
+            <span
+              [class.active]="textCategory() === c.id"
+              [attr.title]="c.hint"
+              role="button"
+              tabindex="0"
+              [attr.aria-pressed]="textCategory() === c.id"
+              (click)="setCategory(c.id)"
+              (keydown.enter)="setCategory(c.id)"
+            >{{ c.label }}</span>
+          }
+        </div>
+      </div>
+    }
+
     <!-- Controls for 'generated' source -->
     @if (textSource() === 'generated') {
       <div class="textsource-controls">

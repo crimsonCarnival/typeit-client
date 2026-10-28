@@ -44,6 +44,13 @@ export interface Character {
 }
 
 export type GameMode = 'phrases' | 'words';
+export type TextCategory = 'classics' | 'quotes' | 'speeches' | 'gta';
+
+export interface Passage {
+  category: TextCategory;
+  title: string | null;
+  author: string;
+}
 export type CaretStyle = 'line' | 'block' | 'underline' | 'off';
 
 export interface GameState {
@@ -69,6 +76,10 @@ export interface GameState {
   totalWords: number;
   // Text source (phrases mode only)
   textSource: 'default' | 'generated' | 'lorem';
+  /** Server passage pool used when textSource is 'default'. */
+  textCategory: TextCategory;
+  /** Where the current phrases text came from (attribution), or null. */
+  passage: Passage | null;
   generatorUnit: 'sentence' | 'paragraph' | 'article';
   generatorCount: number;
   loremMin: number;

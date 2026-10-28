@@ -53,6 +53,8 @@ export const defaultState = (isAuthenticated: boolean): GameState => {
     textSource: isAuthenticated
       ? (ls.get('textSource') as GameState['textSource']) || 'default'
       : 'default',
+    textCategory: (ls.get('textCategory') as GameState['textCategory']) || 'classics',
+    passage: null,
     generatorUnit: (ls.get('generatorUnit') as GameState['generatorUnit']) || 'sentence',
     generatorCount: ls.int('generatorCount', 3),
     loremMin: ls.int('loremMin', 20),

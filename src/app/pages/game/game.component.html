@@ -74,6 +74,7 @@
       <app-text-source-dropdown
         [gameMode]="gameState().gameMode"
         [textSource]="gameState().textSource"
+        [textCategory]="gameState().textCategory"
         [generatorUnit]="gameState().generatorUnit"
         [generatorCount]="gameState().generatorCount"
         [loremMin]="gameState().loremMin"
@@ -174,6 +175,13 @@
       (focusChange)="isFocused = $event"
     />
   </div>
+
+  @if (gameState().passage; as passage) {
+    <p class="passage-credit">
+      &#8212; @if (passage.title) { <cite>{{ passage.title }}</cite>, }{{ passage.author }}
+      @if (passage.category === 'gta') { <span class="passage-tag">Casual &#183; not ranked</span> }
+    </p>
+  }
 
   <div
     class="progress-bar-container"

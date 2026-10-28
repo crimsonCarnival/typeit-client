@@ -62,6 +62,20 @@ export class GameService {
   /** Keys of the current run, sent to the server with the end payload. */
   private readonly keystrokes = new KeystrokeLog();
 
+  /** Current test settings in the shape the game endpoints take. */
+  private settingsPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    const gs = this.gameState();
+    return {
+      gameMode: gs.gameMode,
+      wordCount: gs.wordCount,
+      timeMax: gs.timeMax,
+      punctuationEnabled: gs.punctuationEnabled,
+      numbersEnabled: gs.numbersEnabled,
+      textCategory: gs.textCategory,
+      ...overrides,
+    };
+  }
+
   private playSound(sound: GameSound): void {
     this.audio.play(sound, this.gameState().isMuted);
   }
@@ -76,6 +90,7 @@ export class GameService {
       ...prev,
       text: data.text,
       totalWords: data.totalWords,
+      passage: data.passage ?? null,
       currentText: '',
       currentIndex: 0,
       mistakes: 0,
@@ -122,6 +137,8 @@ export class GameService {
       ...prev,
       text,
       totalWords: data.totalWords ?? prev.totalWords,
+      passage: data.passage ?? null,
+      textCategory: data.textCategory ?? prev.textCategory,
       currentText: resumeText,
       currentIndex: idx,
       mistakes: m,
@@ -172,11 +189,7 @@ export class GameService {
         return;
       }
       const response = await this.gameApi.resetGame({
-        gameMode: gs.gameMode,
-        wordCount: gs.wordCount,
-        timeMax: gs.timeMax,
-        punctuationEnabled: gs.punctuationEnabled,
-        numbersEnabled: gs.numbersEnabled,
+        ...this.settingsPayload(),
         noSession: true,
       });
       if (response.success) this.applyNewText(response.data);
@@ -203,11 +216,7 @@ export class GameService {
           : null;
 
       const response = await this.gameApi.startGame({
-        gameMode: gs.gameMode,
-        wordCount: gs.wordCount,
-        timeMax: gs.timeMax,
-        punctuationEnabled: gs.punctuationEnabled,
-        numbersEnabled: gs.numbersEnabled,
+        ...this.settingsPayload(),
         persist: true,
         ...(clientText ? { clientText: clientText.text, clientTotalWords: clientText.totalWords } : {}),
       });
@@ -763,11 +772,7 @@ export class GameService {
             : null;
 
         const response = await this.gameApi.resetGame({
-          gameMode: gs.gameMode,
-          wordCount: overrideWordCount || gs.wordCount,
-          timeMax: gs.timeMax,
-          punctuationEnabled: gs.punctuationEnabled,
-          numbersEnabled: gs.numbersEnabled,
+          ...this.settingsPayload({ wordCount: overrideWordCount || gs.wordCount }),
           ...(clientText ? { clientText: clientText.text, clientTotalWords: clientText.totalWords } : {}),
         });
         if (response.success) this.applyNewText(response.data);
@@ -793,11 +798,7 @@ export class GameService {
       }
       if (this.sessionId) {
         const response = await this.gameApi.refreshText({
-          gameMode: gs.gameMode,
-          wordCount: gs.wordCount,
-          timeMax: gs.timeMax,
-          punctuationEnabled: gs.punctuationEnabled,
-          numbersEnabled: gs.numbersEnabled,
+          ...this.settingsPayload(),
         });
         if (response.success) this.applyNewText(response.data);
       } else if (this.isAuthenticated) {
@@ -822,55 +823,27 @@ export class GameService {
   setGameMode(mode: GameState['gameMode']): void {
     ls.set('gameMode', mode);
     this.gameStateSignal.update(prev => ({ ...prev, gameMode: mode }));
-    const gs = this.gameState();
-    void this.updateSettingsAndRefresh({
-      gameMode: mode,
-      wordCount: gs.wordCount,
-      timeMax: gs.timeMax,
-      punctuationEnabled: gs.punctuationEnabled,
-      numbersEnabled: gs.numbersEnabled,
-    });
+    void this.updateSettingsAndRefresh(this.settingsPayload());
   }
 
   setWordCount(count: number): void {
     ls.set('wordCount', String(count));
     this.gameStateSignal.update(prev => ({ ...prev, wordCount: count }));
-    const gs = this.gameState();
-    void this.updateSettingsAndRefresh({
-      gameMode: gs.gameMode,
-      wordCount: count,
-      timeMax: gs.timeMax,
-      punctuationEnabled: gs.punctuationEnabled,
-      numbersEnabled: gs.numbersEnabled,
-    });
+    void this.updateSettingsAndRefresh(this.settingsPayload({ wordCount: count }));
   }
 
   togglePunctuation(): void {
     const newEnabled = !this.gameState().punctuationEnabled;
     ls.set('punctuationEnabled', String(newEnabled));
     this.gameStateSignal.update(prev => ({ ...prev, punctuationEnabled: newEnabled }));
-    const gs = this.gameState();
-    void this.updateSettingsAndRefresh({
-      gameMode: gs.gameMode,
-      wordCount: gs.wordCount,
-      timeMax: gs.timeMax,
-      punctuationEnabled: newEnabled,
-      numbersEnabled: gs.numbersEnabled,
-    });
+    void this.updateSettingsAndRefresh(this.settingsPayload({ punctuationEnabled: newEnabled }));
   }
 
   toggleNumbers(): void {
     const newEnabled = !this.gameState().numbersEnabled;
     ls.set('numbersEnabled', String(newEnabled));
     this.gameStateSignal.update(prev => ({ ...prev, numbersEnabled: newEnabled }));
-    const gs = this.gameState();
-    void this.updateSettingsAndRefresh({
-      gameMode: gs.gameMode,
-      wordCount: gs.wordCount,
-      timeMax: gs.timeMax,
-      punctuationEnabled: gs.punctuationEnabled,
-      numbersEnabled: newEnabled,
-    });
+    void this.updateSettingsAndRefresh(this.settingsPayload({ numbersEnabled: newEnabled }));
   }
 
   setCaretStyle(style: GameState['caretStyle']): void {
@@ -890,12 +863,14 @@ export class GameService {
    */
   setGeneratorConfig(patch: Partial<{
     textSource: GameState['textSource'];
+    textCategory: GameState['textCategory'];
     generatorUnit: GameState['generatorUnit'];
     generatorCount: number;
     loremMin: number;
     loremMax: number;
   }>): void {
     if (patch.textSource !== undefined)     ls.set('textSource', patch.textSource);
+    if (patch.textCategory !== undefined)   ls.set('textCategory', patch.textCategory);
     if (patch.generatorUnit !== undefined)  ls.set('generatorUnit', patch.generatorUnit);
     if (patch.generatorCount !== undefined) ls.set('generatorCount', String(patch.generatorCount));
     if (patch.loremMin !== undefined)       ls.set('loremMin', String(patch.loremMin));
@@ -1007,11 +982,7 @@ export class GameService {
     this.resetInternalState();
     if (this.isAuthenticated && this.sessionId) {
       const response = await this.gameApi.resetGame({
-        gameMode: gs.gameMode,
-        wordCount: gs.wordCount,
-        timeMax: gs.timeMax,
-        punctuationEnabled: gs.punctuationEnabled,
-        numbersEnabled: gs.numbersEnabled,
+        ...this.settingsPayload(),
         clientText: text,
         clientTotalWords: gs.totalWords,
       });

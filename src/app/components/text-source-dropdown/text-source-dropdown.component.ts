@@ -15,6 +15,7 @@ export class TextSourceDropdownComponent implements OnDestroy {
 
   readonly gameMode       = input<GameMode>('phrases');
   readonly textSource     = input<GameState['textSource']>('default');
+  readonly textCategory   = input<GameState['textCategory']>('classics');
   readonly generatorUnit  = input<GameState['generatorUnit']>('sentence');
   readonly generatorCount = input<number>(3);
   readonly loremMin       = input<number>(20);
@@ -29,6 +30,19 @@ export class TextSourceDropdownComponent implements OnDestroy {
   setSource(source: GameState['textSource']): void {
     if (this.disabled()) return;
     this.game.setGeneratorConfig({ textSource: source });
+  }
+
+  /** Passage pools served for the default source (see the server's text library). */
+  readonly categories: { id: GameState['textCategory']; label: string; hint: string }[] = [
+    { id: 'classics', label: 'Classics', hint: 'Passages from public-domain books' },
+    { id: 'quotes', label: 'Quotes', hint: 'Attributed quotations' },
+    { id: 'speeches', label: 'Speeches', hint: 'Historic speeches and documents' },
+    { id: 'gta', label: 'GTA radio', hint: 'Mature language. Casual: runs are not ranked' },
+  ];
+
+  setCategory(category: GameState['textCategory']): void {
+    if (this.disabled() || category === this.textCategory()) return;
+    this.game.setGeneratorConfig({ textCategory: category });
   }
 
   setUnit(unit: GameState['generatorUnit']): void {
