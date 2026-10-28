@@ -196,6 +196,7 @@ export class GameService {
       completionPercentage: 0,
       lastWpm: 0,
       lastCpm: 0,
+      timeLeft: prev.timeMax,
       isTyping: false,
       isFinished: false,
       dailyDate: null,
@@ -1131,6 +1132,38 @@ export class GameService {
   /** Leaves race mode locally (the race socket handles the server side). */
   clearRace(): void {
     this.gameStateSignal.update(prev => ({ ...prev, race: null }));
+  }
+
+  /** Bot race outcome of the run that just finished, shown on the results page. */
+  readonly lastBotOutcome = signal<string | null>(null);
+
+  /**
+   * "Retry same" from the results page: the same text again. Signed-in
+   * players get a fresh server session with that text marked as client text,
+   * so the retry is saved but never ranked (the text is already known).
+   */
+  async retrySame(): Promise<void> {
+    const gs = this.gameState();
+    const text = gs.text;
+    if (!text) return;
+    this.resetInternalState();
+    if (this.isAuthenticated && this.sessionId) {
+      const response = await this.gameApi.resetGame({
+        gameMode: gs.gameMode,
+        wordCount: gs.wordCount,
+        timeMax: gs.timeMax,
+        punctuationEnabled: gs.punctuationEnabled,
+        numbersEnabled: gs.numbersEnabled,
+        clientText: text,
+        clientTotalWords: gs.totalWords,
+      });
+      if (response.success) {
+        this.applyNewText(response.data);
+        return;
+      }
+    }
+    // Guests (and a failed reset): restart locally on the same text.
+    this.applyNewText({ text, totalWords: gs.totalWords });
   }
 
   /** Milliseconds since the first keystroke of the current run (0 before it). */

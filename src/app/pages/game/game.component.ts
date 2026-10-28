@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
@@ -10,7 +10,6 @@ import { WordModeSettingsComponent } from '../../components/word-mode-settings/w
 import { CustomTimeDropdownComponent } from '../../components/custom-time-dropdown/custom-time-dropdown.component';
 import { ShortcutsFooterComponent } from '../../components/shortcuts-footer/shortcuts-footer.component';
 import { TypingAreaComponent } from '../../components/typing-area/typing-area.component';
-import { ResultsModalComponent } from '../../components/results-modal/results-modal.component';
 import { TextSourceDropdownComponent } from '../../components/text-source-dropdown/text-source-dropdown.component';
 import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
@@ -34,7 +33,6 @@ const BOT_TICK_MS = 100;
     CustomTimeDropdownComponent,
     ShortcutsFooterComponent,
     TypingAreaComponent,
-    ResultsModalComponent,
     TextSourceDropdownComponent,
     CaretPickerComponent,
     RaceLanesComponent,
@@ -159,6 +157,16 @@ export class GameComponent implements AfterViewInit {
       this.botElapsedMs.set(gs.isTyping ? this.game.getElapsedMs() : 0);
     }, BOT_TICK_MS);
 
+    // A finished run opens the results page (races show their own result).
+    effect(() => {
+      const gs = this.gameState();
+      if (!gs.isFinished || gs.race) return;
+      untracked(() => {
+        this.game.lastBotOutcome.set(this.botOutcome());
+        void this.router.navigate(['/results']);
+      });
+    });
+
     // Report live progress to the race (throttled in RaceService).
     effect(() => {
       const gs = this.gameState();
@@ -185,12 +193,6 @@ export class GameComponent implements AfterViewInit {
     this.typingArea()?.focus();
   }
 
-  async handleCloseResults(): Promise<void> {
-    await this.game.resetGame();
-    this.isFocused = false;
-    this.focusInput();
-    void this.auth.refreshProfile();
-  }
 
   handleTimeSelect(time: number): void {
     this.game.setTimeMax(time);
@@ -236,8 +238,7 @@ export class GameComponent implements AfterViewInit {
     // Clicks on controls keep their own focus; anywhere else focuses the text.
     const isInteractive =
       target.closest('button, a, input, select, textarea, label') ||
-      target.closest('.horizontal-textsource-dropdown') ||
-      target.closest('.alert-card');
+      target.closest('.horizontal-textsource-dropdown');
     if (!isInteractive) {
       this.focusInput();
     }

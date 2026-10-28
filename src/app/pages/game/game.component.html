@@ -209,13 +209,3 @@
   />
 </div>
 
-@if (gameState().isFinished) {
-  <app-results-modal
-    [gameState]="gameState()"
-    [results]="results()"
-    [performance]="performance()"
-    [isAuthenticated]="isAuthenticated()"
-    (close)="handleCloseResults()"
-    (loginClick)="auth.openAuthModal('login')"
-  />
-}

@@ -1,0 +1,128 @@
+@if (gameState().isFinished) {
+  <div class="results">
+    <div class="head">
+      <div class="title-group">
+        <h1 class="title">Results</h1>
+        <div class="chips">
+          @if (gameState().gameMode === 'words') {
+            <span class="chip">Words {{ gameState().wordCount }}</span>
+          } @else {
+            <span class="chip">Phrases</span>
+          }
+          <span class="chip">Limit {{ gameState().timeMax }}s</span>
+          @if (gameState().dailyDate) {
+            <span class="chip chip-accent">Daily</span>
+          }
+          @if (gameState().practice; as p) {
+            <span class="chip">{{ p.label }}</span>
+          }
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-outline" (click)="retry()">Retry same <kbd>Tab</kbd></button>
+        <button type="button" class="btn btn-primary" (click)="next()">Next test <kbd class="on-red">Esc</kbd></button>
+      </div>
+    </div>
+
+    @if (!auth.isAuthenticated()) {
+      <div class="save-banner" role="status">
+        <p>
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8M7 3v5h8"></path></svg>
+          This run isn't saved. Log in to keep it on your profile.
+        </p>
+        <div class="banner-actions">
+          <button type="button" class="btn btn-outline small" (click)="auth.openAuthModal('login')">Log in &amp; save</button>
+          <button type="button" class="btn btn-primary small" (click)="auth.openAuthModal('register')">Create account</button>
+        </div>
+      </div>
+    } @else if (results()?.ranked === false) {
+      <div class="save-banner neutral" role="status">
+        <p>Saved to your profile. This run isn't ranked{{ gameState().practice ? ' (practice runs never are)' : '' }}.</p>
+      </div>
+    }
+
+    @if (botOutcome(); as outcome) {
+      <div class="save-banner neutral" role="status"><p>Bot race: {{ outcome }}</p></div>
+    }
+
+    <div class="hero">
+      <div class="card card-wpm">
+        <span class="wpm-value">{{ wpm() }}</span>
+        <div class="wpm-meta">
+          <span class="stat-label big">
+            WPM
+            <button type="button" class="help" aria-label="What is WPM?" [attr.aria-expanded]="help() === 'wpm'" (click)="toggleHelp('wpm')">?</button>
+          </span>
+          <span class="tier">{{ tier() }}</span>
+          <span class="muted">
+            Highest {{ results()?.highestWpm ?? wpm() }}
+            @if (personalBest() !== null) {
+              &#183; personal best {{ personalBest() }}
+            }
+          </span>
+        </div>
+      </div>
+      <div class="card card-stat">
+        <span class="stat-value">{{ results()?.accuracy ?? gameState().accuracy }}%</span>
+        <span class="stat-label">
+          <span class="swatch swatch-accuracy" aria-hidden="true"></span>Accuracy
+          <button type="button" class="help" aria-label="What is accuracy?" [attr.aria-expanded]="help() === 'accuracy'" (click)="toggleHelp('accuracy')">?</button>
+        </span>
+      </div>
+      <div class="card card-stat">
+        <span class="stat-value">{{ results()?.rawWpm ?? 0 }}</span>
+        <span class="stat-label">
+          <span class="swatch swatch-raw" aria-hidden="true"></span>Raw WPM
+          <button type="button" class="help" aria-label="What is raw WPM?" [attr.aria-expanded]="help() === 'raw'" (click)="toggleHelp('raw')">?</button>
+        </span>
+      </div>
+      <div class="card card-stat">
+        <span class="stat-value">{{ results()?.consistency ?? 0 }}%</span>
+        <span class="stat-label">
+          <span class="swatch swatch-consistency" aria-hidden="true"></span>Consistency
+          <button type="button" class="help" aria-label="What is consistency?" [attr.aria-expanded]="help() === 'consistency'" (click)="toggleHelp('consistency')">?</button>
+        </span>
+      </div>
+    </div>
+
+    @if (helpText()) {
+      <p class="help-text" role="note">{{ helpText() }}</p>
+    }
+
+    <div class="main">
+      <section class="card timeline" aria-labelledby="timeline-title">
+        <h2 id="timeline-title" class="section-title">Timeline</h2>
+        @if (performance().length > 0) {
+          <app-performance-chart [performance]="performance()" />
+        } @else {
+          <p class="muted">The run was too short to chart.</p>
+        }
+      </section>
+
+      <section class="card details" aria-labelledby="details-title">
+        <h2 id="details-title" class="section-title">Details</h2>
+        <dl class="detail-list">
+          <div class="detail"><dt>Score</dt><dd>{{ gameState().score }}</dd></div>
+          <div class="detail"><dt>Highest WPM</dt><dd>{{ results()?.highestWpm ?? wpm() }}</dd></div>
+          <div class="detail"><dt>CPM</dt><dd>{{ results()?.cpm ?? gameState().lastCpm }}</dd></div>
+          <div class="detail">
+            <dt>Characters <small>correct / wrong / extra / missed</small></dt>
+            <dd>{{ results()?.successes ?? gameState().successes }} / <span class="bad">{{ mistakes() }}</span> / 0 / {{ results()?.missed ?? 0 }}</dd>
+          </div>
+          <div class="detail"><dt>Errors</dt><dd class="bad">{{ mistakes() }}</dd></div>
+          <div class="detail"><dt>Error rate <small>per minute</small></dt><dd>{{ errorRate() }}/min</dd></div>
+          <div class="detail"><dt>Words</dt><dd>{{ results()?.totalWords ?? gameState().totalWords }}</dd></div>
+        </dl>
+      </section>
+    </div>
+
+    <div class="time-row">
+      <div class="card time-card"><span class="stat-label">Elapsed</span><span class="time-value">{{ elapsed() }}s</span></div>
+      <div class="card time-card"><span class="stat-label">Time left</span><span class="time-value">{{ gameState().timeLeft }}s</span></div>
+      <div class="card time-card">
+        <span class="stat-label">AFK</span>
+        <span class="time-value afk">{{ afkSeconds() }}s <small>&#183; {{ afkCount() }} {{ afkCount() === 1 ? 'period' : 'periods' }}</small></span>
+      </div>
+    </div>
+  </div>
+}

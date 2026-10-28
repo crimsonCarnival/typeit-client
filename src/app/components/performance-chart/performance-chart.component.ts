@@ -17,6 +17,17 @@ Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryS
 // Ensure the chart uses the application's global font
 Chart.defaults.font.family = "'Hapna Demibold', sans-serif";
 
+/** Reads a design token from styles.css so chart colours stay in one place. */
+const token = (name: string): string =>
+  getComputedStyle(document.documentElement).getPropertyValue(`--color-${name}`).trim();
+
+/** A token colour (hex) at the given opacity, for canvas gradients. */
+const tokenAlpha = (name: string, a: number): string => {
+  const hex = token(name).replace('#', '');
+  const n = parseInt(hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+};
+
 /**
  * Named dataset indices. Update this object whenever datasets are added,
  * removed, or reordered — all tooltip callbacks reference these constants.
@@ -137,7 +148,7 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
           {
             label: 'WPM',
             data: data.map((p) => p.wpm),
-            borderColor: '#eab308',
+            borderColor: token('wpm'),
             borderWidth: 3,
             fill: true,
             tension: 0.4,
@@ -145,10 +156,10 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
             yAxisID: 'y',
             backgroundColor: (context: any) => {
               const { ctx, chartArea } = context.chart;
-              if (!chartArea) return 'rgba(234,179,8,0.3)';
+              if (!chartArea) return tokenAlpha('wpm', 0.3);
               const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-              gradient.addColorStop(0, 'rgba(234,179,8,0)');
-              gradient.addColorStop(1, 'rgba(234,179,8,0.3)');
+              gradient.addColorStop(0, tokenAlpha('wpm', 0));
+              gradient.addColorStop(1, tokenAlpha('wpm', 0.3));
               return gradient;
             },
           },
@@ -156,7 +167,7 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
           {
             label: 'Personal Best (PB)',
             data: pbData,
-            borderColor: '#f472b6',
+            borderColor: token('pb'),
             borderDash: [10, 5],
             borderWidth: 1,
             pointRadius: 0,
@@ -167,7 +178,7 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
           {
             label: 'Avg WPM (3s)',
             data: rollingAvg,
-            borderColor: '#fbbf24',
+            borderColor: tokenAlpha('wpm', 0.55),
             borderDash: [4, 4],
             borderWidth: 1.5,
             tension: 0.4,
@@ -179,7 +190,7 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
           {
             label: 'Raw WPM',
             data: data.map((p) => p.rawWpm),
-            borderColor: '#9ca3af',
+            borderColor: token('raw'),
             borderWidth: 1,
             tension: 0.4,
             pointRadius: 0,
@@ -189,7 +200,7 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
           {
             label: 'Consistency',
             data: data.map((p) => p.consistency),
-            borderColor: '#8b5cf6',
+            borderColor: token('consistency'),
             borderWidth: 2,
             tension: 0.4,
             pointRadius: 0,
@@ -199,7 +210,7 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
           {
             label: 'Accuracy',
             data: data.map((p) => p.accuracy),
-            borderColor: '#34d399',
+            borderColor: token('accuracy'),
             borderWidth: 2,
             tension: 0.4,
             pointRadius: 0,
@@ -209,7 +220,7 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
           {
             label: 'AFK Event Count',
             data: labels.map((ts) => cumulativeAfkMap.get(Number(ts)) || 0),
-            borderColor: '#6366f1',
+            borderColor: token('afk'),
             borderDash: [5, 5],
             borderWidth: 2,
             pointRadius: 0,
@@ -217,10 +228,10 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
             yAxisID: 'errors',
             backgroundColor: (context: any) => {
               const { ctx, chartArea } = context.chart;
-              if (!chartArea) return 'rgba(99,102,241,0.2)';
+              if (!chartArea) return tokenAlpha('afk', 0.2);
               const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-              gradient.addColorStop(0, 'rgba(99,102,241,0.05)');
-              gradient.addColorStop(1, 'rgba(99,102,241,0.25)');
+              gradient.addColorStop(0, tokenAlpha('afk', 0.05));
+              gradient.addColorStop(1, tokenAlpha('afk', 0.25));
               return gradient;
             },
           },
@@ -228,13 +239,13 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
           {
             label: 'Errors',
             data: errorsPerSecond,
-            borderColor: '#ef4444',
+            borderColor: token('accent'),
             showLine: false,
             yAxisID: 'errors',
             tension: 0.4,
             pointRadius: (context: any) => (errorAt[context.dataIndex] ? 4 : 0),
             pointStyle: 'crossRot',
-            pointBackgroundColor: '#ef4444',
+            pointBackgroundColor: token('accent'),
             pointBorderWidth: 2,
           },
           // DS.BACKSPACES = 8
@@ -247,8 +258,8 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
             pointRadius: (context: any) => (backspaceAt[context.dataIndex] ? 5 : 0),
             pointStyle: 'triangle',
             pointRotation: 180,
-            pointBackgroundColor: '#f97316',
-            pointBorderColor: '#ea580c',
+            pointBackgroundColor: token('text-subtle'),
+            pointBorderColor: token('text-faint'),
             pointBorderWidth: 2,
           },
           // DS.AFK_PERIODS = 9
@@ -259,8 +270,8 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
             yAxisID: 'errors',
             pointRadius: 7,
             pointStyle: 'triangle',
-            pointBackgroundColor: '#38bdf8',
-            pointBorderColor: '#0ea5e9',
+            pointBackgroundColor: token('afk'),
+            pointBorderColor: token('afk'),
             pointBorderWidth: 2,
           },
         ],
@@ -272,29 +283,29 @@ export class PerformanceChartComponent implements AfterViewInit, OnDestroy {
         interaction: { mode: 'nearest', axis: 'xy', intersect: false },
         scales: {
           x: {
-            ticks: { color: '#6b7280', font: { size: 12 } },
-            grid: { color: '#404040', borderColor: '#404040' },
-            title: { display: true, text: 'Time (s)', color: '#6b7280', font: { size: 12 } },
+            ticks: { color: token('text-faint'), font: { size: 12 } },
+            grid: { color: token('border'), borderColor: token('border') },
+            title: { display: true, text: 'Time (s)', color: token('text-faint'), font: { size: 12 } },
           },
           y: {
-            ticks: { color: '#6b7280', font: { size: 12 } },
-            grid: { color: '#404040', borderColor: '#404040' },
-            title: { display: true, text: 'WPM & Accuracy', color: '#6b7280', font: { size: 12 } },
+            ticks: { color: token('text-faint'), font: { size: 12 } },
+            grid: { color: token('border'), borderColor: token('border') },
+            title: { display: true, text: 'WPM & Accuracy', color: token('text-faint'), font: { size: 12 } },
           },
           errors: {
             position: 'right',
             min: 0,
             max: Math.max(totalMistakes, maxErrorsPerSecond, 1) + 2,
-            ticks: { stepSize: 1, color: '#6b7280', font: { size: 12 } },
+            ticks: { stepSize: 1, color: token('text-faint'), font: { size: 12 } },
             grid: { display: false },
-            title: { display: true, text: 'Errors', color: '#6b7280', font: { size: 12 } },
+            title: { display: true, text: 'Errors', color: token('text-faint'), font: { size: 12 } },
           },
         },
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
-              color: '#9ca3af',
+              color: token('text-muted'),
               font: { size: 12 },
               padding: 18,
               boxWidth: 24,

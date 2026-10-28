@@ -126,6 +126,10 @@ export interface Results {
   consistency: number;
   afkTime?: string;
   afkCount?: number;
+  /** Server integrity verdict (signed-in runs only). */
+  ranked?: boolean;
+  integrityFlags?: string[];
+  newAchievements?: string[];
 }
 
 export interface Punishment {

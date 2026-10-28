@@ -5,6 +5,7 @@ export const routes: Routes = [
   // Landing page will take '' once it exists; until then send visitors straight to the game.
   { path: '', pathMatch: 'full', redirectTo: 'play' },
   { path: 'play', loadComponent: () => import('./pages/game/game.component').then((m) => m.GameComponent) },
+  { path: 'results', loadComponent: () => import('./pages/results/results.component').then((m) => m.ResultsComponent) },
   { path: 'daily', loadComponent: () => import('./pages/daily/daily.component').then((m) => m.DailyComponent) },
   { path: 'race', loadComponent: () => import('./pages/race-lobby/race-lobby.component').then((m) => m.RaceLobbyComponent) },
   { path: 'learn', loadComponent: () => import('./pages/learn/learn.component').then((m) => m.LearnComponent) },
