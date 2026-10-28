@@ -190,6 +190,9 @@ export class RaceService {
       case 'queue':
         this.queue.set({ queued: !!msg.queued, size: msg.size ?? 0, rating: msg.rating ?? this.queue().rating });
         break;
+      case 'chat-history':
+        this.chat.set((msg.lines as RaceChatMessage[]).slice(-CHAT_HISTORY));
+        break;
       case 'chat':
         this.chat.update((lines) => [...lines, msg as RaceChatMessage].slice(-CHAT_HISTORY));
         break;
