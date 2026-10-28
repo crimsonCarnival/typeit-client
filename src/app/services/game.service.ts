@@ -3,91 +3,14 @@ import { GameApiService } from './game-api.service';
 import { TextGeneratorService } from './text-generator.service';
 import { AfkEvent, ApiResponse, Character, GameState, PerformancePoint, PracticeKind, Results } from '../models/models';
 import { ls } from '../utils/storage';
+import { GameAudioService, GameSound } from './game/game-audio.service';
+import { KeystrokeLog } from './game/keystroke-log';
+import { defaultState, practiceLabel, textToCharacters } from './game/game-state';
 
 const AFK_THRESHOLD_MS = 1600;
 const HEARTBEAT_INTERVAL_S = 5;
 const BACKSPACE_THRESHOLD = 3;
-// Matches the server's MAX_KEYSTROKES; a longer log is cut off (and the run left unranked).
-const MAX_KEYSTROKES = 8000;
-const BACKSPACE = '';
 
-const KEY_SOUND_URL = 'https://res.cloudinary.com/dzjid2tos/video/upload/v1770240117/typewriter-single-key_wbesmp.mp3';
-const TIME_UP_SOUND_URL = 'https://res.cloudinary.com/dzjid2tos/video/upload/v1770240117/typewriter-bell_xrpggk.mp3';
-const ERROR_SOUND_URL = 'https://res.cloudinary.com/dzjid2tos/video/upload/v1770240116/error-sound_kpstvo.mp3';
-
-/**
- * Creates the character array from a text string. Characters before
- * `typedPrefix` (e.g. a resumed session) are marked as already typed.
- */
-const textToCharacters = (text: string, typedPrefix = ''): Character[] => {
-  if (!text) return [];
-  const prefixLength = typedPrefix ? typedPrefix.length : 0;
-  return text.split('').map((char, index) => ({
-    char,
-    status: index < prefixLength ? 'correct' : '',
-  }));
-};
-
-const loadAudioBuffer = async (audioContext: AudioContext, url: string): Promise<AudioBuffer | null> => {
-  try {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    return await audioContext.decodeAudioData(arrayBuffer);
-  } catch {
-    return null;
-  }
-};
-
-/** Fallback banner label when practice state comes from the server (e.g. after a reload). */
-const practiceLabel = (p: { kind: PracticeKind; id: string | null }): string => {
-  switch (p.kind) {
-    case 'drill': return `Drill · ${p.id === ' ' ? 'Space' : (p.id ?? '').toUpperCase()}`;
-    case 'lesson': return 'Lesson';
-    case 'common-words': return 'Common words';
-    case 'list': return 'Custom list';
-  }
-};
-
-const defaultState = (isAuthenticated: boolean): GameState => {
-  const initialGameMode: GameState['gameMode'] = isAuthenticated
-    ? (ls.get('gameMode') as GameState['gameMode']) || 'phrases'
-    : 'words';
-  const initialTimeMax = ls.int('timeMax', 120);
-  return {
-    currentText: '',
-    text: '',
-    currentIndex: 0,
-    mistakes: 0,
-    successes: 0,
-    accuracy: 0,
-    score: 0,
-    completionPercentage: 0,
-    isTyping: false,
-    isFinished: false,
-    timeMax: initialTimeMax,
-    timeLeft: initialTimeMax,
-    gameMode: initialGameMode,
-    wordCount: ls.int('wordCount', 50),
-    isMuted: ls.bool('soundMuted'),
-    punctuationEnabled: isAuthenticated ? ls.bool('punctuationEnabled') : false,
-    numbersEnabled: isAuthenticated ? ls.bool('numbersEnabled') : false,
-    lastWpm: 0,
-    lastCpm: 0,
-    totalWords: 0,
-    textSource: isAuthenticated
-      ? (ls.get('textSource') as GameState['textSource']) || 'default'
-      : 'default',
-    generatorUnit: (ls.get('generatorUnit') as GameState['generatorUnit']) || 'sentence',
-    generatorCount: ls.int('generatorCount', 3),
-    loremMin: ls.int('loremMin', 20),
-    loremMax: ls.int('loremMax', 60),
-    caretStyle: (ls.get('caretStyle') as GameState['caretStyle']) || 'line',
-    dailyDate: null,
-    practice: null,
-    botWpm: null,
-    race: null,
-  };
-};
 
 /**
  * Typing game state service. Port of the React useTypingGame hook: server
@@ -98,6 +21,7 @@ const defaultState = (isAuthenticated: boolean): GameState => {
 export class GameService {
   private readonly gameApi = inject(GameApiService);
   private readonly textGenerator = inject(TextGeneratorService);
+  private readonly audio = inject(GameAudioService);
 
   private readonly gameStateSignal = signal<GameState>(defaultState(false));
   readonly gameState = this.gameStateSignal.asReadonly();
@@ -116,10 +40,6 @@ export class GameService {
   private timer: ReturnType<typeof setInterval> | null = null;
   private snapshotInterval: ReturnType<typeof setInterval> | null = null;
   private startTime: number | null = null;
-  private audioContext: AudioContext | null = null;
-  private keySoundBuffer: AudioBuffer | null = null;
-  private timeUpSoundBuffer: AudioBuffer | null = null;
-  private errorSoundBuffer: AudioBuffer | null = null;
   private starting = false;
   private ending = false;
   private lastKeystrokeTime: number | null = null;
@@ -139,42 +59,11 @@ export class GameService {
   private penaltyTime = 0;
   private penaltyPoints = 0;
   private pendingGuestFinish: Record<string, any> | null = null;
-  /**
-   * Keystroke log sent with the end payload as [gapMs, char] pairs
-   * ('' = backspace). The server replays it against the text to derive
-   * per-key errors and to check the run's integrity.
-   */
-  private keystrokes: [number, string][] = [];
-  private lastLoggedKeyTime: number | null = null;
+  /** Keys of the current run, sent to the server with the end payload. */
+  private readonly keystrokes = new KeystrokeLog();
 
-  constructor() {
-    this.initAudio();
-  }
-
-  private initAudio(): void {
-    this.audioContext = new AudioContext();
-    void Promise.all([
-      loadAudioBuffer(this.audioContext, KEY_SOUND_URL),
-      loadAudioBuffer(this.audioContext, TIME_UP_SOUND_URL),
-      loadAudioBuffer(this.audioContext, ERROR_SOUND_URL),
-    ]).then(([key, timeUp, error]) => {
-      this.keySoundBuffer = key;
-      this.timeUpSoundBuffer = timeUp;
-      this.errorSoundBuffer = error;
-    });
-  }
-
-  private playSound(buffer: AudioBuffer | null): void {
-    const gs = this.gameState();
-    if (!gs.isMuted && buffer && this.audioContext) {
-      if (this.audioContext.state === 'suspended') {
-        void this.audioContext.resume();
-      }
-      const source = this.audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(this.audioContext.destination);
-      source.start(0);
-    }
+  private playSound(sound: GameSound): void {
+    this.audio.play(sound, this.gameState().isMuted);
   }
 
   /**
@@ -488,9 +377,7 @@ export class GameService {
     if (this.ending) return;
     this.ending = true;
     this.stopTimer();
-    if (this.timeUpSoundBuffer) {
-      this.playSound(this.timeUpSoundBuffer);
-    }
+    this.playSound('timeUp');
 
     const gs = this.gameState();
     const gameData = {
@@ -507,7 +394,7 @@ export class GameService {
       timeMax: gs.timeMax,
       text: gs.text,
       totalWords: gs.totalWords,
-      keystrokes: this.keystrokes,
+      keystrokes: [...this.keystrokes.keys],
     };
 
     const markFinished = () => {
@@ -554,7 +441,7 @@ export class GameService {
               performance: this.performance(),
               penalty: this.penaltyPoints,
               rawKeystrokes: this.rawKeystrokes,
-              keystrokes: this.keystrokes,
+              keystrokes: [...this.keystrokes.keys],
             },
           };
         }
@@ -730,9 +617,7 @@ export class GameService {
         // Spam prevention: block input and punish if the same key is pressed repeatedly
         if (this.consecutiveKeyCount >= 5) {
           this.applyPunishment();
-          if (this.errorSoundBuffer) {
-            this.playSound(this.errorSoundBuffer);
-          }
+          this.playSound('error');
           // Force input field to revert to prevent advancing
           this.gameStateSignal.update(prev => ({ ...prev, currentText: this.currentText }));
           return;
@@ -745,17 +630,13 @@ export class GameService {
             newCharacters[newIndex - 1] = { ...newCharacters[newIndex - 1], status: 'correct' };
           }
           totalSuccesses++;
-          if (this.keySoundBuffer) {
-            this.playSound(this.keySoundBuffer);
-          }
+          this.playSound('key');
         } else {
           if (newCharacters[newIndex - 1]) {
             newCharacters[newIndex - 1] = { ...newCharacters[newIndex - 1], status: 'incorrect' };
           }
           newMistakes++;
-          if (this.errorSoundBuffer) {
-            this.playSound(this.errorSoundBuffer);
-          }
+          this.playSound('error');
         }
       }
 
@@ -775,7 +656,7 @@ export class GameService {
         ? (newIndex / targetText.length) * 100
         : 0;
 
-      this.recordKeystrokes(this.currentText, newCurrentText);
+      this.keystrokes.record(this.currentText, newCurrentText);
       this.characters.set(newCharacters);
       this.currentText = newCurrentText;
       this.successes = totalSuccesses;
@@ -800,28 +681,6 @@ export class GameService {
     } catch {
       // Input handling must never throw in a controlled input.
     }
-  }
-
-  /**
-   * Appends the edit from `prev` to `next` to the keystroke log. A prefix diff
-   * covers single keys, word deletion (Ctrl+Backspace) and replacements alike.
-   */
-  private recordKeystrokes(prev: string, next: string): void {
-    let common = 0;
-    while (common < prev.length && common < next.length && prev[common] === next[common]) common++;
-
-    const now = Date.now();
-    let gap = this.lastLoggedKeyTime === null ? 0 : now - this.lastLoggedKeyTime;
-    this.lastLoggedKeyTime = now;
-
-    const push = (char: string) => {
-      if (this.keystrokes.length >= MAX_KEYSTROKES) return;
-      this.keystrokes.push([gap, char]);
-      gap = 0; // keys landing in the same input event share one timestamp
-    };
-    for (let i = prev.length; i > common; i--) push(BACKSPACE);
-    // Index by UTF-16 unit, not code point: the server expects 1-length chars.
-    for (let i = common; i < next.length; i++) push(next[i]);
   }
 
   /**
@@ -865,8 +724,7 @@ export class GameService {
     this.backspaceCount = 0;
     this.penaltyTime = 0;
     this.penaltyPoints = 0;
-    this.keystrokes = [];
-    this.lastLoggedKeyTime = null;
+    this.keystrokes.reset();
 
     this.results.set(null);
     this.performance.set([]);
