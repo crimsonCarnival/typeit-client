@@ -1,0 +1,52 @@
+<div class="players">
+  <div class="head">
+    <h1 class="title">Players</h1>
+    <p class="subtitle">Find someone by username or name and open their profile.</p>
+  </div>
+
+  <form class="search" role="search" (submit)="onSubmit($event)">
+    <svg class="search-icon" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    <input
+      #searchInput
+      class="search-input"
+      type="search"
+      maxlength="50"
+      placeholder="Search players"
+      aria-label="Search players"
+      autocomplete="off"
+      [value]="query()"
+      (input)="onInput($event)"
+    />
+  </form>
+
+  @if (error()) {
+    <p class="state" role="alert">{{ error() }}</p>
+  } @else if (query().trim().replace('@', '').length < minQuery) {
+    <p class="state">Type at least {{ minQuery }} characters. You can also find players on the <a routerLink="/ranks">rankings</a>.</p>
+  } @else if (loading() && !results().length) {
+    <p class="state" aria-busy="true">Searching&#8230;</p>
+  } @else if (searched() && !results().length) {
+    <p class="state">No players match "{{ query().trim() }}".</p>
+  } @else {
+    <ul class="results" aria-label="Players found" aria-live="polite">
+      @for (p of results(); track p.id) {
+        <li>
+          <a class="result" [routerLink]="['/user', p.id]">
+            @if (p.avatar) {
+              <img class="avatar" [src]="p.avatar" alt="" />
+            } @else {
+              <span class="avatar" aria-hidden="true" [style.background]="avatarColor(p)">{{ initial(p) }}</span>
+            }
+            <span class="names">
+              <span class="name">{{ p.displayName }}</span>
+              <span class="handle">&#64;{{ p.username }}</span>
+            </span>
+            <span class="stat"><b>{{ p.bestWpm }}</b> best WPM</span>
+            <span class="stat hide-sm"><b>{{ p.gamesPlayed }}</b> tests</span>
+            <span class="stat hide-sm"><b>{{ p.followersCount }}</b> followers</span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -16,6 +16,7 @@ export const routes: Routes = [
   { path: 'stats', canActivate: [authGuard], loadComponent: () => import('./pages/stats/stats.component').then((m) => m.StatsComponent) },
   { path: 'settings', loadComponent: () => import('./pages/settings/settings.component').then((m) => m.SettingsComponent) },
   { path: 'replay/:resultId', loadComponent: () => import('./pages/replay/replay.component').then((m) => m.ReplayComponent) },
+  { path: 'players', loadComponent: () => import('./pages/players/players.component').then((m) => m.PlayersComponent) },
   { path: 'user/:userId', loadComponent: () => import('./pages/public-profile/public-profile.component').then((m) => m.PublicProfileComponent) },
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];

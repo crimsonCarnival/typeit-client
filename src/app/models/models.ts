@@ -236,6 +236,17 @@ export interface PublicProfile {
   isOwner: boolean;
 }
 
+/** A player found by GET /users/search. */
+export interface PlayerSearchResult {
+  id: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  bestWpm: number;
+  gamesPlayed: number;
+  followersCount: number;
+}
+
 export interface FollowListUser {
   _id: string;
   username: string;
