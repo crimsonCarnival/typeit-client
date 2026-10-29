@@ -108,7 +108,7 @@
 .invite-toast {
   position: fixed;
   right: 20px;
-  bottom: 20px;
+  bottom: 68px;
   z-index: 900;
   display: flex;
   align-items: center;
@@ -209,7 +209,7 @@
   .invite-toast {
     left: 12px;
     right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom));
+    bottom: calc(60px + env(safe-area-inset-bottom));
     max-width: none;
   }
 }
@@ -294,13 +294,26 @@
   }
 }
 
-/* Footer: the version, which opens the release notes */
+/* Footer: pinned to the bottom of the viewport on every page, so the links,
+   theme and version (which opens the release notes) are always in reach. */
 .app-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
-  padding: 8px 24px 20px;
+  padding: 6px 24px calc(6px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-bg);
+}
+
+/* Room for the pinned footer, so it never covers the end of a page. */
+.app-main:has(~ .app-footer) {
+  padding-bottom: 72px;
 }
 
 .version {
