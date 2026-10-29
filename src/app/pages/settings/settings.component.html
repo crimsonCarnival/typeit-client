@@ -91,10 +91,10 @@
     <h2 id="behaviour-title" class="group-title">Behaviour</h2>
     <div class="row">
       <div class="row-text">
-        <span class="row-label">Difficulty</span>
+        <span class="row-label">Fail mode</span>
         <span class="row-hint">Expert fails the test if you finish a word with a mistake. Master fails it on a single wrong key (100% accuracy). Daily challenges and races are never failed.</span>
       </div>
-      <ng-container *ngTemplateOutlet="segmented; context: { key: 'failMode', options: failModes, label: 'Difficulty' }" />
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'failMode', options: failModes, label: 'Fail mode' }" />
     </div>
     <div class="row">
       <div class="row-text">

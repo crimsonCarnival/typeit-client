@@ -59,9 +59,18 @@
 
 .row-text {
   display: flex;
+  flex: 1 1 280px;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+}
+
+/* Long hints wrap inside the text column instead of pushing the control
+   onto its own line, so every row keeps its control on the right. */
+.row > :not(.row-text) {
+  flex-shrink: 0;
+  max-width: 100%;
+  margin-left: auto;
 }
 
 .row-label {
