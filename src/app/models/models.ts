@@ -382,6 +382,8 @@ export interface Achievement {
   /** Tiered badges share a family; tiers count from 1. */
   family?: string;
   tier?: number;
+  /** Secret until earned: the server sends a placeholder name and hint meanwhile. */
+  hidden?: boolean;
   name: string;
   description: string;
   category: AchievementCategory;

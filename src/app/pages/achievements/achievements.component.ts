@@ -144,6 +144,8 @@ export class AchievementsComponent {
   }
 
   progressLabel(a: Achievement): string {
-    return `${Math.floor(a.value)} / ${a.target} ${a.unit}`;
+    // Hours are the one fractional progress (0.4 of 1 h); everything else counts whole things.
+    const value = a.unit === 'h' ? a.value.toFixed(1) : Math.floor(a.value);
+    return `${value} / ${a.target} ${a.unit}`;
   }
 }

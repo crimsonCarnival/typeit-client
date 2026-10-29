@@ -77,6 +77,8 @@
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg>
                 Unlocked
               </span>
+            } @else if (a.hidden) {
+              <span class="badge-progress">Hidden &#183; unlocks when you find it</span>
             } @else {
               <div class="bar" role="progressbar" [attr.aria-label]="a.name + ' progress'" aria-valuemin="0" [attr.aria-valuemax]="a.target" [attr.aria-valuenow]="a.value">
                 <div class="bar-fill" [class]="'bar-fill bar-fill-' + a.rarity" [style.width.%]="progressPercent(a)"></div>
