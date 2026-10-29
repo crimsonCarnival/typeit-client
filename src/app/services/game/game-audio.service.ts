@@ -13,6 +13,13 @@ const SYNTH: Record<Exclude<SoundPack, 'typewriter'>, Record<GameSound, [number,
   soft: { key: [520, 0.04, 0.12, 'sine'], error: [180, 0.12, 0.15, 'sine'], timeUp: [660, 0.5, 0.15, 'sine'] },
 };
 
+/** Room cues: two quick notes, rising when someone joins and falling when they leave. [Hz, start s] */
+export type RoomCue = 'join' | 'leave';
+const CUES: Record<RoomCue, [number, number][]> = {
+  join: [[520, 0], [780, 0.09]],
+  leave: [[520, 0], [340, 0.09]],
+};
+
 const loadAudioBuffer = async (audioContext: AudioContext, url: string): Promise<AudioBuffer | null> => {
   try {
     const response = await fetch(url);
@@ -61,16 +68,24 @@ export class GameAudioService {
     source.start(0);
   }
 
-  private tone(frequency: number, duration: number, gain: number, wave: OscillatorType): void {
+  /** Join/leave cue for a race room; the same notes in every sound pack. */
+  playCue(cue: RoomCue, muted: boolean): void {
+    if (muted || !this.context) return;
+    if (this.context.state === 'suspended') void this.context.resume();
+    for (const [frequency, at] of CUES[cue]) this.tone(frequency, 0.14, 0.14, 'sine', at);
+  }
+
+  private tone(frequency: number, duration: number, gain: number, wave: OscillatorType, delay = 0): void {
     const ctx = this.context!;
     const osc = ctx.createOscillator();
     const amp = ctx.createGain();
     osc.type = wave;
     osc.frequency.value = frequency;
-    amp.gain.setValueAtTime(gain, ctx.currentTime);
-    amp.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+    const start = ctx.currentTime + delay;
+    amp.gain.setValueAtTime(gain, start);
+    amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     osc.connect(amp).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
+    osc.start(start);
+    osc.stop(start + duration);
   }
 }
