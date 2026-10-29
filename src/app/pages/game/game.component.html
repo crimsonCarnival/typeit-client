@@ -16,9 +16,9 @@
     <div class="run-head">
       <div class="run-stats">
         <div class="run-timer">
-          @if (gameState().zen && !gameState().dailyDate && !gameState().practice) {
+          @if (untimed()) {
             <span class="run-timer-value" role="timer">{{ elapsedLabel() }}</span>
-            <span class="run-label">Zen</span>
+            <span class="run-label">{{ gameState().zen ? 'Zen' : 'Time' }}</span>
           } @else {
             <span class="run-timer-value" role="timer">{{ timeLeftLabel() }}</span>
             <span class="run-label">Left</span>
@@ -40,7 +40,7 @@
       }
       <p class="run-settings">
         @if (gameState().gameMode === 'words') { Words {{ gameState().zen ? '' : gameState().wordCount }} } @else if (gameState().gameMode === 'code') { Code } @else { Phrases }
-        @if (gameState().zen) { &#183; Zen } @else { &#183; Limit {{ gameState().timeMax }}s }
+        @if (gameState().zen) { &#183; Zen } @else if (!untimed()) { &#183; Limit {{ gameState().timeMax }}s }
         @if (gameState().rules.difficulty === 'hardcore') { &#183; Hardcore }
       </p>
     </div>
@@ -65,99 +65,112 @@
     [class.locked]="gameState().isTyping"
     [class.daily-locked]="!!gameState().dailyDate || !!gameState().race"
   >
-    <app-sound-toggle
-      [isMuted]="gameState().isMuted"
-      [disabled]="gameState().isTyping"
-      (toggle)="game.toggleMute()"
-    />
-    <app-caret-picker
-      [caretStyle]="gameState().caretStyle"
-      [disabled]="gameState().isTyping"
-      (caretChange)="handleCaretChange($event)"
-    />
-    @if (isAuthenticated()) {
-      <app-mode-dropdown
-        [gameMode]="gameState().gameMode"
-        [isTyping]="gameState().isTyping"
-        (modeChange)="handleModeChange($event)"
-      />
-    }
-    @if (!gameState().zen) {
-    <app-word-count-dropdown
-      [wordCount]="gameState().wordCount"
-      [gameMode]="gameState().gameMode"
-      [isTyping]="gameState().isTyping"
-      (wordCountChange)="handleWordCountChange($event)"
-    />
-    }
-    <app-language-picker
-      [gameMode]="gameState().gameMode"
-      [language]="gameState().language"
-      [codeLanguage]="gameState().codeLanguage"
-      [disabled]="gameState().isTyping"
-      (languageChange)="handleLanguageChange($event)"
-    />
-    @if (isAuthenticated()) {
-      <app-word-mode-settings
-        [punctuationEnabled]="gameState().punctuationEnabled"
-        [numbersEnabled]="gameState().numbersEnabled"
-        [disabled]="gameState().isTyping"
-        [gameMode]="gameState().gameMode"
-        (punctuationToggle)="game.togglePunctuation()"
-        (numbersToggle)="game.toggleNumbers()"
-      />
-      <app-text-source-dropdown
-        [gameMode]="gameState().gameMode"
-        [textSource]="gameState().textSource"
-        [textCategory]="gameState().textCategory"
-        [generatorUnit]="gameState().generatorUnit"
-        [generatorCount]="gameState().generatorCount"
-        [loremMin]="gameState().loremMin"
-        [loremMax]="gameState().loremMax"
-        [disabled]="gameState().isTyping"
-      />
-    }
-    @if (!gameState().dailyDate && !gameState().race) {
-      <app-rules-picker
-        [rules]="gameState().rules"
-        [disabled]="gameState().isTyping"
-        (rulesChange)="handleRulesChange($event)"
-      />
-    }
-    @if (!gameState().dailyDate && !gameState().race) {
-      <div class="tb-section">
-        <span class="tb-label" aria-hidden="true">Zen</span>
-        <div class="tb-buttons">
-          <button type="button" class="tb-btn" [class.active]="gameState().zen" [attr.aria-pressed]="gameState().zen" title="No clock pressure: a long text you finish when you like (not ranked)" [disabled]="gameState().isTyping" (click)="toggleZen()">Zen</button>
-        </div>
+    <!-- Row 1: what you type -->
+    <div class="tb-row">
+      @if (isAuthenticated()) {
+        <app-mode-dropdown
+          [gameMode]="gameState().gameMode"
+          [isTyping]="gameState().isTyping"
+          (modeChange)="handleModeChange($event)"
+        />
+        @if (gameState().gameMode === 'phrases') {
+          <app-text-source-dropdown
+            [gameMode]="gameState().gameMode"
+            [textSource]="gameState().textSource"
+            [textCategory]="gameState().textCategory"
+            [generatorUnit]="gameState().generatorUnit"
+            [generatorCount]="gameState().generatorCount"
+            [loremMin]="gameState().loremMin"
+            [loremMax]="gameState().loremMax"
+            [disabled]="gameState().isTyping"
+          />
+        }
+      }
+      @if (gameState().gameMode !== 'phrases') {
+        <app-language-picker
+          [gameMode]="gameState().gameMode"
+          [language]="gameState().language"
+          [codeLanguage]="gameState().codeLanguage"
+          [disabled]="gameState().isTyping"
+          (languageChange)="handleLanguageChange($event)"
+        />
+      }
+      @if (isAuthenticated() && gameState().gameMode === 'words') {
+        <app-word-mode-settings
+          [punctuationEnabled]="gameState().punctuationEnabled"
+          [numbersEnabled]="gameState().numbersEnabled"
+          [disabled]="gameState().isTyping"
+          [gameMode]="gameState().gameMode"
+          (punctuationToggle)="game.togglePunctuation()"
+          (numbersToggle)="game.toggleNumbers()"
+        />
+      }
+      <div class="tb-end">
+        @if (!isAuthenticated()) {
+          <button type="button" class="unlock-card" (click)="auth.openAuthModal('register')">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            <span class="unlock-text">
+              <span class="unlock-title">Unlock more modes</span>
+              <span class="unlock-sub">Phrases, punctuation &amp; numbers</span>
+            </span>
+          </button>
+        }
+        <app-caret-picker
+          [caretStyle]="gameState().caretStyle"
+          [disabled]="gameState().isTyping"
+          (caretChange)="handleCaretChange($event)"
+        />
+        <app-sound-toggle
+          [isMuted]="gameState().isMuted"
+          [disabled]="gameState().isTyping"
+          (toggle)="game.toggleMute()"
+        />
       </div>
-    }
-    @if (isAuthenticated() && !gameState().dailyDate && !gameState().race && !ghost()) {
-      <div class="tb-section">
-        <span class="tb-label" aria-hidden="true">Ghost</span>
-        <div class="tb-buttons">
-          <button type="button" class="tb-btn" title="Race your best verified run for this mode and time limit" [disabled]="gameState().isTyping" (click)="racePb()">Race my PB</button>
+    </div>
+
+    <!-- Row 2: how long, and the rules -->
+    <div class="tb-row">
+      @if (!gameState().zen && gameState().gameMode === 'words') {
+        <app-word-count-dropdown
+          [wordCount]="gameState().wordCount"
+          [gameMode]="gameState().gameMode"
+          [isTyping]="gameState().isTyping"
+          (wordCountChange)="handleWordCountChange($event)"
+        />
+      }
+      @if (!gameState().zen) {
+        <app-custom-time-dropdown
+          [timeMax]="gameState().timeMax"
+          [timeLeft]="gameState().timeLeft"
+          [isTyping]="gameState().isTyping"
+          [disabled]="gameState().isFinished"
+          [locked]="!!untimedReason()"
+          [lockedReason]="untimedReason()"
+          (timeSelect)="handleTimeSelect($event)"
+        />
+      }
+      @if (!gameState().dailyDate && !gameState().race) {
+        <app-rules-picker
+          [rules]="gameState().rules"
+          [disabled]="gameState().isTyping"
+          (rulesChange)="handleRulesChange($event)"
+        />
+        <div class="tb-section">
+          <span class="tb-label" aria-hidden="true">Zen</span>
+          <div class="tb-buttons">
+            <button type="button" class="tb-btn" [class.active]="gameState().zen" [attr.aria-pressed]="gameState().zen" title="No clock pressure: a long text you finish when you like (not ranked)" [disabled]="gameState().isTyping" (click)="toggleZen()">Zen</button>
+          </div>
         </div>
-      </div>
-    }
-    @if (!gameState().zen) {
-    <app-custom-time-dropdown
-      [timeMax]="gameState().timeMax"
-      [timeLeft]="gameState().timeLeft"
-      [isTyping]="gameState().isTyping"
-      [disabled]="gameState().isFinished"
-      (timeSelect)="handleTimeSelect($event)"
-    />
-    }
-    @if (!isAuthenticated()) {
-      <button type="button" class="unlock-card" (click)="auth.openAuthModal('register')">
-        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
-        <span class="unlock-text">
-          <span class="unlock-title">Unlock more modes</span>
-          <span class="unlock-sub">Phrases, punctuation &amp; numbers</span>
-        </span>
-      </button>
-    }
+        @if (isAuthenticated() && !ghost()) {
+          <div class="tb-section">
+            <span class="tb-label" aria-hidden="true">Ghost</span>
+            <div class="tb-buttons">
+              <button type="button" class="tb-btn" title="Race your best verified run for this mode and time limit" [disabled]="gameState().isTyping" (click)="racePb()">Race my PB</button>
+            </div>
+          </div>
+        }
+      }
+    </div>
   </div>
 
   @if (ghostError()) {
@@ -173,6 +186,8 @@
     }
     @if (gameState().zen) {
       &#183; <b>Zen</b>, no limit
+    } @else if (untimed()) {
+      &#183; <b>No time limit</b>
     } @else {
       &#183; Limit <b>{{ gameState().timeMax }}s</b>
     }
@@ -220,7 +235,13 @@
           <div class="race-result-actions">
             <button type="button" class="race-btn" (click)="rematch()">Rematch</button>
             <button type="button" class="race-btn" (click)="backToLobby()">Back to race lobby</button>
+            <button type="button" class="race-btn" [attr.aria-expanded]="showMistakes()" (click)="showMistakes.set(!showMistakes())">
+              {{ showMistakes() ? 'Hide mistakes' : 'Compare mistakes' }}
+            </button>
           </div>
+          @if (showMistakes() && race.room()?.code; as code) {
+            <app-race-mistakes class="race-mistakes" [raceRef]="code" />
+          }
         </div>
       } @else {
         <div class="race-foot">

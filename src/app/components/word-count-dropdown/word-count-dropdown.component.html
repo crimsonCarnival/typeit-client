@@ -21,7 +21,7 @@
           />
         </form>
       } @else if (isCustomCount()) {
-        <button type="button" class="tb-btn active" aria-pressed="true" aria-label="Custom word count, change" [disabled]="isTyping()" (click)="handleCustomClick($event)">{{ wordCount() }}</button>
+        <button type="button" class="tb-btn tb-custom active" aria-pressed="true" aria-label="Custom word count, change" [disabled]="isTyping()" (click)="handleCustomClick($event)">{{ wordCount() }}</button>
       } @else {
         <button type="button" class="tb-btn tb-icon" aria-label="Custom word count" title="Custom word count" [disabled]="isTyping()" (click)="handleCustomClick($event)">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"></path></svg>

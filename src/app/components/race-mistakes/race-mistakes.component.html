@@ -1,0 +1,83 @@
+@if (loading()) {
+  <p class="hint" role="status">Loading mistakes&#8230;</p>
+} @else if (error()) {
+  <p class="hint" role="alert">
+    {{ error() }}
+    <button type="button" class="link-btn" (click)="load()">Try again</button>
+  </p>
+} @else if (data(); as d) {
+  <div class="table-wrap">
+    <table class="compare">
+      <caption class="sr-only">Mistakes per racer</caption>
+      <thead>
+        <tr>
+          <th scope="col">Racer</th>
+          <th scope="col" class="num">WPM</th>
+          <th scope="col" class="num">Acc</th>
+          <th scope="col" class="num">Mistakes</th>
+          <th scope="col" class="num">Backspaces</th>
+          <th scope="col">Worst keys</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of d.players; track p.userId) {
+          <tr [class.best]="cleanest() === p.userId">
+            <th scope="row" class="who">
+              <span class="place">{{ p.place ? '#' + p.place : 'DNF' }}</span>
+              <span class="name">{{ p.displayName }}</span>
+            </th>
+            <td class="num">{{ p.wpm ?? '–' }}</td>
+            <td class="num">{{ p.accuracy !== null ? p.accuracy + '%' : '–' }}</td>
+            @if (p.hasData) {
+              <td class="num strong">{{ p.mistakes }}</td>
+              <td class="num">{{ p.backspaces }}</td>
+              <td>
+                @if (p.worstKeys?.length) {
+                  <span class="keys">
+                    @for (k of p.worstKeys; track k.key) {
+                      <span class="key"><kbd>{{ k.key }}</kbd> {{ k.count }}</span>
+                    }
+                  </span>
+                } @else {
+                  <span class="hint">Clean run</span>
+                }
+              </td>
+            } @else {
+              <td class="hint" colspan="3">No keystroke data for this run.</td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (d.words.length) {
+    <div class="strips">
+      <p class="strips-title">Where it went wrong <span class="hint">one cell per word</span></p>
+      @for (p of d.players; track p.userId) {
+        @if (p.hasData) {
+          <div class="strip-row">
+            <span class="strip-name">{{ p.displayName }}</span>
+            <div class="strip" role="img" [attr.aria-label]="p.displayName + ': ' + p.mistakes + ' mistakes'">
+              @for (w of d.words; track $index) {
+                <span class="cell" [class.h1]="heat(p, $index) === 1" [class.h2]="heat(p, $index) === 2" [attr.title]="cellTitle(p, w, $index)"></span>
+              }
+            </div>
+          </div>
+        }
+      }
+      <p class="legend hint">
+        <span class="cell"></span> clean <span class="cell h1"></span> 1 mistake <span class="cell h2"></span> 2 or more
+      </p>
+    </div>
+  }
+
+  @if (d.hardestWords.length) {
+    <p class="hardest">
+      <span class="strips-title">Hardest words</span>
+      @for (w of d.hardestWords; track w.word) {
+        <span class="key"><b>{{ w.word }}</b> {{ w.errors }}</span>
+      }
+    </p>
+  }
+}

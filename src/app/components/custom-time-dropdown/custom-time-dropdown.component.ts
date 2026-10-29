@@ -13,6 +13,9 @@ export class CustomTimeDropdownComponent {
   readonly timeLeft = input(120);
   readonly isTyping = input(false);
   readonly disabled = input(false);
+  /** Time can't be chosen (e.g. phrases end with the passage); `lockedReason` says why. */
+  readonly locked = input(false);
+  readonly lockedReason = input('');
   readonly timeSelect = output<number>();
 
   readonly PRESET_TIMES = PRESET_TIMES;

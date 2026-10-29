@@ -15,6 +15,7 @@ import { TextSourceDropdownComponent } from '../../components/text-source-dropdo
 import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
 import { RulesPatch, RulesPickerComponent } from '../../components/rules-picker/rules-picker.component';
+import { RaceMistakesComponent } from '../../components/race-mistakes/race-mistakes.component';
 import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
 import { LanguagePatch, LanguagePickerComponent } from '../../components/language-picker/language-picker.component';
 import { Ghost } from '../../components/typing-area/typing-area.component';
@@ -45,6 +46,7 @@ const BOT_TICK_MS = 100;
     RulesPickerComponent,
     LanguagePickerComponent,
     RaceChatComponent,
+    RaceMistakesComponent,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
@@ -109,6 +111,19 @@ export class GameComponent implements AfterViewInit {
     return gs.dailyDate ? 'daily' : gs.practice ? 'practice' : gs.botWpm ? 'bot-race' : null;
   }
 
+  /** Zen and phrases runs have no time limit; the passage or Finish ends them. */
+  readonly untimed = computed(() => {
+    const gs = this.gameState();
+    return !gs.dailyDate && !gs.practice && !gs.race && (gs.zen || gs.gameMode === 'phrases');
+  });
+
+  /** Why the time limit can't be picked, or '' when it can. */
+  readonly untimedReason = computed(() =>
+    !this.gameState().dailyDate && !this.gameState().practice && this.gameState().gameMode === 'phrases'
+      ? 'Phrases have no time limit: the run ends when you finish the passage.'
+      : ''
+  );
+
   private abandonSession(): void {
     this.game.abandonSession(this.race.room()?.state === 'racing');
   }
@@ -126,6 +141,8 @@ export class GameComponent implements AfterViewInit {
       (a.place ?? 99) - (b.place ?? 99) || b.index - a.index
     );
   });
+
+  readonly showMistakes = signal(false);
 
   readonly raceFinished = computed(() => this.race.room()?.state === 'finished');
 
@@ -391,7 +408,7 @@ export class GameComponent implements AfterViewInit {
   readonly settingsSummary = computed(() => {
     const gs = this.gameState();
     const mode = gs.gameMode === 'words' ? (gs.zen ? 'Words' : `${gs.wordCount} words`) : gs.gameMode === 'code' ? 'Code' : 'Phrases';
-    return gs.zen ? `${mode} · Zen` : `${mode} · ${gs.timeMax}s`;
+    return gs.zen ? `${mode} · Zen` : this.untimed() ? mode : `${mode} · ${gs.timeMax}s`;
   });
 
   toggleZen(): void {

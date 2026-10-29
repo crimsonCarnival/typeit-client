@@ -5,30 +5,29 @@
 
 .game-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: 4px;
-  padding: 8px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: 16px;
   background: var(--color-typing-box);
 }
 
 /* Typing: settings can't change, the timer stays readable. */
-.game-toolbar.locked > :not(app-custom-time-dropdown) {
+.game-toolbar.locked .tb-row > :not(app-custom-time-dropdown),
+.game-toolbar.locked .tb-end {
   pointer-events: none;
   opacity: 0.45;
 }
 
 /* Daily challenge and races: settings are fixed for the whole run. */
-.game-toolbar.daily-locked > * {
+.game-toolbar.daily-locked .tb-row > * {
   pointer-events: none;
   opacity: 0.45;
 }
 
 .unlock-card {
-  margin-left: auto;
-  align-self: center;
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -293,6 +292,10 @@ app-shortcuts-footer.dimmed {
   border: 1px solid var(--color-primary);
   border-radius: 16px;
   background: rgba(200, 16, 46, 0.12);
+}
+
+.race-mistakes {
+  flex: 1 1 100%;
 }
 
 .race-result-title {

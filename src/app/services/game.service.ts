@@ -11,7 +11,8 @@ import { DEFAULT_RULES, KeyOutcome, TypingEngine } from './game/typing-engine';
 import { PROGRESS_INTERVAL_MS, RACE_PROGRESS_INTERVAL_MS, RunSyncService } from './game/run-sync.service';
 
 const CLOCK_TICK_MS = 250;
-// Zen runs: the longest text and limit the server allows; no timer shown.
+// Zen and phrases runs: the longest limit the server allows; no timer shown.
+// (Zen also takes the longest text.)
 const ZEN_WORDS = 500;
 const ZEN_SECONDS = 600;
 
@@ -74,7 +75,7 @@ export class GameService {
     return {
       gameMode: gs.gameMode,
       wordCount: gs.zen && gs.gameMode === 'words' ? ZEN_WORDS : gs.wordCount,
-      timeMax: gs.zen ? ZEN_SECONDS : gs.timeMax,
+      timeMax: gs.zen || gs.gameMode === 'phrases' ? ZEN_SECONDS : gs.timeMax,
       punctuationEnabled: gs.punctuationEnabled,
       numbersEnabled: gs.numbersEnabled,
       textCategory: gs.textCategory,
@@ -135,8 +136,8 @@ export class GameService {
     this.resetInternalState();
     if (data.sessionId) this.sessionId = data.sessionId;
     this.runLimitSec = data.timeMax ?? null;
-    // A zen run's long limit is not the player's time setting.
-    const zenRun = this.gameState().zen && !data.dailyDate && !data.practice && !data.raceCode;
+    // A zen or phrases run's long limit is not the player's time setting.
+    const untimedRun = (this.gameState().zen || (data.gameMode ?? this.gameState().gameMode) === 'phrases') && !data.dailyDate && !data.practice && !data.raceCode;
     const text: string = data.text || '';
     const rules = this.rulesFrom(data);
     const resumeText: string = data.incomplete && typeof data.typedText === 'string' ? data.typedText : '';
@@ -161,8 +162,8 @@ export class GameService {
       lastCpm: 0,
       completionPercentage: text.length ? (this.engine.position / text.length) * 100 : 0,
       gameMode: data.gameMode ?? prev.gameMode,
-      wordCount: zenRun ? prev.wordCount : data.wordCount ?? prev.wordCount,
-      timeMax: zenRun ? prev.timeMax : data.timeMax ?? prev.timeMax,
+      wordCount: this.gameState().zen && untimedRun ? prev.wordCount : data.wordCount ?? prev.wordCount,
+      timeMax: untimedRun ? prev.timeMax : data.timeMax ?? prev.timeMax,
       timeLeft: data.timeMax ?? prev.timeMax,
       language: data.language ?? prev.language,
       codeLanguage: data.codeLanguage ?? prev.codeLanguage,

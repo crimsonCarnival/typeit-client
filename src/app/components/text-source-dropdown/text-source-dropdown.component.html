@@ -1,83 +1,66 @@
 @if (gameMode() === 'phrases') {
-  <div
-    class="horizontal-textsource-dropdown"
-    [class.disabled]="disabled()"
-  >
-    <!-- Source toggle -->
-    <div class="textsource-options">
-      <span
-        [class.active]="textSource() === 'default'"
-        (click)="setSource('default')"
-      >Default</span>
-      <span
-        [class.active]="textSource() === 'generated'"
-        (click)="setSource('generated')"
-      >Generated</span>
-      <span
-        [class.active]="textSource() === 'lorem'"
-        (click)="setSource('lorem')"
-      >Lorem</span>
-      <span
-        [class.active]="textSource() === 'custom'"
-        (click)="openCustom()"
-      >Custom</span>
+  <div class="tb-group" [class.disabled]="disabled()">
+    <div class="tb-section">
+      <span class="tb-label" aria-hidden="true">Text</span>
+      <div class="tb-buttons" role="group" aria-label="Text source">
+        <button type="button" class="tb-btn" [class.active]="textSource() === 'default'" [attr.aria-pressed]="textSource() === 'default'" (click)="setSource('default')">Default</button>
+        <button type="button" class="tb-btn" [class.active]="textSource() === 'generated'" [attr.aria-pressed]="textSource() === 'generated'" (click)="setSource('generated')">Generated</button>
+        <button type="button" class="tb-btn" [class.active]="textSource() === 'lorem'" [attr.aria-pressed]="textSource() === 'lorem'" (click)="setSource('lorem')">Lorem</button>
+        <button type="button" class="tb-btn" [class.active]="textSource() === 'custom'" [attr.aria-pressed]="textSource() === 'custom'" (click)="openCustom()">Custom</button>
+      </div>
     </div>
 
-    <!-- Passage pool for the default source -->
     @if (textSource() === 'default') {
-      <div class="textsource-controls">
-        <div class="textsource-unit-options" role="group" aria-label="Text category">
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Passages</span>
+        <div class="tb-buttons" role="group" aria-label="Text category">
           @for (c of categories; track c.id) {
-            <span
-              [class.active]="textCategory() === c.id"
-              [attr.title]="c.hint"
-              role="button"
-              tabindex="0"
-              [attr.aria-pressed]="textCategory() === c.id"
-              (click)="setCategory(c.id)"
-              (keydown.enter)="setCategory(c.id)"
-            >{{ c.label }}</span>
+            <button type="button" class="tb-btn" [class.active]="textCategory() === c.id" [attr.aria-pressed]="textCategory() === c.id" [attr.title]="c.hint" (click)="setCategory(c.id)">{{ c.label }}</button>
           }
         </div>
       </div>
     }
 
-    <!-- Controls for 'generated' source -->
     @if (textSource() === 'generated') {
-      <div class="textsource-controls">
-        <div class="textsource-unit-options">
-          <span [class.active]="generatorUnit() === 'sentence'"  (click)="setUnit('sentence')">Sentences</span>
-          <span [class.active]="generatorUnit() === 'paragraph'" (click)="setUnit('paragraph')">Paragraphs</span>
-          <span [class.active]="generatorUnit() === 'article'"   (click)="setUnit('article')">Article</span>
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Unit</span>
+        <div class="tb-buttons" role="group" aria-label="Generated text unit">
+          <button type="button" class="tb-btn" [class.active]="generatorUnit() === 'sentence'" [attr.aria-pressed]="generatorUnit() === 'sentence'" (click)="setUnit('sentence')">Sentences</button>
+          <button type="button" class="tb-btn" [class.active]="generatorUnit() === 'paragraph'" [attr.aria-pressed]="generatorUnit() === 'paragraph'" (click)="setUnit('paragraph')">Paragraphs</button>
+          <button type="button" class="tb-btn" [class.active]="generatorUnit() === 'article'" [attr.aria-pressed]="generatorUnit() === 'article'" (click)="setUnit('article')">Article</button>
         </div>
-        <div class="textsource-stepper">
-          <button class="stepper-btn" (click)="adjustCount(-1)" [disabled]="generatorCount() <= 1">-</button>
-          <span class="stepper-value">{{ generatorCount() }}</span>
-          <button class="stepper-btn" (click)="adjustCount(1)"  [disabled]="generatorCount() >= 10">+</button>
+      </div>
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Count</span>
+        <div class="tb-buttons">
+          <button type="button" class="tb-btn tb-step" aria-label="Fewer" (click)="adjustCount(-1)" [disabled]="generatorCount() <= 1">&minus;</button>
+          <span class="tb-value">{{ generatorCount() }}</span>
+          <button type="button" class="tb-btn tb-step" aria-label="More" (click)="adjustCount(1)" [disabled]="generatorCount() >= 10">+</button>
         </div>
-
-        <!-- Custom vocabulary modal toggle -->
-        <div class="vocab-toggle" (click)="vocabModalOpen = true">
-          <i class="fas fa-book-open"></i>
-          <span>Vocabulary</span>
+      </div>
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Words</span>
+        <div class="tb-buttons">
+          <button type="button" class="tb-btn" (click)="vocabModalOpen = true">Vocabulary</button>
         </div>
       </div>
     }
 
-    <!-- Controls for 'lorem' source -->
     @if (textSource() === 'lorem') {
-      <div class="textsource-controls textsource-lorem">
-        <span class="lorem-label">Min Words</span>
-        <div class="textsource-stepper">
-          <button class="stepper-btn" (click)="adjustLoremMin(-5)" [disabled]="loremMin() <= 5">-</button>
-          <span class="stepper-value">{{ loremMin() }}</span>
-          <button class="stepper-btn" (click)="adjustLoremMin(5)">+</button>
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Min words</span>
+        <div class="tb-buttons">
+          <button type="button" class="tb-btn tb-step" aria-label="Fewer minimum words" (click)="adjustLoremMin(-5)" [disabled]="loremMin() <= 5">&minus;</button>
+          <span class="tb-value">{{ loremMin() }}</span>
+          <button type="button" class="tb-btn tb-step" aria-label="More minimum words" (click)="adjustLoremMin(5)">+</button>
         </div>
-        <span class="lorem-sep">to Max</span>
-        <div class="textsource-stepper">
-          <button class="stepper-btn" (click)="adjustLoremMax(-5)" [disabled]="loremMax() <= loremMin()">-</button>
-          <span class="stepper-value">{{ loremMax() }}</span>
-          <button class="stepper-btn" (click)="adjustLoremMax(5)">+</button>
+      </div>
+      <div class="tb-section">
+        <span class="tb-label" aria-hidden="true">Max words</span>
+        <div class="tb-buttons">
+          <button type="button" class="tb-btn tb-step" aria-label="Fewer maximum words" (click)="adjustLoremMax(-5)" [disabled]="loremMax() <= loremMin()">&minus;</button>
+          <span class="tb-value">{{ loremMax() }}</span>
+          <button type="button" class="tb-btn tb-step" aria-label="More maximum words" (click)="adjustLoremMax(5)">+</button>
         </div>
       </div>
     }

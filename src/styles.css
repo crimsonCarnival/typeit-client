@@ -207,6 +207,11 @@
   color: #fff;
 }
 
+.tb-btn.tb-step {
+  min-width: 36px;
+  padding: 0;
+}
+
 .tb-btn.tb-icon {
   padding: 0;
   color: var(--color-text-subtle);
@@ -230,32 +235,63 @@
   outline-offset: 2px;
 }
 
-@media (max-width: 768px) {
-  .game-toolbar > * + * .tb-section::before {
-    display: none;
+/* The toolbar is two rows of equal-height sections: a 12px label over 44px
+   controls, so everything lines up on one baseline. Lives here, not in
+   game.component.css: emulated encapsulation would stop it reaching the
+   sections inside the child components. */
+.tb-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px 4px;
+}
+
+/* Component hosts and wrappers directly in a row. */
+.tb-row > * {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* Divider before each group except the first in a row. */
+@media (min-width: 1100px) {
+  .tb-row > * + *:not(.tb-end) {
+    margin-left: 4px;
+    padding-left: 10px;
+    border-left: 1px solid var(--color-border);
   }
 }
 
-/* Lives here, not in game.component.css: emulated encapsulation would stop
-   it reaching the sections inside the child components. */
-/* Divider before every section except the first (empty hosts render none). */
-.game-toolbar > * + * .tb-section {
-  position: relative;
-  margin-left: 5px;
+/* Sound and caret sit at the row's right edge. */
+.tb-end {
+  margin-left: auto;
+  gap: 4px;
+  align-items: flex-start;
 }
 
-.game-toolbar > * + * .tb-section::before {
-  content: '';
-  position: absolute;
-  left: -5px;
-  top: 8px;
-  bottom: 8px;
-  width: 1px;
-  background: var(--color-border);
+.tb-group {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tb-section.is-locked .tb-buttons {
+  opacity: 0.4;
+}
+
+/* A custom value (not one of the presets) keeps its slot after the presets. */
+.tb-btn.tb-custom {
+  border: 1px dashed var(--color-primary);
+}
+
+.tb-btn.tb-custom:not(.active) {
+  border-color: var(--color-border-strong);
 }
 
 .tb-input {
   width: 72px;
+  max-width: 100%;
   height: 44px;
   padding: 0 10px;
   border: 1.5px solid #34343a;
@@ -264,6 +300,12 @@
   color: var(--color-text);
   font-family: var(--font-display);
   font-size: 19px;
+}
+
+select.tb-input {
+  width: auto;
+  min-width: 124px;
+  padding-right: 6px;
 }
 
 .tb-input:focus {
