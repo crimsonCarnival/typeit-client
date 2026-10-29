@@ -1,6 +1,6 @@
 import { Component, ElementRef, computed, effect, inject, output, signal, viewChild } from '@angular/core';
 import { ChangelogService } from '../../services/changelog.service';
-import { TimezoneService } from '../../services/timezone.service';
+import { DISPLAY_LOCALE, TimezoneService } from '../../services/timezone.service';
 import { ChangelogEntry, ChangelogRelease } from '../../models/models';
 
 // In the order they are shown (mirrors SECTIONS in the server's changelog-lib.js).
@@ -124,7 +124,7 @@ export class ChangelogModalComponent {
   }
 
   private label(key: string, options: Intl.DateTimeFormatOptions): string {
-    return new Intl.DateTimeFormat(undefined, { ...options, timeZone: 'UTC' }).format(new Date(`${key}T12:00:00Z`));
+    return new Intl.DateTimeFormat(DISPLAY_LOCALE, { ...options, timeZone: 'UTC' }).format(new Date(`${key}T12:00:00Z`));
   }
 
   private range(keys: string[]): string {

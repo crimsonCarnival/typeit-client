@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameApiService } from '../../services/game-api.service';
 import { GameService } from '../../services/game.service';
-import { TimezoneService } from '../../services/timezone.service';
+import { DISPLAY_LOCALE, TimezoneService } from '../../services/timezone.service';
 import { DailyDayModalComponent } from '../../components/daily-day-modal/daily-day-modal.component';
 import { DailyOverview } from '../../models/models';
 
@@ -50,7 +50,7 @@ export class DailyComponent {
     const d = this.data();
     if (!d) return '';
     const at = new Date(d.resetsAt);
-    return `${new Intl.DateTimeFormat(undefined, { timeStyle: 'short', timeZone: this.tz.zone() }).format(at)} ${this.tz.label(at)}`;
+    return `${new Intl.DateTimeFormat(DISPLAY_LOCALE, { timeStyle: 'short', timeZone: this.tz.zone() }).format(at)} ${this.tz.label(at)}`;
   });
 
   readonly modifierLabel = computed(() => {

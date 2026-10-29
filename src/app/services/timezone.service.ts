@@ -1,6 +1,9 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 
+/** The UI is in English, so dates are too, whatever language the browser prefers. */
+export const DISPLAY_LOCALE = 'en-US';
+
 const detectZone = (): string => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -38,16 +41,16 @@ export class TimezoneService {
   }
 
   date(value: string | number | Date, options: Intl.DateTimeFormatOptions = {}): string {
-    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', ...options, timeZone: this.zone() }).format(new Date(value));
+    return new Intl.DateTimeFormat(DISPLAY_LOCALE, { dateStyle: 'medium', ...options, timeZone: this.zone() }).format(new Date(value));
   }
 
   dateTime(value: string | number | Date): string {
-    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone: this.zone() }).format(new Date(value));
+    return new Intl.DateTimeFormat(DISPLAY_LOCALE, { dateStyle: 'medium', timeStyle: 'short', timeZone: this.zone() }).format(new Date(value));
   }
 
   /** Short zone name for the current moment, e.g. "GMT+2". */
   label(at: Date = new Date()): string {
-    const part = new Intl.DateTimeFormat(undefined, { timeZone: this.zone(), timeZoneName: 'short' }).formatToParts(at).find((p) => p.type === 'timeZoneName');
+    const part = new Intl.DateTimeFormat(DISPLAY_LOCALE, { timeZone: this.zone(), timeZoneName: 'short' }).formatToParts(at).find((p) => p.type === 'timeZoneName');
     return part?.value ?? this.zone();
   }
 }
