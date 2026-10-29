@@ -36,6 +36,7 @@ export class SettingsComponent {
     { key: 'achievements', label: 'Achievements', hint: 'Badges you unlock.' },
     { key: 'races', label: 'Race results', hint: 'How a race went, and your rating change.' },
     { key: 'daily', label: 'Daily challenge', hint: 'A reminder before it expires, and where you placed.' },
+    { key: 'releases', label: 'New releases', hint: 'When a new version of typeit is out.' },
   ];
   readonly settingsService = inject(SettingsService);
   readonly settings = this.settingsService.settings;

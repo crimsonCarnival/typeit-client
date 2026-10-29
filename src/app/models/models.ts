@@ -668,6 +668,7 @@ export interface NotificationPrefs {
   achievements: boolean;
   races: boolean;
   daily: boolean;
+  releases: boolean;
 }
 
 export interface AdminUser {
