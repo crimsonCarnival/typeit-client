@@ -99,6 +99,11 @@
   color: var(--color-text);
 }
 
+.chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .chip.active {
   background: var(--color-primary);
   border-color: var(--color-primary);

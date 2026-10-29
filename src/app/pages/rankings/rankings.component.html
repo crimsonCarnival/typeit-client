@@ -33,10 +33,10 @@
       }
     </div>
 
-    <div class="filter-group" role="group" aria-label="Time limit">
-      <span class="filter-label">Time limit</span>
+    <div class="filter-group" role="group" aria-label="Time limit" [attr.title]="timeDisabled() ? 'Phrases have no time limit' : null">
+      <span class="filter-label">Time limit{{ timeDisabled() ? ' · n/a' : '' }}</span>
       @for (t of timeLimits; track t) {
-        <button type="button" class="chip" [class.active]="time() === t" [attr.aria-pressed]="time() === t" (click)="time.set(t)">
+        <button type="button" class="chip" [class.active]="!timeDisabled() && time() === t" [attr.aria-pressed]="!timeDisabled() && time() === t" [disabled]="timeDisabled()" (click)="time.set(t)">
           {{ t }}s
         </button>
       }

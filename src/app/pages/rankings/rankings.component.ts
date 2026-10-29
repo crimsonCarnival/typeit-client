@@ -39,6 +39,8 @@ export class RankingsComponent {
     { id: 'phrases', label: 'Phrases' },
   ];
   readonly timeLimits = TIME_LIMITS;
+  /** Phrases runs have no time limit, so that board has none to filter by. */
+  readonly timeDisabled = computed(() => this.mode() === 'phrases');
   // Plain runs ('none') are what Global and Monthly rank; this tab covers the rest.
   readonly modifierOptions: { id: RankingModifiers; label: string }[] = [
     { id: 'punctuation', label: 'Punctuation' },
@@ -68,7 +70,7 @@ export class RankingsComponent {
   readonly query = computed<RankingQuery>(() => ({
     period: this.tab() === 'monthly' ? 'month' : 'all',
     mode: this.mode(),
-    time: this.time(),
+    time: this.timeDisabled() ? null : this.time(),
     modifiers: this.tab() === 'modifiers' ? this.modifiers() : 'none',
     region: this.region(),
   }));
@@ -96,7 +98,7 @@ export class RankingsComponent {
         queryParams: {
           board: tab !== 'global' ? tab : null,
           mode: this.mode() !== 'words' ? this.mode() : null,
-          time: this.time() !== 60 ? this.time() : null,
+          time: this.time() !== 60 && !this.timeDisabled() ? this.time() : null,
           mods: tab === 'modifiers' && this.modifiers() !== 'punctuation' ? this.modifiers() : null,
           region: this.region() !== 'all' ? this.region() : null,
         },
@@ -144,7 +146,7 @@ export class RankingsComponent {
 
   boardLabel(): string {
     const mode = this.mode() === 'words' ? 'words' : 'phrases';
-    return `${this.time()}s ${mode}`;
+    return this.timeDisabled() ? mode : `${this.time()}s ${mode}`;
   }
 
   onRegionChange(event: Event): void {
