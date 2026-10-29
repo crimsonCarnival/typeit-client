@@ -334,6 +334,8 @@ export interface ChangelogEntry {
   pr: number | null;
   hash: string;
   repo: string | null;
+  /** ISO date ('YYYY-MM-DD') of the commit — used to group entries by weekday. */
+  day?: string;
 }
 
 export interface ChangelogRelease {
