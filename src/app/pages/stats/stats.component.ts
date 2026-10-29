@@ -32,7 +32,8 @@ export class StatsComponent {
   readonly overall = computed(() => {
     const s = this.user()?.stats || {};
     return [
-      { label: 'Games',             value: s.gamesPlayed || 0 },
+      { label: 'Tests started',     value: Math.max(s.testsStarted || 0, s.gamesPlayed || 0) },
+      { label: 'Tests finished',    value: s.gamesPlayed || 0 },
       { label: 'Best WPM',          value: s.bestWpm || 0 },
       { label: 'High Score',        value: s.highScore || 0 },
       { label: 'Best Accuracy',     value: `${s.bestAccuracy || 0}%` },
