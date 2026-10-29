@@ -717,3 +717,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.kick.armed {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}

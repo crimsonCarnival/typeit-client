@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { GameService } from './game.service';
+import { GameAudioService } from './game/game-audio.service';
 import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceHistoryEntry, RaceInvite, RaceMistakes, RaceRatingEntry, RaceRoom, RaceSettings } from '../models/models';
 import { ls } from '../utils/storage';
 
@@ -18,7 +19,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   'room-not-found': 'No race with that code.',
   'room-full': 'That race is full.',
   'already-started': 'That race has already started.',
-  'not-host': 'Only the host can start early.',
+  'not-host': 'Only the host can do that.',
   'friend-offline': 'Your friend went offline.',
   'not-friends': 'You can only invite friends (people you follow who follow you back).',
   'invite-cooldown': 'Invite already sent. Give them a moment.',
@@ -30,6 +31,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   'too-many-spectators': 'That race has as many spectators as it can take.',
   'chat-cooldown': 'Slow down a little.',
   'not-finished': 'The race is still on.',
+  banned: "The host removed you from that race, so you can't rejoin it.",
+  'cannot-kick-self': "You can't kick yourself.",
+  'bad-kick': 'Could not kick that player.',
 };
 
 // Chat lines kept on screen.
@@ -55,6 +59,7 @@ export class RaceService {
   private readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   private readonly game = inject(GameService);
+  private readonly audio = inject(GameAudioService);
   private readonly router = inject(Router);
   private startedCode: string | null = null;
 
@@ -180,6 +185,7 @@ export class RaceService {
         // A rematch reuses the room code: let the next start load again.
         if (msg.room.state === 'lobby' && this.startedCode === msg.room.code) this.startedCode = null;
         this.spectating.set(!!msg.spectating);
+        this.playRoomCues(this.room(), msg.room);
         this.room.set(msg.room);
         this.error.set('');
         break;
@@ -187,6 +193,13 @@ export class RaceService {
         this.room.set(null);
         this.spectating.set(false);
         this.chat.set([]);
+        break;
+      case 'kicked':
+        this.room.set(null);
+        this.spectating.set(false);
+        this.chat.set([]);
+        this.error.set(`The host removed you from "${msg.name}". You can't rejoin it.`);
+        void this.router.navigate(['/race'], { replaceUrl: true });
         break;
       case 'queue':
         this.queue.set({ queued: !!msg.queued, size: msg.size ?? 0, rating: msg.rating ?? this.queue().rating });
@@ -207,6 +220,24 @@ export class RaceService {
         this.error.set(ERROR_MESSAGES[msg.code] ?? 'Something went wrong.');
         break;
     }
+  }
+
+  /** A sound when someone joins or leaves the room we're already in (not for our own entry). */
+  private playRoomCues(prev: RaceRoom | null, next: RaceRoom): void {
+    if (!prev || prev.code !== next.code || this.spectating()) return;
+    const before = new Set(prev.players.map((p) => p.userId));
+    const after = new Set(next.players.map((p) => p.userId));
+    const me = this.myId();
+    const joined = next.players.some((p) => p.userId !== me && !before.has(p.userId));
+    const left = prev.players.some((p) => p.userId !== me && !after.has(p.userId));
+    const muted = this.game.gameState().isMuted;
+    if (joined) this.audio.playCue('join', muted);
+    else if (left) this.audio.playCue('leave', muted);
+  }
+
+  /** Host only: removes a player and bars them from this room for good. */
+  kick(userId: string): void {
+    this.send({ type: 'kick', userId });
   }
 
   private send(msg: Record<string, unknown>): void {

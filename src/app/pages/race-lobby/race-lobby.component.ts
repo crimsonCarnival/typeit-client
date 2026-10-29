@@ -77,7 +77,7 @@ export class RaceLobbyComponent {
 
   readonly tab = signal<'create' | 'join'>(this.linkCode ? 'join' : 'create');
   readonly roomName = signal(this.query.get('name') ?? '');
-  readonly isPrivate = signal(this.query.get('public') !== '1');
+  readonly isPrivate = signal(this.query.get('private') === '1');
   readonly draft = signal<RaceSettings>(settingsFromQuery((k) => this.query.get(k)));
   readonly joinCode = signal(this.linkCode);
   readonly showMistakes = signal(false);
@@ -165,7 +165,7 @@ export class RaceLobbyComponent {
       countdown: d.countdownSec !== base.countdownSec ? d.countdownSec : null,
       punct: d.punctuation ? 1 : null,
       nums: d.numbers ? 1 : null,
-      public: this.isPrivate() ? null : 1,
+      private: this.isPrivate() ? 1 : null,
     };
   }
 
@@ -217,6 +217,24 @@ export class RaceLobbyComponent {
   progress(p: RacePlayer): number {
     const len = this.room()?.text?.length ?? 0;
     return len ? Math.min(100, (p.index / len) * 100) : 0;
+  }
+
+  /** The player whose kick is waiting for a second click. */
+  readonly kickArmed = signal<string | null>(null);
+
+  /** Host may remove others before the race and outside rated rooms. */
+  canKick(p: RacePlayer): boolean {
+    const r = this.room();
+    return !!r && this.race.isHost() && !this.race.spectating() && !r.rated && r.state !== 'racing' && p.userId !== this.race.myId();
+  }
+
+  kick(p: RacePlayer): void {
+    if (this.kickArmed() !== p.userId) {
+      this.kickArmed.set(p.userId);
+      return;
+    }
+    this.kickArmed.set(null);
+    this.race.kick(p.userId);
   }
 
   invite(friend: RaceFriend): void {

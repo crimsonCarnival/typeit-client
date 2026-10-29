@@ -151,7 +151,7 @@
                   <span class="switch-knob"></span>
                 </button>
               </div>
-              <p class="hint">{{ isPrivate() ? 'Only people with the code or link can join.' : 'Listed under Join for anyone to find.' }}</p>
+              <p class="hint">{{ isPrivate() ? 'Only people with the code or link can join.' : 'Listed under Join for anyone to find. Switch on Private room to hide it.' }}</p>
               <button type="submit" class="btn-primary" [disabled]="race.status() !== 'online'">Create room</button>
             </form>
           } @else {
@@ -253,6 +253,11 @@
                   <span class="badge ready">Ready</span>
                 } @else {
                   <span class="badge">Not ready</span>
+                }
+                @if (canKick(p)) {
+                  <button type="button" class="btn-outline small kick" [class.armed]="kickArmed() === p.userId" [attr.aria-label]="(kickArmed() === p.userId ? 'Confirm kick ' : 'Kick ') + p.displayName" (click)="kick(p)" (blur)="kickArmed.set(null)">
+                    {{ kickArmed() === p.userId ? 'Sure? Kick' : 'Kick' }}
+                  </button>
                 }
               </li>
             }
