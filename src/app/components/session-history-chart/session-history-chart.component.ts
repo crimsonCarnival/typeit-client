@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, inject, input, viewChild } from '@angular/core';
+import { TimezoneService } from '../../services/timezone.service';
 import { Chart } from 'chart.js/auto';
 import { SessionSummary } from '../../models/models';
 import { token, tokenAlpha } from '../../utils/chart-tokens';
@@ -25,6 +26,7 @@ const DS = {
 export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
   readonly sessions = input<SessionSummary[]>([]);
 
+  private readonly tz = inject(TimezoneService);
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   private chart: Chart | undefined;
 
@@ -173,7 +175,7 @@ export class SessionHistoryChartComponent implements AfterViewInit, OnDestroy {
               title: (items: any[]) => {
                 const s = sessions[items[0].dataIndex];
                 if (!s) return '';
-                const date = new Date(s.endTime).toLocaleDateString();
+                const date = this.tz.date(s.endTime);
                 const tag  = s.migrated ? ' (migrated)' : '';
                 return `Session ${items[0].label} — ${date}${tag}`;
               },

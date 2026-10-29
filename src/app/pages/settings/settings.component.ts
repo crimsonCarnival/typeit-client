@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
 import { SettingsService } from '../../services/settings.service';
 import { GameAudioService } from '../../services/game/game-audio.service';
+import { TimezoneService } from '../../services/timezone.service';
 import { PlayerSettings } from '../../models/models';
 
 type Option<K extends keyof PlayerSettings> = { value: PlayerSettings[K]; label: string; hint?: string };
@@ -22,6 +23,7 @@ export class SettingsComponent {
   readonly auth = inject(AuthService);
   private readonly game = inject(GameService);
   private readonly audio = inject(GameAudioService);
+  readonly tz = inject(TimezoneService);
   readonly settingsService = inject(SettingsService);
   readonly settings = this.settingsService.settings;
 
@@ -85,6 +87,15 @@ export class SettingsComponent {
     else if (key === 'soundMuted') {
       if (this.game.gameState().isMuted !== value) this.game.toggleMute();
     } else this.settingsService.update({ [key]: value } as Partial<PlayerSettings>);
+  }
+
+  readonly tzError = signal('');
+
+  /** '' follows the browser; anything else is an IANA zone the player picked. */
+  async onZone(event: Event): Promise<void> {
+    const value = (event.target as HTMLSelectElement).value;
+    const res = await this.tz.setZone(value || null);
+    this.tzError.set(res.success ? '' : res.error ?? 'Could not save your time zone');
   }
 
   previewSound(): void {

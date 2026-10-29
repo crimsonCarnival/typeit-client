@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TimezoneService } from '../../services/timezone.service';
 import { AuthService } from '../../services/auth.service';
 import { UserApiService } from '../../services/user-api.service';
 import { PublicProfile } from '../../models/models';
@@ -18,6 +19,7 @@ import { membershipAge } from '../../utils/time';
 export class PublicProfileComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
+  private readonly tz = inject(TimezoneService);
   private readonly api = inject(UserApiService);
 
   readonly isAuthenticated = this.auth.isAuthenticated;
@@ -36,7 +38,7 @@ export class PublicProfileComponent {
   readonly age = computed(() => membershipAge(this.profile()?.createdAt));
   readonly joined = computed(() => {
     const created = this.profile()?.createdAt;
-    return created ? new Date(created).toLocaleDateString() : '';
+    return created ? this.tz.date(created) : '';
   });
 
   readonly publicStats = computed(() => {
@@ -45,7 +47,7 @@ export class PublicProfileComponent {
       { label: 'Best WPM', value: s.bestWpm || 0 },
       { label: 'High Score', value: s.highScore || 0 },
       { label: 'Best Accuracy', value: `${s.bestAccuracy || 0}%` },
-      { label: 'Games', value: s.gamesPlayed || 0 },
+      { label: 'Tests done / started', value: `${s.gamesPlayed || 0} / ${Math.max(s.testsStarted || 0, s.gamesPlayed || 0)}` },
     ];
   });
 

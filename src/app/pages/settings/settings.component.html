@@ -115,4 +115,27 @@
       <ng-container *ngTemplateOutlet="segmented; context: { key: 'keyboardLayout', options: layouts, label: 'Keyboard layout' }" />
     </div>
   </section>
+  <section class="group" aria-labelledby="tz-title">
+    <h2 id="tz-title" class="group-title">Time</h2>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Time zone</span>
+        <span class="row-hint">
+          Dates and times are shown in {{ tz.zone() }} ({{ tz.label() }}){{ tz.isManual() ? '' : ', detected from this browser' }}.
+          Daily challenges still change at midnight UTC.
+        </span>
+        @if (tzError()) {
+          <span class="row-hint" role="alert">{{ tzError() }}</span>
+        }
+      </div>
+      @if (auth.isAuthenticated()) {
+        <select class="tz-select" aria-label="Time zone" (change)="onZone($event)">
+          <option value="" [selected]="!tz.isManual()">Automatic ({{ tz.detected }})</option>
+          @for (z of tz.zones; track z) {
+            <option [value]="z" [selected]="tz.isManual() && tz.zone() === z">{{ z }}</option>
+          }
+        </select>
+      }
+    </div>
+  </section>
 </div>
