@@ -36,6 +36,10 @@ export class TypingAreaComponent {
   readonly currentText = input('');
   readonly caretStyle = input<CaretStyle>('line');
   readonly ghosts = input<Ghost[]>([]);
+  /** The line caret glides between letters at this speed instead of jumping. */
+  readonly smoothCaret = input<'off' | 'slow' | 'medium' | 'fast'>('off');
+  /** One line that scrolls sideways, instead of lines scrolling up. */
+  readonly tapeMode = input(false);
 
   readonly typing = output<string>();
   /** Shift+Enter: end the run now (zen). */
@@ -59,6 +63,21 @@ export class TypingAreaComponent {
   private readonly refreshKey = signal(0);
 
   readonly ghostMarks = signal<GhostMark[]>([]);
+  /** Where the smooth caret is drawn (null when it is off). */
+  readonly caretMark = signal<{ left: number; top: number; height: number } | null>(null);
+  readonly smoothOn = computed(() => this.smoothCaret() !== 'off' && this.caretStyle() === 'line');
+  readonly caretMs = computed(() => ({ off: 0, slow: 150, medium: 100, fast: 60 })[this.smoothCaret()]);
+
+  /** Start and end (exclusive) of the word the caret is in, for the word highlight. */
+  readonly currentWord = computed(() => {
+    const chars = this.characters();
+    const at = Math.min((this.currentText() ?? '').length, chars.length);
+    let start = at;
+    while (start > 0 && chars[start - 1].char !== ' ' && chars[start - 1].char !== '\n') start--;
+    let end = at;
+    while (end < chars.length && chars[end].char !== ' ' && chars[end].char !== '\n') end++;
+    return { start, end };
+  });
 
   /**
    * The text in the hidden input. Inputs drop line breaks from their value,
@@ -79,6 +98,8 @@ export class TypingAreaComponent {
     effect(() => {
       this.refreshKey();
       this.currentText();
+      this.tapeMode();
+      this.smoothOn();
       const el = this.textDisplay()?.nativeElement;
       const target = this.characters().length;
       if (!el || el.querySelectorAll('span').length !== target) {
@@ -86,6 +107,7 @@ export class TypingAreaComponent {
         return;
       }
       this.layout(el);
+      this.placeCaret(el);
     });
 
     effect(() => {
@@ -137,11 +159,38 @@ export class TypingAreaComponent {
     this.ghostMarks.set([...byIndex.values()]);
   }
 
+  /** Puts the smooth caret at the active letter (or after the last one). */
+  private placeCaret(el: HTMLElement): void {
+    if (!this.smoothOn()) {
+      if (this.caretMark()) this.caretMark.set(null);
+      return;
+    }
+    const spans = Array.from(el.querySelectorAll('span')) as HTMLElement[];
+    if (!spans.length) return;
+    const at = Math.min((this.currentText() ?? '').length, spans.length);
+    const atEnd = at === spans.length;
+    // Relative to the paragraph, so its scrolling transform (which moves letters and caret together) cancels out.
+    const origin = el.getBoundingClientRect();
+    const rect = spans[atEnd ? at - 1 : at].getBoundingClientRect();
+    this.caretMark.set({ left: (atEnd ? rect.right : rect.left) - origin.left, top: rect.top - origin.top, height: rect.height });
+  }
+
   private layout(el: HTMLElement): void {
     const spans = Array.from(el.querySelectorAll('span')) as HTMLElement[];
     if (spans.length === 0) {
       this.lineOfIndex.set([]);
       el.style.transform = 'translateY(0)';
+      return;
+    }
+
+    if (this.tapeMode()) {
+      // One line: keep the caret about a third of the way in, the text sliding left past it.
+      this.lineOfIndex.set(spans.map(() => 0));
+      const at = Math.min((this.currentText() ?? '').length, spans.length - 1);
+      const box = el.parentElement?.clientWidth ?? 0;
+      const left = spans[at].getBoundingClientRect().left - el.getBoundingClientRect().left;
+      const offset = Math.max(0, left - box * 0.35);
+      el.style.transform = `translateX(${-offset}px)`;
       return;
     }
 
@@ -244,6 +293,8 @@ export class TypingAreaComponent {
       }
     }
     if (index === safe.length) classes.push('active');
+    const word = this.currentWord();
+    if (index >= word.start && index < word.end) classes.push('cur-word');
     return classes.join(' ');
   }
 

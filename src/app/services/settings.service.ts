@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { UserApiService } from './user-api.service';
 import { PlayerSettings } from '../models/models';
 import { ls } from '../utils/storage';
+import { applyTheme } from '../utils/themes';
 
 export const DEFAULT_SETTINGS: PlayerSettings = {
   theme: 'crimson',
@@ -16,6 +17,23 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   stopOnError: 'off',
   spaceSkips: false,
   soundMuted: false,
+  soundVolume: 0.5,
+  errorSound: true,
+  timeWarning: 0,
+  blindMode: false,
+  typedEffect: 'keep',
+  timerColor: 'main',
+  timerOpacity: 1,
+  quickRestart: 'both',
+  smoothCaret: 'off',
+  highlightMode: 'letter',
+  tapeMode: false,
+  paceCaret: 'off',
+  paceCaretWpm: 100,
+  failMode: 'normal',
+  minWpm: 0,
+  minAccuracy: 0,
+  saveResults: true,
 };
 
 /** localStorage keys; some predate this service and are shared with GameService. */
@@ -31,6 +49,23 @@ const STORAGE_KEYS: Record<keyof PlayerSettings, string> = {
   stopOnError: 'stopOnError',
   spaceSkips: 'spaceSkips',
   soundMuted: 'soundMuted',
+  soundVolume: 'soundVolume',
+  errorSound: 'errorSound',
+  timeWarning: 'timeWarning',
+  blindMode: 'blindMode',
+  typedEffect: 'typedEffect',
+  timerColor: 'timerColor',
+  timerOpacity: 'timerOpacity',
+  quickRestart: 'quickRestart',
+  smoothCaret: 'smoothCaret',
+  highlightMode: 'highlightMode',
+  tapeMode: 'tapeMode',
+  paceCaret: 'paceCaret',
+  paceCaretWpm: 'paceCaretWpm',
+  failMode: 'failMode',
+  minWpm: 'minWpm',
+  minAccuracy: 'minAccuracy',
+  saveResults: 'saveResults',
 };
 
 const readLocal = (): PlayerSettings => {
@@ -38,7 +73,8 @@ const readLocal = (): PlayerSettings => {
   for (const [key, storageKey] of Object.entries(STORAGE_KEYS)) {
     const raw = ls.get(storageKey);
     if (raw === null) continue;
-    out[key] = typeof DEFAULT_SETTINGS[key as keyof PlayerSettings] === 'boolean' ? raw === 'true' : raw;
+    const kind = typeof DEFAULT_SETTINGS[key as keyof PlayerSettings];
+    out[key] = kind === 'boolean' ? raw === 'true' : kind === 'number' ? Number(raw) : raw;
   }
   return out as unknown as PlayerSettings;
 };
@@ -107,8 +143,13 @@ export class SettingsService {
   private applyToDocument(s: PlayerSettings): void {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
-    root.dataset['theme'] = s.theme;
+    applyTheme(root, s.theme);
     root.dataset['typingFont'] = s.typingFont;
     root.dataset['fontSize'] = s.fontSize;
+    root.dataset['blind'] = s.blindMode ? 'on' : 'off';
+    root.dataset['typed'] = s.typedEffect;
+    root.dataset['highlight'] = s.highlightMode;
+    root.style.setProperty('--timer-color', s.timerColor === 'main' ? 'var(--color-accent)' : s.timerColor === 'text' ? 'var(--color-text)' : 'var(--color-text-subtle)');
+    root.style.setProperty('--timer-opacity', String(s.timerOpacity));
   }
 }

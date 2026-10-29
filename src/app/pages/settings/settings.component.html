@@ -30,14 +30,13 @@
     <h2 id="look-title" class="group-title">Look</h2>
     <div class="row">
       <div class="row-text"><span class="row-label">Theme</span></div>
-      <div class="themes" role="radiogroup" aria-label="Theme">
-        @for (t of themes; track t.value) {
-          <button type="button" role="radio" class="theme" [attr.data-preview]="t.value" [class.active]="settings().theme === t.value" [attr.aria-checked]="settings().theme === t.value" (click)="set('theme', t.value)">
-            <span class="theme-swatch" aria-hidden="true"><i></i><i></i></span>
-            {{ t.label }}
-          </button>
-        }
-      </div>
+      <button type="button" class="theme-current" (click)="themePickerOpen.set(true)">
+        <span class="theme-swatch-live" aria-hidden="true" [style.background]="currentTheme().bg">
+          <i [style.background]="currentTheme().main"></i><i [style.background]="currentTheme().sub"></i><i [style.background]="currentTheme().text"></i>
+        </span>
+        {{ currentTheme().name }}
+        <span class="theme-more">change</span>
+      </button>
     </div>
     <div class="row">
       <div class="row-text"><span class="row-label">Typing font</span></div>
@@ -88,8 +87,139 @@
     </div>
   </section>
 
+  <section class="group" aria-labelledby="behaviour-title">
+    <h2 id="behaviour-title" class="group-title">Behaviour</h2>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Difficulty</span>
+        <span class="row-hint">Expert fails the test if you finish a word with a mistake. Master fails it on a single wrong key (100% accuracy). Daily challenges and races are never failed.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'failMode', options: failModes, label: 'Difficulty' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Quick restart</span>
+        <span class="row-hint">Esc gives you new text, Tab restarts the same text. Turn either off if you use those keys for something else.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'quickRestart', options: restarts, label: 'Quick restart' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Result saving</span>
+        <span class="row-hint">Off: tests are still scored, but nothing is saved to your account (no stats, rankings, badges or XP). Daily challenges, races and practice always save.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'saveResults', options: onOff, label: 'Result saving' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Min speed</span>
+        <span class="row-hint">Automatically fails a test if your speed falls below this, after the first 5 seconds (0 = off).</span>
+      </div>
+      <app-stepper><input class="num-input" type="number" min="0" max="300" step="1" [attr.aria-label]="'Min speed (0 = off)'" [value]="settings().minWpm" (change)="setNumber('minWpm', $event)" /></app-stepper>
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Min accuracy</span>
+        <span class="row-hint">Automatically fails a test if your accuracy falls below this, after the first 5 seconds (0 = off).</span>
+      </div>
+      <app-stepper><input class="num-input" type="number" min="0" max="100" step="1" [attr.aria-label]="'Min accuracy (0 = off)'" [value]="settings().minAccuracy" (change)="setNumber('minAccuracy', $event)" /></app-stepper>
+    </div>
+  </section>
+
+  <section class="group" aria-labelledby="caret-title">
+    <h2 id="caret-title" class="group-title">Caret</h2>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Smooth caret</span>
+        <span class="row-hint">The line caret glides between letters and words instead of jumping.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'smoothCaret', options: smoothCarets, label: 'Smooth caret' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Pace caret</span>
+        <span class="row-hint">A second caret moving at a steady speed: your best, your recent average, your last result, or a speed you set.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'paceCaret', options: paceCarets, label: 'Pace caret' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Custom pace</span>
+        <span class="row-hint">The speed of the custom pace caret, in WPM.</span>
+      </div>
+      <app-stepper><input class="num-input" type="number" min="10" max="300" step="1" [attr.aria-label]="'Custom pace'" [value]="settings().paceCaretWpm" (change)="setNumber('paceCaretWpm', $event)" /></app-stepper>
+    </div>
+  </section>
+
+  <section class="group" aria-labelledby="look-run-title">
+    <h2 id="look-run-title" class="group-title">Appearance while typing</h2>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Highlight mode</span>
+        <span class="row-hint">Letter: only the caret marks your place. Word: the whole current word stands out.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'highlightMode', options: highlightModes, label: 'Highlight mode' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Tape mode</span>
+        <span class="row-hint">Shows one line that scrolls sideways as you type.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'tapeMode', options: onOff, label: 'Tape mode' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Blind mode</span>
+        <span class="row-hint">Mistakes are not highlighted while you type. Helps you focus on raw speed.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'blindMode', options: onOff, label: 'Blind mode' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Typed effect</span>
+        <span class="row-hint">How the letters you have already typed are shown.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'typedEffect', options: typedEffects, label: 'Typed effect' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Timer colour</span>
+        <span class="row-hint">The colour of the timer during a test.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'timerColor', options: timerColors, label: 'Timer colour' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Timer opacity</span>
+        <span class="row-hint">How visible the timer and live numbers are during a test.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'timerOpacity', options: timerOpacities, label: 'Timer opacity' }" />
+    </div>
+  </section>
+
   <section class="group" aria-labelledby="sound-title">
     <h2 id="sound-title" class="group-title">Sound</h2>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Sound volume</span>
+        <span class="row-hint">How loud the sound effects are.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'soundVolume', options: volumes, label: 'Sound volume' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Sound on mistake</span>
+        <span class="row-hint">A short sound when you press a wrong key.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'errorSound', options: onOff, label: 'Sound on mistake' }" />
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label">Time warning</span>
+        <span class="row-hint">A warning beep when a timed test is about to end.</span>
+      </div>
+      <ng-container *ngTemplateOutlet="segmented; context: { key: 'timeWarning', options: warnings, label: 'Time warning' }" />
+    </div>
     <div class="row">
       <div class="row-text"><span class="row-label">Sounds</span></div>
       <button type="button" class="toggle" role="switch" [attr.aria-checked]="!settings().soundMuted" (click)="set('soundMuted', !settings().soundMuted)">
@@ -161,3 +291,7 @@
     </section>
   }
 </div>
+
+@if (themePickerOpen()) {
+  <app-theme-picker (closed)="themePickerOpen.set(false)" />
+}

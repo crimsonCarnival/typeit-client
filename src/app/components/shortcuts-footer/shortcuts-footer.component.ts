@@ -1,5 +1,6 @@
 import { Component, DestroyRef, effect, inject, output, signal } from '@angular/core';
 import { ls } from '../../utils/storage';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-shortcuts-footer',
@@ -8,6 +9,7 @@ import { ls } from '../../utils/storage';
 })
 export class ShortcutsFooterComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly settings = inject(SettingsService);
 
   readonly reset = output<void>();
   readonly muteToggle = output<void>();
@@ -30,13 +32,14 @@ export class ShortcutsFooterComponent {
         activeEl.classList.contains('hidden-input')
       );
 
-      if (e.key === 'Escape') {
+      const restart = this.settings.settings().quickRestart;
+      if (e.key === 'Escape' && (restart === 'both' || restart === 'esc')) {
         e.preventDefault();
         this.reset.emit();
         return;
       }
 
-      if (e.key === 'Tab') {
+      if (e.key === 'Tab' && (restart === 'both' || restart === 'tab')) {
         e.preventDefault();
         this.restartSame.emit();
         return;

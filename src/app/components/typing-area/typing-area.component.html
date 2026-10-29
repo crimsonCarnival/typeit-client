@@ -4,6 +4,8 @@
   [class.focused]="isFocused"
   [class.cursor-idle]="cursorIdle()"
   [attr.data-caret]="caretStyle()"
+  [attr.data-smooth]="smoothOn() ? 'on' : null"
+  [class.tape]="tapeMode()"
   (click)="onContainerClick()"
 >
   @if (!isFocused) {
@@ -22,6 +24,9 @@
       } @else {
         <span [class]="charClass(char, $index)">{{ char.char }}</span>
       }
+    }
+    @if (caretMark(); as c) {
+      <i class="smooth-caret" aria-hidden="true" [style.left.px]="c.left" [style.top.px]="c.top" [style.height.px]="c.height" [style.transition-duration.ms]="caretMs()"></i>
     }
     @for (m of ghostMarks(); track m.ghosts[0].id) {
       <i class="ghost" aria-hidden="true" [style.left.px]="m.left" [style.top.px]="m.top" [style.height.px]="m.height" [style.--ghost]="m.ghosts[0].color">

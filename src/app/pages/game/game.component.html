@@ -173,6 +173,9 @@
     </div>
   </div>
 
+  @if (game.failReason(); as reason) {
+    <p class="status-line fail-line" role="alert">Test failed. {{ reason }}</p>
+  }
   @if (ghostError()) {
     <p class="status-line" role="status">{{ ghostError() }}</p>
   }
@@ -278,6 +281,8 @@
       [currentText]="gameState().currentText"
       [caretStyle]="gameState().caretStyle"
       [ghosts]="ghosts()"
+      [smoothCaret]="settings.settings().smoothCaret"
+      [tapeMode]="settings.settings().tapeMode"
       (typing)="game.handleTyping($event)"
       (finish)="onFinishKey()"
       (focusChange)="isFocused = $event"
@@ -317,6 +322,7 @@
     [class.dimmed]="gameState().isTyping"
     (reset)="handleReset()"
     (muteToggle)="game.toggleMute()"
+    (restartSame)="handleRestartSame()"
   />
 </div>
 

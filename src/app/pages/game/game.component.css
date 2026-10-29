@@ -72,6 +72,7 @@
 /* Focus mode (redesign/Typing.dc.html). min-height matches the toolbar +
    status line it replaces, so the text panel doesn't move. */
 .run-head {
+  opacity: var(--timer-opacity, 1);
   min-height: 142px;
   display: flex;
   flex-wrap: wrap;
@@ -98,7 +99,7 @@
   font-family: var(--font-display);
   font-size: 88px;
   line-height: 0.8;
-  color: var(--color-accent);
+  color: var(--timer-color, var(--color-accent));
   font-variant-numeric: tabular-nums;
 }
 
@@ -277,7 +278,7 @@ app-shortcuts-footer.dimmed {
   padding: 10px 24px;
   border-radius: var(--radius-md);
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 32px;
   text-transform: uppercase;
@@ -317,7 +318,7 @@ app-shortcuts-footer.dimmed {
   border: 0;
   border-radius: var(--radius-sm);
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 18px;
   text-transform: uppercase;
@@ -517,4 +518,8 @@ app-shortcuts-footer.dimmed {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.fail-line {
+  color: var(--color-error);
 }

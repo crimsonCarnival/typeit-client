@@ -78,7 +78,7 @@
   border: 0;
   border-radius: var(--radius-md);
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 26px;
   letter-spacing: 0.06em;
@@ -183,5 +183,35 @@
 
   .label-touch {
     display: inline;
+  }
+}
+
+/* Smooth caret: one element that glides; the per-letter caret is hidden. */
+.typing-text .smooth-caret {
+  position: absolute;
+  width: 3px;
+  margin-left: -2px;
+  border-radius: 1px;
+  background: var(--color-caret);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--color-caret) 85%, transparent);
+  pointer-events: none;
+  transition-property: left, top;
+  transition-timing-function: ease-out;
+  animation: blink 0.9s step-end infinite;
+}
+
+.typing-text:not(.focused) .smooth-caret {
+  display: none;
+}
+
+/* Tape mode: one line that slides sideways. */
+.typing-text.tape p {
+  white-space: nowrap;
+  transition: transform 0.12s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-text .smooth-caret {
+    transition: none;
   }
 }

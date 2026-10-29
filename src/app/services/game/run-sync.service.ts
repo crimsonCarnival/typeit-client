@@ -76,7 +76,7 @@ export class RunSyncService {
   }
 
   /** Ends the run: the last keys go with the request; the server scores it. */
-  async finish(typedText: string): Promise<{ results: Results | null; error?: string }> {
+  async finish(typedText: string, discard = false): Promise<{ results: Results | null; error?: string }> {
     const log = this.log;
     if (!log) return { results: null, error: 'No run in progress' };
     if (this.inFlight) await this.inFlight;
@@ -85,6 +85,7 @@ export class RunSyncService {
         from: this.sent,
         keys: log.from(this.sent),
         typedText,
+        ...(discard ? { discard: true } : {}),
         elapsedMs: Math.max(1000, Math.round(this.elapsed())),
         ...(this.sessionId ? { sessionId: this.sessionId } : {}),
       });

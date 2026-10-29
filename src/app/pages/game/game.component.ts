@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
 import { SettingsService } from '../../services/settings.service';
+import { GameApiService } from '../../services/game-api.service';
 import { SoundToggleComponent } from '../../components/sound-toggle/sound-toggle.component';
 import { RefreshButtonComponent } from '../../components/refresh-button/refresh-button.component';
 import { ModeDropdownComponent } from '../../components/mode-dropdown/mode-dropdown.component';
@@ -56,7 +57,8 @@ const BOT_TICK_MS = 100;
 export class GameComponent implements AfterViewInit {
   readonly auth = inject(AuthService);
   readonly game = inject(GameService);
-  private readonly settings = inject(SettingsService);
+  readonly settings = inject(SettingsService);
+  private readonly gameApi = inject(GameApiService);
 
   readonly gameState = this.game.gameState;
   readonly characters = this.game.characters;
@@ -164,6 +166,19 @@ export class GameComponent implements AfterViewInit {
   readonly liveStats = computed(() => this.settings.settings().liveStats);
   readonly ghostError = signal('');
 
+  /** Speed (WPM) of the pace caret, or 0 when it is off or its source has no data yet. */
+  private readonly recentWpm = signal<{ average: number; last: number } | null>(null);
+  readonly paceWpm = computed(() => {
+    const s = this.settings.settings();
+    switch (s.paceCaret) {
+      case 'pb': return this.auth.user()?.stats?.bestWpm ?? 0;
+      case 'custom': return s.paceCaretWpm;
+      case 'average': return this.recentWpm()?.average ?? 0;
+      case 'last': return this.recentWpm()?.last ?? 0;
+      default: return 0;
+    }
+  });
+
   /** Characters the recorded-run ghost has typed so far, on this text. */
   private readonly ghostChars = computed(() => {
     const g = this.ghost();
@@ -204,6 +219,12 @@ export class GameComponent implements AfterViewInit {
         }));
     }
     const ghosts: Ghost[] = [];
+    // The pace caret runs at a steady speed from the first key.
+    const pace = this.paceWpm();
+    if (pace > 0 && !gs.dailyDate && !gs.practice) {
+      const chars = Math.min(gs.text.length, Math.floor(((pace * 5) / 60) * (this.botElapsedMs() / 1000)));
+      ghosts.push({ id: 'pace', label: `Pace · ${Math.round(pace)} WPM`, index: chars, color: 'var(--color-text-subtle)' });
+    }
     if (gs.botWpm) {
       ghosts.push({ id: 'bot', label: `Bot · ${gs.botWpm} WPM`, index: this.botChars(), color: 'var(--color-avatar-2)' });
     }
@@ -220,6 +241,13 @@ export class GameComponent implements AfterViewInit {
     const length = gs.text.length;
     return gs.currentIndex >= Math.min(length, this.ghostChars()) ? `You beat ${g.kind === 'pb' ? 'your PB ghost' : 'the ghost'}.` : `The ghost won this one.`;
   });
+
+  /** Tab: the same text again (unranked, since it is already known). */
+  handleRestartSame(): void {
+    if (this.gameState().race || this.gameState().dailyDate) return;
+    void this.game.retrySame();
+    this.typingArea()?.blur();
+  }
 
   async racePb(): Promise<void> {
     this.ghostError.set('');
@@ -293,7 +321,7 @@ export class GameComponent implements AfterViewInit {
     const tick = setInterval(() => {
       this.now.set(Date.now());
       const gs = this.gameState();
-      if ((!gs.botWpm && !this.ghost()) || gs.isFinished) return;
+      if ((!gs.botWpm && !this.ghost() && !this.paceWpm()) || gs.isFinished) return;
       this.botElapsedMs.set(gs.isTyping ? this.game.getElapsedMs() : 0);
     }, BOT_TICK_MS);
 
@@ -304,6 +332,17 @@ export class GameComponent implements AfterViewInit {
       untracked(() => {
         this.game.lastBotOutcome.set(this.botOutcome() ?? this.ghostOutcome());
         void this.router.navigate(['/results']);
+      });
+    });
+
+    // The average and last-result pace carets need the latest results.
+    effect(() => {
+      const source = this.settings.settings().paceCaret;
+      if ((source !== 'average' && source !== 'last') || this.recentWpm() || !this.isAuthenticated()) return;
+      void this.gameApi.getSessionHistory({ limit: 10 }).then((res) => {
+        const sessions = res.data?.sessions ?? [];
+        if (!sessions.length) return;
+        this.recentWpm.set({ average: sessions.reduce((n, x) => n + x.wpm, 0) / sessions.length, last: sessions[sessions.length - 1].wpm });
       });
     });
 

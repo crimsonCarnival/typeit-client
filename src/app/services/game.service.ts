@@ -48,6 +48,8 @@ export class GameService {
 
   /** Why the last run has no results (e.g. the server couldn't be reached). */
   readonly scoreError = signal<string | null>(null);
+  /** Why the last run was failed by the player's own rules (expert, master, minimums), or null. */
+  readonly failReason = signal<string | null>(null);
 
   /** True while a guest-finished game is being migrated to the authenticated account. */
   private readonly migrationPending = signal(false);
@@ -87,7 +89,9 @@ export class GameService {
   }
 
   private playSound(sound: GameSound): void {
-    this.audio.play(sound, this.gameState().isMuted, this.settings.settings().soundPack);
+    const s = this.settings.settings();
+    if (sound === 'error' && !s.errorSound) return;
+    this.audio.play(sound, this.gameState().isMuted, s.soundPack, s.soundVolume);
   }
 
   private rulesFrom(data: any): TypingRules {
@@ -345,7 +349,12 @@ export class GameService {
     const deadline = this.sync.live()?.deadlineMs ?? (this.runLimitSec ?? gs.timeMax) * 1000;
     const remaining = deadline - this.getElapsedMs();
     const timeLeft = Math.max(0, Math.ceil(remaining / 1000));
-    if (timeLeft !== gs.timeLeft) this.gameStateSignal.update(prev => ({ ...prev, timeLeft }));
+    if (timeLeft !== gs.timeLeft) {
+      // The time warning sounds once, as the clock reaches the chosen second (not in zen runs).
+      const warn = this.settings.settings().timeWarning;
+      if (warn && timeLeft === warn && gs.timeLeft > warn && !gs.zen) this.audio.playWarning(gs.isMuted, this.settings.settings().soundVolume);
+      this.gameStateSignal.update(prev => ({ ...prev, timeLeft }));
+    }
     if (remaining <= 0) void this.handleEnd();
   }
 
@@ -359,6 +368,41 @@ export class GameService {
       accuracy: live.accuracy,
       mistakes: live.mistakes,
     }));
+    this.checkMinimums(live.wpm, live.accuracy);
+  }
+
+  /** Seconds before the minimum speed and accuracy apply: the first words are always slow. */
+  private static readonly MINIMUMS_AFTER_MS = 5000;
+
+  private checkMinimums(wpm: number, accuracy: number): void {
+    const s = this.settings.settings();
+    const gs = this.gameState();
+    if (!gs.isTyping || gs.race || gs.dailyDate || this.getElapsedMs() < GameService.MINIMUMS_AFTER_MS) return;
+    if (s.minWpm && wpm < s.minWpm) this.failRun(`Your speed fell below ${s.minWpm} WPM.`);
+    else if (s.minAccuracy && accuracy < s.minAccuracy) this.failRun(`Your accuracy fell below ${s.minAccuracy}%.`);
+  }
+
+  /** Whether the word just finished by a space (in the typed text before it) had a mistake. */
+  private wordHadMistake(typedBefore: string): boolean {
+    const text = this.gameState().text;
+    const end = typedBefore.length;
+    let start = typedBefore.lastIndexOf(' ', end - 1) + 1;
+    if (start < 0) start = 0;
+    for (let i = start; i < end; i++) if (typedBefore[i] !== text[i]) return true;
+    return false;
+  }
+
+  /**
+   * Ends the run as failed by the player's own rules: nothing is scored or
+   * saved (it stays a started, unfinished test) and fresh text is loaded.
+   * Daily challenges and races are never failed this way.
+   */
+  failRun(reason: string): void {
+    const gs = this.gameState();
+    if (!gs.isTyping || gs.race || gs.dailyDate || this.ending) return;
+    this.failReason.set(reason);
+    this.playSound('error');
+    void this.resetGame();
   }
 
   private showResults(data: Results): void {
@@ -385,7 +429,7 @@ export class GameService {
     this.playSound('timeUp');
 
     try {
-      const { results, error } = await this.sync.finish(this.engine.value);
+      const { results, error } = await this.sync.finish(this.engine.value, !this.settings.settings().saveResults);
       if (results) {
         this.showResults(results);
         if (!this.isAuthenticated) this.guestFinishedId = this.sessionId;
@@ -415,12 +459,25 @@ export class GameService {
 
       const first = !gs.isTyping;
       // In a race the clock runs from the shared start for everyone.
-      if (first) this.startRun(gs.race ? gs.race.startAt : Date.now());
+      if (first) {
+        this.failReason.set(null);
+        this.startRun(gs.race ? gs.race.startAt : Date.now());
+      }
 
       this.log.push(keys);
       let sound: GameSound | undefined;
+      const failMode = this.settings.settings().failMode;
       for (const key of keys) {
+        const before = this.engine.value;
         const outcome = this.engine.apply(key);
+        if (failMode === 'master' && (outcome === 'wrong' || outcome === 'rejected' || outcome === 'blocked')) {
+          this.failRun('Master: a wrong key ends the test.');
+          return;
+        }
+        if (failMode === 'expert' && key === ' ' && this.wordHadMistake(before)) {
+          this.failRun('Expert: a word was finished with a mistake.');
+          return;
+        }
         sound = SOUND_FOR[outcome] === 'error' ? 'error' : sound ?? SOUND_FOR[outcome];
       }
       if (sound) this.playSound(sound);
