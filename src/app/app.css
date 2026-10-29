@@ -244,8 +244,8 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 10px;
   padding: 8px 10px;
   border: 0;
   border-radius: 8px;
@@ -253,6 +253,13 @@
   color: var(--color-text);
   text-align: left;
   cursor: pointer;
+}
+
+.toast-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .toast-title {

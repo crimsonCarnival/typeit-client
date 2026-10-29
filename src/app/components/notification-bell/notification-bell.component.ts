@@ -2,12 +2,13 @@ import { Component, ElementRef, inject, signal } from '@angular/core';
 import { NotificationService } from '../../services/notification.service';
 import { AppNotification } from '../../models/models';
 import { ContextMenuDirective } from '../menu/context-menu.directive';
+import { NotificationIconComponent } from '../notification-icon/notification-icon.component';
 import { MenuItem } from '../menu/menu.service';
 
 /** Header bell: unread count, and a panel with the inbox. */
 @Component({
   selector: 'app-notification-bell',
-  imports: [ContextMenuDirective],
+  imports: [ContextMenuDirective, NotificationIconComponent],
   templateUrl: './notification-bell.component.html',
   styleUrl: './notification-bell.component.css',
   host: {

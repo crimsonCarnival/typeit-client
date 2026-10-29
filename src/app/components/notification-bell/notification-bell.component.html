@@ -21,6 +21,7 @@
             <li [appContextMenu]="menuFor(n)">
               <button type="button" class="item" [class.unread]="!n.read" (click)="go(n)">
                 <span class="dot" aria-hidden="true"></span>
+                <app-notification-icon [type]="n.type" />
                 <span class="item-text">
                   <span class="item-title">{{ n.title }}</span>
                   @if (n.body) {

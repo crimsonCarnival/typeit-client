@@ -16,11 +16,12 @@ import { ThemePickerComponent } from './components/theme-picker/theme-picker.com
 import { themeById } from './utils/themes';
 import { TooltipService } from './components/tooltip/tooltip.service';
 import { NotificationService } from './services/notification.service';
+import { NotificationIconComponent } from './components/notification-icon/notification-icon.component';
 import { AppNotification } from './models/models';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, UserMenuComponent, AuthModalComponent, NotificationBellComponent, MenuHostComponent, ChangelogModalComponent, ThemePickerComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, UserMenuComponent, AuthModalComponent, NotificationBellComponent, MenuHostComponent, ChangelogModalComponent, ThemePickerComponent, NotificationIconComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

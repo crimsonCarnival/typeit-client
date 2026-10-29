@@ -9,8 +9,6 @@ import { ApiResponse, AppNotification, NotificationPrefs } from '../models/model
 
 const PAGE = 30;
 const TOAST_MS = 6000;
-// Types already shown by their own live UI (the race invite banner), so no toast.
-const NO_TOAST = new Set(['race-invite']);
 // Where notices stored before every type carried a link lead.
 const FALLBACK_LINK: Record<string, string> = { account: '/account' };
 
@@ -104,7 +102,6 @@ export class NotificationService {
     this.unread.update((c) => c + 1);
     // The notes loaded at startup predate the release just announced.
     if (n.type === 'changelog') void this.changelog.load(true);
-    if (NO_TOAST.has(n.type)) return;
     this.toasts.update((list) => [...list, n].slice(-3));
     setTimeout(() => this.dismissToast(n.id), TOAST_MS);
   }

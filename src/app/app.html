@@ -65,10 +65,13 @@
   @for (t of notifications.toasts(); track t.id) {
     <div class="toast" role="status">
       <button type="button" class="toast-main" (click)="openToast(t)">
-        <span class="toast-title">{{ t.title }}</span>
-        @if (t.body) {
-          <span class="toast-body">{{ t.body }}</span>
-        }
+        <app-notification-icon [type]="t.type" />
+        <span class="toast-text">
+          <span class="toast-title">{{ t.title }}</span>
+          @if (t.body) {
+            <span class="toast-body">{{ t.body }}</span>
+          }
+        </span>
       </button>
       <button type="button" class="toast-close" aria-label="Dismiss notification" (click)="notifications.dismissToast(t.id)">&#10005;</button>
     </div>
