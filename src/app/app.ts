@@ -6,10 +6,12 @@ import { GameService } from './services/game.service';
 import { SettingsService } from './services/settings.service';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
+import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, UserMenuComponent, AuthModalComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, UserMenuComponent, AuthModalComponent, NotificationBellComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -18,6 +20,7 @@ export class App {
   // Created here so signed-in players stay connected (online for friends, invites).
   readonly race = inject(RaceService);
   private readonly router = inject(Router);
+  readonly notifications = inject(NotificationService);
   private readonly game = inject(GameService);
 
   // Applies saved settings (theme, typing font) from the first render.
@@ -32,6 +35,13 @@ export class App {
 
   /** While a run is in progress the header steps back (design: focus mode). */
   readonly focusMode = computed(() => this.game.gameState().isTyping);
+
+  /** A toast opens what the notification is about. */
+  openToast(link: string | null, id: string): void {
+    void this.notifications.markRead([id]);
+    this.notifications.dismissToast(id);
+    if (link) void this.router.navigateByUrl(link);
+  }
 
   acceptInvite(): void {
     this.race.acceptInvite();

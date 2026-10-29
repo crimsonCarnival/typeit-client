@@ -5,6 +5,8 @@ import { GameService } from '../../services/game.service';
 import { SettingsService } from '../../services/settings.service';
 import { GameAudioService } from '../../services/game/game-audio.service';
 import { TimezoneService } from '../../services/timezone.service';
+import { NotificationService } from '../../services/notification.service';
+import { NotificationPrefs } from '../../models/models';
 import { PlayerSettings } from '../../models/models';
 
 type Option<K extends keyof PlayerSettings> = { value: PlayerSettings[K]; label: string; hint?: string };
@@ -24,6 +26,14 @@ export class SettingsComponent {
   private readonly game = inject(GameService);
   private readonly audio = inject(GameAudioService);
   readonly tz = inject(TimezoneService);
+  readonly notifications = inject(NotificationService);
+
+  readonly notificationKinds: { key: keyof NotificationPrefs; label: string; hint: string }[] = [
+    { key: 'social', label: 'Followers and invites', hint: 'Someone follows you, or invites you to a race.' },
+    { key: 'achievements', label: 'Achievements', hint: 'Badges you unlock.' },
+    { key: 'races', label: 'Race results', hint: 'How a race went, and your rating change.' },
+    { key: 'daily', label: 'Daily challenge', hint: 'A reminder before it expires, and where you placed.' },
+  ];
   readonly settingsService = inject(SettingsService);
   readonly settings = this.settingsService.settings;
 
@@ -91,11 +101,19 @@ export class SettingsComponent {
 
   readonly tzError = signal('');
 
+  constructor() {
+    if (this.auth.isAuthenticated()) void this.notifications.loadPrefs();
+  }
+
   /** '' follows the browser; anything else is an IANA zone the player picked. */
   async onZone(event: Event): Promise<void> {
     const value = (event.target as HTMLSelectElement).value;
     const res = await this.tz.setZone(value || null);
     this.tzError.set(res.success ? '' : res.error ?? 'Could not save your time zone');
+  }
+
+  setNotification(key: keyof NotificationPrefs, on: boolean): void {
+    void this.notifications.setPref(key, on);
   }
 
   previewSound(): void {

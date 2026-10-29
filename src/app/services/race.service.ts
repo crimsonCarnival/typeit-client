@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { GameService } from './game.service';
 import { GameAudioService } from './game/game-audio.service';
+import { NotificationService } from './notification.service';
 import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceHistoryEntry, RaceInvite, RaceMistakes, RaceRatingEntry, RaceRoom, RaceSettings } from '../models/models';
 import { ls } from '../utils/storage';
 
@@ -31,6 +32,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   'too-many-spectators': 'That race has as many spectators as it can take.',
   'chat-cooldown': 'Slow down a little.',
   'not-finished': 'The race is still on.',
+  muted: 'A moderator muted you in this room.',
   banned: "The host removed you from that race, so you can't rejoin it.",
   'cannot-kick-self': "You can't kick yourself.",
   'bad-kick': 'Could not kick that player.',
@@ -60,6 +62,7 @@ export class RaceService {
   private readonly http = inject(HttpClient);
   private readonly game = inject(GameService);
   private readonly audio = inject(GameAudioService);
+  private readonly notifications = inject(NotificationService);
   private readonly router = inject(Router);
   private startedCode: string | null = null;
 
@@ -193,6 +196,9 @@ export class RaceService {
         this.room.set(null);
         this.spectating.set(false);
         this.chat.set([]);
+        break;
+      case 'notification':
+        this.notifications.receive(msg.notification);
         break;
       case 'kicked':
         this.room.set(null);

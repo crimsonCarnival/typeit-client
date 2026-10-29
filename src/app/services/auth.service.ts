@@ -17,6 +17,7 @@ export const normalizeUser = (raw: any): User | null => {
     avatar: raw.avatar,
     bio: raw.bio || '',
     role: raw.role,
+    permissions: Array.isArray(raw.permissions) ? raw.permissions : [],
     timezone: raw.timezone,
     timezoneManual: !!raw.timezoneManual,
     stats: raw.stats,
@@ -51,6 +52,11 @@ export class AuthService {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly isAuthenticated = computed(() => this.userSignal() !== null);
+
+  /** Whether the signed-in player holds a permission (the server reports them; it still checks every action). */
+  can(permission: string): boolean {
+    return !!this.userSignal()?.permissions?.includes(permission);
+  }
 
   /** Which auth dialog is open (rendered once in the app shell), or null. */
   readonly authModal = signal<AuthModalMode | null>(null);

@@ -138,4 +138,26 @@
       }
     </div>
   </section>
+
+  @if (auth.isAuthenticated()) {
+    <section class="group" aria-labelledby="notif-title">
+      <h2 id="notif-title" class="group-title">Notifications</h2>
+      @if (notifications.prefs(); as prefs) {
+        @for (k of notificationKinds; track k.key) {
+          <div class="row">
+            <div class="row-text">
+              <span class="row-label" [id]="'notif-' + k.key">{{ k.label }}</span>
+              <span class="row-hint">{{ k.hint }}</span>
+            </div>
+            <button type="button" class="toggle" role="switch" [attr.aria-checked]="prefs[k.key]" [attr.aria-labelledby]="'notif-' + k.key" (click)="setNotification(k.key, !prefs[k.key])">
+              <span class="toggle-knob"></span>
+            </button>
+          </div>
+        }
+        <p class="row-hint">Account notices, such as warnings and role changes, always arrive.</p>
+      } @else {
+        <p class="row-hint">Loading&#8230;</p>
+      }
+    </section>
+  }
 </div>

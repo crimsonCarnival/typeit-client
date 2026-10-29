@@ -1,0 +1,44 @@
+<div class="bell">
+  <button type="button" class="bell-btn" [attr.aria-label]="label()" [attr.aria-expanded]="open()" aria-haspopup="true" (click)="toggle()">
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+    @if (notifications.unread() > 0) {
+      <span class="badge" aria-hidden="true">{{ notifications.unread() > 9 ? '9+' : notifications.unread() }}</span>
+    }
+  </button>
+
+  @if (open()) {
+    <section class="panel" aria-label="Notifications">
+      <header class="panel-head">
+        <h2 class="panel-title">Notifications</h2>
+        <button type="button" class="link-btn" [disabled]="!notifications.hasUnread()" (click)="notifications.markRead()">Mark all read</button>
+      </header>
+
+      @if (notifications.items().length === 0) {
+        <p class="empty">{{ notifications.loading() ? 'Loading…' : "You're all caught up." }}</p>
+      } @else {
+        <ul class="list">
+          @for (n of notifications.items(); track n.id) {
+            <li>
+              <button type="button" class="item" [class.unread]="!n.read" (click)="go(n)">
+                <span class="dot" aria-hidden="true"></span>
+                <span class="item-text">
+                  <span class="item-title">{{ n.title }}</span>
+                  @if (n.body) {
+                    <span class="item-body">{{ n.body }}</span>
+                  }
+                </span>
+                <time class="item-time" [attr.datetime]="n.createdAt">{{ ago(n.createdAt) }}</time>
+                @if (!n.read) {
+                  <span class="sr-only">Unread</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+        @if (notifications.hasMore()) {
+          <button type="button" class="more" [disabled]="notifications.loading()" (click)="notifications.loadMore()">Show older</button>
+        }
+      }
+    </section>
+  }
+</div>

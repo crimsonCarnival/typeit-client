@@ -13,6 +13,9 @@
       <a class="app-nav-link" routerLink="/race" routerLinkActive="active" ariaCurrentWhenActive="page">Race</a>
       <a class="app-nav-link" routerLink="/ranks" routerLinkActive="active" ariaCurrentWhenActive="page">Ranks</a>
       <a class="app-nav-link" routerLink="/learn" routerLinkActive="active" ariaCurrentWhenActive="page">Learn</a>
+      @if (auth.can('admin.access')) {
+        <a class="app-nav-link" routerLink="/admin" routerLinkActive="active" ariaCurrentWhenActive="page">Admin</a>
+      }
       @if (auth.isAuthenticated()) {
         <!-- Statistics lives in the account menu, as in the design. -->
         <a class="app-nav-link" routerLink="/profile" routerLinkActive="active" ariaCurrentWhenActive="page">Profile</a>
@@ -24,6 +27,9 @@
     <a class="app-search" routerLink="/players" routerLinkActive="active" aria-label="Find players" title="Find players">
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
     </a>
+    @if (auth.isAuthenticated()) {
+      <app-notification-bell />
+    }
     <app-user-menu />
   </div>
 </header>
@@ -31,6 +37,20 @@
 <main class="app-main">
   <router-outlet />
 </main>
+
+<div class="toasts" aria-live="polite" aria-atomic="false">
+  @for (t of notifications.toasts(); track t.id) {
+    <div class="toast" role="status">
+      <button type="button" class="toast-main" (click)="openToast(t.link, t.id)">
+        <span class="toast-title">{{ t.title }}</span>
+        @if (t.body) {
+          <span class="toast-body">{{ t.body }}</span>
+        }
+      </button>
+      <button type="button" class="toast-close" aria-label="Dismiss notification" (click)="notifications.dismissToast(t.id)">&#10005;</button>
+    </div>
+  }
+</div>
 
 @if (race.invite(); as invite) {
   <div class="invite-toast" role="alert">

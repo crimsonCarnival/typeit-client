@@ -1,5 +1,5 @@
 import { Routes, UrlMatcher, UrlSegment } from '@angular/router';
-import { authGuard } from './core/auth.guard';
+import { adminGuard, authGuard } from './core/auth.guard';
 
 const raceMatcher: UrlMatcher = (segments: UrlSegment[]) =>
   segments[0]?.path === 'race' && segments.length <= 2
@@ -31,6 +31,7 @@ export const routes: Routes = [
   { path: 'ranks', loadComponent: () => import('./pages/rankings/rankings.component').then((m) => m.RankingsComponent) },
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile.component').then((m) => m.ProfileComponent) },
   { path: 'stats', canActivate: [authGuard], loadComponent: () => import('./pages/stats/stats.component').then((m) => m.StatsComponent) },
+  { path: 'admin', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/admin.component').then((m) => m.AdminComponent) },
   { path: 'settings', loadComponent: () => import('./pages/settings/settings.component').then((m) => m.SettingsComponent) },
   { path: 'replay/:resultId', loadComponent: () => import('./pages/replay/replay.component').then((m) => m.ReplayComponent) },
   { path: 'players', loadComponent: () => import('./pages/players/players.component').then((m) => m.PlayersComponent) },

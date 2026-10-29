@@ -50,6 +50,8 @@ export interface User {
   avatar?: string;
   bio?: string;
   role?: string;
+  /** What this player may do in the admin area (role plus per-user overrides). */
+  permissions?: string[];
   timezone?: string;
   /** True when the player chose their zone instead of following the browser. */
   timezoneManual?: boolean;
@@ -497,6 +499,72 @@ export interface RaceSettings {
   countdownSec: number;
   punctuation: boolean;
   numbers: boolean;
+}
+
+export type Role = 'user' | 'moderator' | 'admin' | 'founder';
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  link: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface NotificationPrefs {
+  social: boolean;
+  achievements: boolean;
+  races: boolean;
+  daily: boolean;
+}
+
+export interface AdminUser {
+  _id: string;
+  username: string;
+  displayName?: string;
+  email?: string;
+  role: Role;
+  status: 'active' | 'deactivated' | 'banned';
+  statusReason?: string;
+  permissionGrants?: string[];
+  permissionRevokes?: string[];
+  createdAt: string;
+}
+
+export interface AdminUsersPage {
+  users: AdminUser[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
+export interface PermissionCatalog {
+  permissions: { id: string; description: string }[];
+  roles: Record<Role, string[]>;
+}
+
+export interface AdminRoom {
+  code: string;
+  name: string;
+  state: string;
+  isPrivate: boolean;
+  rated: boolean;
+  hostId: string;
+  players: { userId: string; displayName: string; muted: boolean }[];
+  spectators: number;
+}
+
+export interface AdminAudit {
+  entries: {
+    id: string;
+    action: string;
+    reason: string;
+    details: unknown;
+    createdAt: string;
+    actor: { userId: string; username: string; role: string } | null;
+    target: { userId: string; username: string; role: string } | null;
+  }[];
+  pagination: { page: number; limit: number; total: number; pages: number };
 }
 
 export interface RaceMistakePlayer {
