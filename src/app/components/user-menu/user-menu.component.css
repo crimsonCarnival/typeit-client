@@ -30,7 +30,7 @@
 .btn-primary {
   background: var(--color-primary);
   border: 1.5px solid var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .btn-primary:hover {
@@ -68,7 +68,7 @@
   display: grid;
   place-items: center;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 22px;
 }

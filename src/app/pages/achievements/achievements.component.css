@@ -96,7 +96,7 @@
 .btn-primary {
   border: 0;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 19px;
   letter-spacing: 0.06em;

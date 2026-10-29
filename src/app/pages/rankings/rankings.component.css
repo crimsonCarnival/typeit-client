@@ -61,7 +61,7 @@
 
 .segmented-btn.active {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .filters {
@@ -107,7 +107,7 @@
 .chip.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .segmented-btn:focus-visible,
@@ -174,7 +174,7 @@
   padding: 0 20px;
   border-radius: var(--radius-sm);
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 19px;
   letter-spacing: 0.06em;
