@@ -106,9 +106,10 @@
 }
 
 .version {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: 30px;
-  font-weight: 700;
+  font-weight: normal;
+  letter-spacing: 0.04em;
   color: var(--color-wpm);
 }
 
@@ -168,11 +169,13 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
+  /* The fonts are single-weight files, so a heavier font-weight changes nothing; the display face reads bolder. */
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: normal;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
 }
 
 .kind-title::before {
