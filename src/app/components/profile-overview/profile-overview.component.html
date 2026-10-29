@@ -1,0 +1,52 @@
+<dl class="totals">
+  <div class="total">
+    <dt>Tests started</dt>
+    <dd>{{ totals().started }}</dd>
+  </div>
+  <div class="total">
+    <dt>Tests completed</dt>
+    <dd>
+      {{ totals().completed }}@if (totals().completionRate !== null) {<span class="rate">({{ totals().completionRate }}%)</span>}
+    </dd>
+    @if (totals().restartsPerTest !== null) {
+      <dd class="sub" title="Tests started and dropped, for every one finished">{{ totals().restartsPerTest }} restarts per completed test</dd>
+    }
+  </div>
+  <div class="total">
+    <dt>Time typing</dt>
+    <dd>{{ timeTyping() }}</dd>
+    <dd class="sub">about {{ totals().estimatedWords.toLocaleString() }} words typed</dd>
+  </div>
+</dl>
+
+<div class="bests" role="group" aria-label="Personal bests">
+  @for (g of groups(); track g.id) {
+    <section class="best-group" [attr.aria-label]="'Personal bests ' + g.title.toLowerCase()">
+      <h2 class="best-title">{{ g.title }}</h2>
+      <ul class="slots">
+        @for (slot of g.slots; track $index) {
+          <li class="slot" [class.empty]="!slot">
+            <span class="slot-label">{{ g.limits[$index] }}{{ g.unit }}</span>
+            @if (slot) {
+              <span class="slot-wpm">{{ slot.wpm | number: '1.0-0' }}</span>
+              <span class="slot-acc">{{ slot.accuracy | number: '1.0-0' }}%</span>
+            } @else {
+              <span class="slot-wpm">–</span>
+              <span class="slot-acc">–</span>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>
+
+<app-activity-heatmap
+  [days]="overview().activity.days"
+  [from]="overview().activity.from"
+  [to]="overview().activity.to"
+  [total]="overview().activity.total"
+  [year]="overview().activity.year"
+  [years]="overview().activity.years"
+  (yearChange)="yearChange.emit($event)"
+/>

@@ -1,16 +1,123 @@
 <div class="stats-page">
   <h1 class="title">Statistics</h1>
-  @if (loading()) {
+
+  @if (error()) {
+    <p class="notice" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading() || (!overview() && !error())) {
     <div class="state" aria-busy="true">Loading&#8230;</div>
-  } @else {
-    <app-stats-sections [stats]="user()?.stats ?? null" [overall]="overall()" [averages]="averages()">
-      <section class="history-card">
-        @if (historyLoading()) {
-          <div class="state" aria-busy="true">Loading history&#8230;</div>
-        } @else {
-          <app-session-history-chart [sessions]="sessions()" />
+  } @else if (overview(); as o) {
+    <app-profile-overview [overview]="o" (yearChange)="onYear($event)" />
+
+    <section class="filters" aria-label="Filters">
+      <div class="chips" role="group" aria-label="Date range">
+        @for (r of ranges; track r.id) {
+          <button type="button" class="chip" [class.active]="filters().range === r.id" [attr.aria-pressed]="filters().range === r.id" (click)="setFilter('range', r.id)">{{ r.label }}</button>
         }
+      </div>
+      <div class="selects">
+        <label class="sel"><span>Mode</span>
+          <select (change)="onSelect('mode', $event)" [value]="filters().mode">
+            <option value="all">all</option>
+            <option value="words">words</option>
+            <option value="phrases">phrases</option>
+            <option value="code">code</option>
+          </select>
+        </label>
+        <label class="sel"><span>Time limit</span>
+          <select (change)="onSelect('time', $event)">
+            <option value="all" [selected]="filters().time === 'all'">all</option>
+            @for (t of timeLimits(); track t) {
+              <option [value]="t" [selected]="filters().time === t">{{ t }}s</option>
+            }
+          </select>
+        </label>
+        <label class="sel"><span>Words</span>
+          <select (change)="onSelect('words', $event)">
+            <option value="all" [selected]="filters().words === 'all'">all</option>
+            @for (w of wordCounts(); track w) {
+              <option [value]="w" [selected]="filters().words === w">{{ w }}</option>
+            }
+          </select>
+        </label>
+        <label class="sel"><span>Modifiers</span>
+          <select (change)="onSelect('mods', $event)" [value]="filters().mods">
+            <option value="all">all</option>
+            <option value="none">none</option>
+            <option value="punctuation">punctuation</option>
+            <option value="numbers">numbers</option>
+            <option value="both">both</option>
+          </select>
+        </label>
+        <label class="sel"><span>Language</span>
+          <select (change)="onSelect('lang', $event)">
+            <option value="all" [selected]="filters().lang === 'all'">all</option>
+            @for (l of languages(); track l) {
+              <option [value]="l" [selected]="filters().lang === l">{{ l === 'none' ? 'not recorded' : l }}</option>
+            }
+          </select>
+        </label>
+        <label class="sel"><span>Verified</span>
+          <select (change)="onSelect('verified', $event)" [value]="filters().verified">
+            <option value="all">all</option>
+            <option value="yes">verified</option>
+            <option value="no">not verified</option>
+          </select>
+        </label>
+        <label class="sel"><span>Kind</span>
+          <select (change)="onSelect('kind', $event)" [value]="filters().kind">
+            <option value="all">all</option>
+            <option value="tests">tests</option>
+            <option value="practice">practice</option>
+            <option value="daily">daily challenge</option>
+          </select>
+        </label>
+        @if (filtering()) {
+          <button type="button" class="reset" (click)="resetFilters()">Reset filters</button>
+        }
+      </div>
+      <p class="count">
+        {{ filtered().length }} {{ filtered().length === 1 ? 'test' : 'tests' }}
+        @if (capped()) {
+          <span class="hint"> (the latest 3,000 are shown)</span>
+        }
+      </p>
+    </section>
+
+    @if (resultsLoading()) {
+      <div class="state" aria-busy="true">Loading your results&#8230;</div>
+    } @else {
+      <app-stats-charts [rows]="filtered()" />
+
+      <section class="grid-section" aria-label="Summary">
+        <dl class="grid">
+          <div class="stat"><dt>Highest WPM</dt><dd>{{ summary().highest.wpm | number: '1.0-0' }}</dd></div>
+          <div class="stat"><dt>Average WPM</dt><dd>{{ summary().average.wpm | number: '1.0-0' }}</dd></div>
+          <div class="stat"><dt>Average WPM ({{ recentLabel }})</dt><dd>{{ summary().recent.wpm | number: '1.0-0' }}</dd></div>
+
+          <div class="stat"><dt>Highest raw WPM</dt><dd>{{ summary().highest.raw | number: '1.0-0' }}</dd></div>
+          <div class="stat"><dt>Average raw WPM</dt><dd>{{ summary().average.raw | number: '1.0-0' }}</dd></div>
+          <div class="stat"><dt>Average raw WPM ({{ recentLabel }})</dt><dd>{{ summary().recent.raw | number: '1.0-0' }}</dd></div>
+
+          <div class="stat"><dt>Highest accuracy</dt><dd>{{ pct(summary().highest.acc) }}</dd></div>
+          <div class="stat"><dt>Average accuracy</dt><dd>{{ pct(summary().average.acc) }}</dd></div>
+          <div class="stat"><dt>Average accuracy ({{ recentLabel }})</dt><dd>{{ pct(summary().recent.acc) }}</dd></div>
+
+          <div class="stat"><dt>Highest consistency</dt><dd>{{ pct(summary().highest.cons) }}</dd></div>
+          <div class="stat"><dt>Average consistency</dt><dd>{{ pct(summary().average.cons) }}</dd></div>
+          <div class="stat"><dt>Average consistency ({{ recentLabel }})</dt><dd>{{ pct(summary().recent.cons) }}</dd></div>
+        </dl>
+        <div class="grid-foot">
+          <span class="hint">{{ summary().words.toLocaleString() }} words typed in {{ clock(summary().secs) }} (these results)</span>
+          <button type="button" class="export" [disabled]="!filtered().length" (click)="exportCsv()">Export CSV</button>
+        </div>
       </section>
-    </app-stats-sections>
+
+      <app-results-table [rows]="filtered()" [history]="rows()" />
+    }
+
+    <h2 class="section-title">By category</h2>
+    <app-stats-sections [stats]="user()?.stats ?? null" [summary]="false" />
   }
 </div>

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Achievement, ApiResponse, ErrorTrends, GhostTimeline, LiveStats, Replay, DailyOverview, DailyDay, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
+import { Achievement, ApiResponse, ErrorTrends, GhostTimeline, LiveStats, Replay, DailyOverview, DailyDay, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, ResultRow, RankingsResponse, SessionHistoryResponse } from '../models/models';
 
 /**
  * Game HTTP service. Mirrors the React typeIt.api wrapper: every method
@@ -36,6 +36,10 @@ export class GameApiService {
   getRankings(query: RankingQuery): Promise<ApiResponse<RankingsResponse>> {
     const params = new HttpParams({ fromObject: { ...query, time: String(query.time ?? 60) } });
     return this.call(this.http.get<ApiResponse<RankingsResponse>>(`${this.base}/rankings`, { params }));
+  }
+
+  getResultRows(): Promise<ApiResponse<{ results: ResultRow[]; capped: boolean }>> {
+    return this.call(this.http.get<ApiResponse<{ results: ResultRow[]; capped: boolean }>>(`${this.base}/stats/results`));
   }
 
   getAchievements(): Promise<ApiResponse<{ achievements: Achievement[] }>> {

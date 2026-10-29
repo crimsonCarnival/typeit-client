@@ -38,6 +38,8 @@ export class StatsSectionsComponent {
   readonly stats = input<UserStats | null>(null);
   readonly overall = input<{ label: string; value: string | number }[]>([]);
   readonly averages = input<{ label: string; value: string | number }[]>([]);
+  /** Show the Overall and Recent averages blocks above the tables. */
+  readonly summary = input(true);
 
   readonly formatMode = this.timeDisplay.formatMode;
 

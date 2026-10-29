@@ -1,0 +1,94 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.chart-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 260px;
+}
+
+.canvas-wrap.tall {
+  height: 380px;
+}
+
+.empty {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--color-text-subtle);
+}
+
+.chart-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.slope {
+  font-size: 15px;
+  color: var(--color-text-subtle);
+}
+
+.slope b {
+  color: var(--color-text);
+}
+
+.slope b.up {
+  color: var(--color-accuracy);
+}
+
+.slope b.down {
+  color: var(--color-accent-hover);
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toggle {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-subtle);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.toggle.on {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

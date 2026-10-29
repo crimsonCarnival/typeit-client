@@ -91,9 +91,12 @@
       <div class="card best"><span class="best-value">{{ outcomes()?.finished ?? s().gamesPlayed ?? 0 }}</span><span class="best-label">Tests finished</span></div>
     </div>
 
+    @if (overview(); as ov) {
+      <app-profile-overview [overview]="ov" (yearChange)="onYear($event)" />
+    }
+
     @if (outcomes(); as o) {
       <div class="outcome-grid" role="group" aria-label="Tests started and how they ended">
-        <div class="card time" title="Tests you typed at least one key in"><span class="best-label">Started</span><span class="time-value">{{ o.started }}</span></div>
         <div class="card time" title="Started but never finished"><span class="best-label">Abandoned</span><span class="time-value afk">{{ o.abandoned }}</span></div>
         <div class="card time" title="Finished and passed the integrity checks"><span class="best-label">Approved</span><span class="time-value ok">{{ o.approved }}</span></div>
         <div class="card time" title="Finished but flagged by the integrity checks"><span class="best-label">Failed</span><span class="time-value afk">{{ o.failed }}</span></div>

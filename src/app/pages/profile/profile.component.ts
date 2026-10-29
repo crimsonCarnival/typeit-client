@@ -9,11 +9,12 @@ import { RaceMistakesComponent } from '../../components/race-mistakes/race-mista
 import { TimezoneService } from '../../services/timezone.service';
 import { TimeDisplayService } from '../../services/time-display.service';
 import { UserApiService } from '../../services/user-api.service';
-import { RaceHistoryEntry, TestOutcomes, UserStats } from '../../models/models';
+import { ProfileOverviewComponent } from '../../components/profile-overview/profile-overview.component';
+import { ProfileOverview, RaceHistoryEntry, TestOutcomes, UserStats } from '../../models/models';
 
 @Component({
   selector: 'app-profile',
-  imports: [RouterLink, FollowersFollowingModalComponent, RaceMistakesComponent, StaffRingDirective],
+  imports: [RouterLink, FollowersFollowingModalComponent, RaceMistakesComponent, StaffRingDirective, ProfileOverviewComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })
@@ -26,6 +27,21 @@ export class ProfileComponent {
 
   /** Started / abandoned / finished (approved, failed), from the server. */
   readonly outcomes = signal<TestOutcomes | null>(null);
+  /** Totals, personal bests and the activity graph. */
+  readonly overview = signal<ProfileOverview | null>(null);
+  private year: number | null = null;
+
+  async loadOverview(): Promise<void> {
+    const id = this.user()?.id;
+    if (!id) return;
+    const res = await this.userApi.getOverview(id, this.year);
+    if (res.success && res.data) this.overview.set(res.data);
+  }
+
+  onYear(year: number | null): void {
+    this.year = year;
+    void this.loadOverview();
+  }
   private readonly raceService = inject(RaceService);
 
   readonly races = signal<RaceHistoryEntry[]>([]);
@@ -77,6 +93,7 @@ export class ProfileComponent {
         void this.auth.refreshProfile();
         void this.raceService.loadHistory().then((races) => this.races.set(races));
         void this.userApi.getMyOutcomes().then((res) => res.data && this.outcomes.set(res.data));
+        void this.loadOverview();
       }
     });
     effect(() => {

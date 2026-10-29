@@ -1,0 +1,44 @@
+<section class="heatmap" aria-label="Activity">
+  <header class="head">
+    <label class="range">
+      <span class="sr-only">Time span</span>
+      <select class="select" (change)="onYear($event)">
+        <option value="" [selected]="year() === null">Last 12 months</option>
+        @for (y of years(); track y) {
+          <option [value]="y" [selected]="year() === y">{{ y }}</option>
+        }
+      </select>
+    </label>
+    <span class="total">{{ total() }} {{ total() === 1 ? 'test' : 'tests' }}</span>
+    <span class="legend" aria-hidden="true">
+      less
+      <span class="cell level-0"></span><span class="cell level-1"></span><span class="cell level-2"></span><span class="cell level-3"></span><span class="cell level-4"></span>
+      more
+    </span>
+  </header>
+
+  <div class="scroll">
+    <div class="grid-wrap">
+      <div class="weekday-labels" aria-hidden="true">
+        @for (d of weekdays; track d; let i = $index) {
+          <span>{{ i % 2 === 0 ? d.toLowerCase() : '' }}</span>
+        }
+      </div>
+      <div class="months" aria-hidden="true" [style.grid-template-columns]="'repeat(' + weeks() + ', 14px)'">
+        @for (m of monthLabels(); track m.column) {
+          <span [style.grid-column]="m.column">{{ m.name }}</span>
+        }
+      </div>
+      <div class="grid" role="img" [attr.aria-label]="total() + ' tests, shown per day'" [style.grid-template-columns]="'repeat(' + weeks() + ', 12px)'">
+        @for (c of cells(); track $index) {
+          @if (c) {
+            <span class="cell" [class]="'cell level-' + c.level" [attr.title]="c.label"></span>
+          } @else {
+            <span class="cell blank"></span>
+          }
+        }
+      </div>
+    </div>
+  </div>
+  <p class="note">All activity data is using UTC time.</p>
+</section>

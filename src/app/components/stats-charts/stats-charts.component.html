@@ -1,0 +1,34 @@
+<section class="chart-card" aria-label="Speed and accuracy over time">
+  <div class="canvas-wrap tall" [hidden]="!rows().length">
+    <canvas #perf role="img" aria-label="Speed and accuracy of each test, with moving averages"></canvas>
+  </div>
+  @if (!rows().length) {
+    <p class="empty">No tests match these filters.</p>
+  } @else {
+    <div class="chart-foot">
+      <p class="slope">
+        Speed change per hour spent typing:
+        @if (slope(); as s) {
+          <b [class.up]="s > 0" [class.down]="s < 0">{{ s > 0 ? '+' : '' }}{{ s.toFixed(2) }} WPM</b>
+        } @else {
+          <b>not enough data</b>
+        }
+      </p>
+      <div class="toggles" role="group" aria-label="Lines to show">
+        @for (s of series; track s.id) {
+          <button type="button" class="toggle" [class.on]="shown()[s.id]" [attr.aria-pressed]="shown()[s.id]" (click)="toggle(s.id)">{{ s.label }}</button>
+        }
+      </div>
+    </div>
+  }
+</section>
+
+<section class="chart-card" aria-label="Tests per speed" [hidden]="!rows().length">
+  <h2 class="chart-title">Tests by speed</h2>
+  <div class="canvas-wrap"><canvas #hist role="img" aria-label="Number of tests in each speed band"></canvas></div>
+</section>
+
+<section class="chart-card" aria-label="Time typing per day" [hidden]="!rows().length">
+  <h2 class="chart-title">Time typing per day</h2>
+  <div class="canvas-wrap"><canvas #daily role="img" aria-label="Minutes spent typing each day, with the average speed"></canvas></div>
+</section>

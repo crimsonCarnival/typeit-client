@@ -1,0 +1,54 @@
+<section class="results" aria-label="Results">
+  <div class="scroll">
+    <table class="table">
+      <caption class="sr-only">Your results, newest first</caption>
+      <thead>
+        <tr>
+          <th scope="col"><span class="sr-only">Personal best</span></th>
+          <th scope="col" class="num">WPM</th>
+          <th scope="col" class="num">Raw</th>
+          <th scope="col" class="num">Accuracy</th>
+          <th scope="col" class="num">Consistency</th>
+          <th scope="col" class="num" title="Correct characters / mistakes / backspaces">Chars</th>
+          <th scope="col">Mode</th>
+          <th scope="col">Info</th>
+          <th scope="col" class="date">Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of visible(); track r.id) {
+          <tr>
+            <td class="crown">
+              @if (bests().has(r.id)) {
+                <svg class="crown-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" role="img" aria-label="Personal best" [attr.title]="'Personal best for this kind of test'"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"></path></svg>
+              }
+            </td>
+            <td class="num strong">{{ r.wpm | number: '1.2-2' }}</td>
+            <td class="num">{{ r.raw | number: '1.2-2' }}</td>
+            <td class="num">{{ r.acc | number: '1.2-2' }}%</td>
+            <td class="num">{{ r.cons | number: '1.2-2' }}%</td>
+            <td class="num chars">{{ r.correct }}/{{ r.incorrect }}/{{ r.backspaces }}</td>
+            <td class="nowrap">{{ modeLabel(r) }}</td>
+            <td class="info">
+              @for (n of info(r); track n.title) {
+                <span class="note" [attr.title]="n.title">{{ n.text }}</span>
+              }
+              @if (r.replay) {
+                <a class="note replay" [routerLink]="['/replay', r.id]" title="Watch the replay">replay</a>
+              }
+            </td>
+            <td class="date">
+              <span class="day">{{ date(r) }}</span>
+              <span class="clock">{{ time(r) }}</span>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="9" class="none">No results to show.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (hasMore()) {
+    <button type="button" class="more" (click)="more()">Load more</button>
+  }
+</section>
