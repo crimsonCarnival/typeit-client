@@ -7,11 +7,13 @@ import { SettingsService } from './services/settings.service';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
 import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
+import { MenuHostComponent } from './components/menu/menu-host.component';
+import { TooltipService } from './components/tooltip/tooltip.service';
 import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, UserMenuComponent, AuthModalComponent, NotificationBellComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, UserMenuComponent, AuthModalComponent, NotificationBellComponent, MenuHostComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -27,6 +29,9 @@ export class App {
   private readonly settings = inject(SettingsService);
 
   constructor() {
+    // Custom hover tooltips for every element with a title.
+    inject(TooltipService).start();
+
     // The account's settings, once signed in, also set the game's rules, caret and sound.
     effect(() => {
       if (this.settings.synced() > 0) untracked(() => this.game.applySyncedSettings());

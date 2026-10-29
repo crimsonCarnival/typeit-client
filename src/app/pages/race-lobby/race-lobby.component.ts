@@ -5,6 +5,9 @@ import { AuthService } from '../../services/auth.service';
 import { RaceService } from '../../services/race.service';
 import { RaceFriend, RaceMode, RacePlayer, RaceRatingEntry, RaceSettings } from '../../models/models';
 import { RaceMistakesComponent } from '../../components/race-mistakes/race-mistakes.component';
+import { ContextMenuDirective } from '../../components/menu/context-menu.directive';
+import { KebabMenuComponent } from '../../components/menu/kebab-menu.component';
+import { MenuItem } from '../../components/menu/menu.service';
 import { StaffRingDirective } from '../../components/staff-ring/staff-ring.directive';
 import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
 
@@ -55,7 +58,7 @@ const settingsFromQuery = (q: (key: string) => string | null): RaceSettings => {
 
 @Component({
   selector: 'app-race-lobby',
-  imports: [NgTemplateOutlet, RaceChatComponent, RaceMistakesComponent, StaffRingDirective],
+  imports: [NgTemplateOutlet, RaceChatComponent, RaceMistakesComponent, StaffRingDirective, ContextMenuDirective, KebabMenuComponent],
   templateUrl: './race-lobby.component.html',
   styleUrl: './race-lobby.component.css',
 })
@@ -237,6 +240,19 @@ export class RaceLobbyComponent {
     this.kickArmed.set(null);
     this.race.kick(p.userId);
   }
+
+  /** Right-click or ⋯ on a racer: their profile, and removing them when you host. */
+  playerMenu = (p: RacePlayer): MenuItem[] => [
+    { label: p.displayName, heading: true },
+    { label: 'View profile', action: () => void this.router.navigate(['/user', p.userId]) },
+    ...(this.canKick(p) ? [{ separator: true }, { label: 'Kick from room', danger: true, hint: 'locks them out', action: () => this.race.kick(p.userId) } as MenuItem] : []),
+  ];
+
+  friendMenu = (f: RaceFriend): MenuItem[] => [
+    { label: f.displayName, heading: true },
+    { label: 'View profile', action: () => void this.router.navigate(['/user', f.userId]) },
+    { label: this.invited().has(f.userId) ? 'Invited' : 'Invite to race', disabled: !f.online || this.room()?.state !== 'lobby' || this.invited().has(f.userId), hint: f.online ? undefined : 'offline', action: () => this.invite(f) },
+  ];
 
   invite(friend: RaceFriend): void {
     this.race.inviteFriend(friend.userId);

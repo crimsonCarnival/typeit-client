@@ -1,11 +1,17 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AdminApiService } from '../../services/admin-api.service';
 import { TimezoneService } from '../../services/timezone.service';
+import { ContextMenuDirective } from '../../components/menu/context-menu.directive';
+import { KebabMenuComponent } from '../../components/menu/kebab-menu.component';
+import { MenuItem } from '../../components/menu/menu.service';
+import { StepperComponent } from '../../components/stepper/stepper.component';
 import { AdminAudit, AdminRoom, AdminUser, PermissionCatalog, Role } from '../../models/models';
 
 type Tab = 'users' | 'races' | 'audit';
+type DialogKind = 'warn' | 'deactivate' | 'ban' | 'reactivate' | 'profile' | 'role' | 'permissions' | 'xp';
+
 const ROLES: Role[] = ['user', 'moderator', 'admin', 'founder'];
 // Higher outranks lower (mirrors the server's config/permissions.js, which enforces it).
 const RANK: Record<Role, number> = { user: 0, moderator: 1, admin: 2, founder: 3 };
@@ -28,15 +34,28 @@ const AUDIT_LABELS: Record<string, string> = {
   'race.mute': 'muted in a race',
   'race.unmute': 'unmuted in a race',
 };
+const DIALOG_TITLES: Record<DialogKind, string> = {
+  warn: 'Warn',
+  deactivate: 'Deactivate',
+  ban: 'Ban',
+  reactivate: 'Reactivate',
+  profile: 'Reset profile',
+  role: 'Change role',
+  permissions: 'Edit permissions',
+  xp: 'Grant XP',
+};
+/** Permissions only admins and founders can hold; the editor shows them but cannot change them. */
+const ADMINS_ONLY = ['users.role', 'users.permissions', 'users.xp'];
 
 /**
- * Admin area: users, live race rooms and the audit log. What each tab and
- * button shows follows the permissions the server reports for the signed-in
- * player; the server still checks every action.
+ * Admin area: users, live race rooms and the audit log. Each row has a ⋯
+ * menu and the same menu on right-click; actions that need input open a
+ * dialog. What shows follows the permissions the server reports for the
+ * signed-in player; the server still checks every action.
  */
 @Component({
   selector: 'app-admin',
-  imports: [RouterLink],
+  imports: [ContextMenuDirective, KebabMenuComponent, StepperComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.css',
 })
@@ -44,18 +63,11 @@ export class AdminComponent {
   readonly auth = inject(AuthService);
   private readonly api = inject(AdminApiService);
   private readonly tz = inject(TimezoneService);
+  private readonly router = inject(Router);
 
   readonly roles = ROLES;
-
-  private readonly myRank = computed(() => RANK[(this.auth.user()?.role as Role) ?? 'user'] ?? 0);
-  /** Roles the signed-in player may give: below their own, and never founder (that comes from the server settings). */
-  readonly assignableRoles = computed(() => ROLES.filter((r) => r !== 'founder' && RANK[r] < this.myRank()));
-  /** The selected player is below the signed-in one, so actions on them are possible at all. */
-  readonly canActOnSelected = computed(() => {
-    const s = this.selected();
-    return !!s && s.role !== 'founder' && RANK[s.role] < this.myRank() && !this.isSelf();
-  });
   readonly profileFields = PROFILE_FIELDS;
+  readonly adminsOnly = ADMINS_ONLY;
 
   readonly tabs = computed(() =>
     ([
@@ -78,26 +90,62 @@ export class AdminComponent {
   readonly search = signal('');
   readonly roleFilter = signal('');
   readonly statusFilter = signal('');
-  readonly selected = signal<AdminUser | null>(null);
-  readonly reason = signal('');
-  readonly xpAmount = signal('');
   readonly catalog = signal<PermissionCatalog | null>(null);
-  /** Permissions ticked in the editor: what the player would effectively hold. */
-  readonly effective = signal<Set<string>>(new Set());
-  readonly resetFields = signal<Set<string>>(new Set());
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Races
   readonly rooms = signal<AdminRoom[]>([]);
+  readonly raceReason = signal('');
 
   // Audit
   readonly audit = signal<AdminAudit | null>(null);
   readonly auditPage = signal(1);
 
+  // The open dialog and its form
+  readonly dialog = signal<{ kind: DialogKind; user: AdminUser } | null>(null);
+  readonly reason = signal('');
+  readonly xpAmount = signal('');
+  readonly roleChoice = signal<Role>('user');
+  readonly resetFields = signal<Set<string>>(new Set());
+  /** Permissions ticked in the editor: what the player would effectively hold. */
+  readonly effective = signal<Set<string>>(new Set());
+  private readonly dialogEl = viewChild<ElementRef<HTMLElement>>('dialogEl');
+  private opener: HTMLElement | null = null;
+
+  private readonly myRank = computed(() => RANK[(this.auth.user()?.role as Role) ?? 'user'] ?? 0);
+  /** Roles the signed-in player may give: below their own, and never founder (that comes from the server settings). */
+  readonly assignableRoles = computed(() => ROLES.filter((r) => r !== 'founder' && RANK[r] < this.myRank()));
+  readonly dialogTitle = computed(() => {
+    const d = this.dialog();
+    return d ? `${DIALOG_TITLES[d.kind]}: ${d.user.username}` : '';
+  });
+
   /** Permissions a role starts with, for the editor. */
-  readonly baseOf = computed(() => new Set(this.catalog()?.roles[this.selected()?.role ?? 'user'] ?? []));
-  readonly selectedIsAdmin = computed(() => this.selected()?.role === 'admin');
-  readonly isSelf = computed(() => this.selected()?._id === this.auth.user()?.id);
+  private baseOf(role: Role): Set<string> {
+    return new Set(this.catalog()?.roles[role] ?? []);
+  }
+
+  readonly dialogBase = computed(() => this.baseOf(this.dialog()?.user.role ?? 'user'));
+
+  /** Whole points from the XP field, or null when it is not a usable amount. */
+  readonly xpPoints = computed(() => {
+    const n = Number(this.xpAmount());
+    return Number.isInteger(n) && n >= 1 && n <= 50_000 ? n : null;
+  });
+
+  /** Whether the open dialog has what it needs to be sent. */
+  readonly canSubmit = computed(() => {
+    const d = this.dialog();
+    if (!d || this.busy()) return false;
+    const why = this.reason().trim().length > 0;
+    switch (d.kind) {
+      case 'warn': return why;
+      case 'profile': return why && this.resetFields().size > 0;
+      case 'xp': return why && this.xpPoints() !== null;
+      case 'role': return this.roleChoice() !== d.user.role;
+      default: return true;
+    }
+  });
 
   constructor() {
     effect(() => {
@@ -108,6 +156,11 @@ export class AdminComponent {
       if (this.auth.loading() || !this.auth.isAuthenticated()) return;
       void this.loadUsers();
       void this.api.permissions().then((res) => res.data && this.catalog.set(res.data));
+    });
+    // Move focus into a dialog when it opens.
+    effect(() => {
+      const el = this.dialogEl()?.nativeElement;
+      if (el) queueMicrotask(() => (el.querySelector<HTMLElement>('textarea, input, select') ?? el).focus());
     });
   }
 
@@ -149,70 +202,77 @@ export class AdminComponent {
     this.total.set(res.data.pagination.total);
   }
 
-  select(user: AdminUser): void {
-    this.selected.set(user);
-    this.reason.set('');
-    this.resetFields.set(new Set());
+  joined(u: AdminUser): string {
+    return this.tz.date(u.createdAt);
+  }
+
+  isSelf(u: AdminUser): boolean {
+    return u._id === this.auth.user()?.id;
+  }
+
+  /** The signed-in player outranks this one (and it is not a founder, who nobody can act on). */
+  canAct(u: AdminUser): boolean {
+    return !this.isSelf(u) && u.role !== 'founder' && RANK[u.role] < this.myRank();
+  }
+
+  /** The ⋯ and right-click menu for a player: only what this admin is allowed to do to them. */
+  menuFor = (u: AdminUser): MenuItem[] => {
+    const items: MenuItem[] = [
+      { label: u.username, heading: true },
+      { label: 'View profile', action: () => void this.router.navigate(['/user', u._id]) },
+      { label: 'Copy user ID', action: () => void navigator.clipboard?.writeText(u._id).catch(() => undefined) },
+    ];
+    const acts: MenuItem[] = [];
+    if (this.canAct(u) && this.auth.can('users.moderate')) {
+      acts.push({ label: 'Warn…', action: () => this.openDialog('warn', u) });
+      if (u.status === 'active') {
+        acts.push({ label: 'Deactivate…', action: () => this.openDialog('deactivate', u) });
+        acts.push({ label: 'Ban…', danger: true, action: () => this.openDialog('ban', u) });
+      } else {
+        acts.push({ label: 'Reactivate…', action: () => this.openDialog('reactivate', u) });
+      }
+    }
+    if (this.canAct(u) && this.auth.can('content.moderate')) acts.push({ label: 'Reset profile…', action: () => this.openDialog('profile', u) });
+    if (this.canAct(u) && this.auth.can('users.role')) acts.push({ label: 'Change role…', action: () => this.openDialog('role', u) });
+    if (this.canAct(u) && this.auth.can('users.permissions')) acts.push({ label: 'Edit permissions…', action: () => this.openDialog('permissions', u) });
+    if (!this.isSelf(u) && this.auth.can('users.xp')) acts.push({ label: 'Grant XP…', action: () => this.openDialog('xp', u) });
+    if (acts.length) items.push({ separator: true }, ...acts);
+    else if (!this.isSelf(u)) items.push({ separator: true }, { label: 'No actions available', disabled: true, hint: 'higher rank' });
+    return items;
+  };
+
+  // ---- dialog
+
+  openDialog(kind: DialogKind, user: AdminUser): void {
+    this.opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     this.message.set(null);
-    const base = new Set(this.catalog()?.roles[user.role] ?? []);
-    for (const p of user.permissionGrants ?? []) base.add(p);
-    for (const p of user.permissionRevokes ?? []) base.delete(p);
-    this.effective.set(base);
+    this.reason.set('');
+    this.xpAmount.set('');
+    this.resetFields.set(new Set());
+    this.roleChoice.set(user.role);
+    const held = new Set(this.baseOf(user.role));
+    for (const p of user.permissionGrants ?? []) held.add(p);
+    for (const p of user.permissionRevokes ?? []) held.delete(p);
+    this.effective.set(held);
+    this.dialog.set({ kind, user });
+  }
+
+  closeDialog(): void {
+    if (this.busy()) return;
+    this.dialog.set(null);
+    this.opener?.focus?.();
   }
 
   onReason(event: Event): void {
     this.reason.set((event.target as HTMLTextAreaElement).value);
   }
 
-  /** Runs an action on the selected player, then refreshes the list and the panel. */
-  private async act(run: (u: AdminUser) => Promise<{ success: boolean; error?: string; data?: unknown }>, done: string): Promise<void> {
-    const user = this.selected();
-    if (!user || this.busy()) return;
-    this.busy.set(true);
-    this.message.set(null);
-    const res = await run(user);
-    this.busy.set(false);
-    if (!res.success) return this.fail(res.error);
-    if (!this.message() || this.message()!.error) this.ok(done);
-    this.reason.set('');
-    await this.loadUsers();
-    const fresh = this.users().find((u) => u._id === user._id);
-    if (fresh) this.select(fresh);
-  }
-
   onXpAmount(event: Event): void {
     this.xpAmount.set((event.target as HTMLInputElement).value);
   }
 
-  /** Whole points from the field, or null when it is not a usable amount. */
-  readonly xpPoints = computed(() => {
-    const n = Number(this.xpAmount());
-    return Number.isInteger(n) && n >= 1 && n <= 50_000 ? n : null;
-  });
-
-  async grantXp(): Promise<void> {
-    const points = this.xpPoints();
-    if (points === null) return;
-    await this.act(async (u) => {
-      const res = await this.api.grantXp(u._id, points, this.reason());
-      if (res.success && res.data) this.xpAmount.set('');
-      if (res.success && res.data && res.data.level > res.data.levelBefore) this.ok(`Granted ${points.toLocaleString()} XP: now level ${res.data.level}.`);
-      return res;
-    }, `Granted ${points.toLocaleString()} XP.`);
-  }
-
-  warn(): Promise<void> {
-    return this.act((u) => this.api.warn(u._id, this.reason()), 'Warning sent.');
-  }
-
-  setStatus(status: 'active' | 'deactivated' | 'banned'): Promise<void> {
-    const verb = { active: 'reactivated', deactivated: 'deactivated', banned: 'banned' }[status];
-    return this.act((u) => this.api.setStatus(u._id, status, this.reason()), `Account ${verb}.`);
-  }
-
-  setRole(event: Event): Promise<void> {
-    const role = (event.target as HTMLSelectElement).value as Role;
-    return this.act((u) => this.api.setRole(u._id, role), `Role changed to ${role}.`);
+  onRoleChoice(event: Event): void {
+    this.roleChoice.set((event.target as HTMLSelectElement).value as Role);
   }
 
   togglePermission(id: string, event: Event): void {
@@ -222,14 +282,6 @@ export class AdminComponent {
     this.effective.set(next);
   }
 
-  savePermissions(): Promise<void> {
-    const base = this.baseOf();
-    const held = this.effective();
-    const grants = [...held].filter((p) => !base.has(p));
-    const revokes = [...base].filter((p) => !held.has(p));
-    return this.act((u) => this.api.setPermissions(u._id, grants, revokes), 'Permissions saved.');
-  }
-
   toggleResetField(id: string, event: Event): void {
     const next = new Set(this.resetFields());
     if ((event.target as HTMLInputElement).checked) next.add(id);
@@ -237,8 +289,64 @@ export class AdminComponent {
     this.resetFields.set(next);
   }
 
-  resetProfile(): Promise<void> {
-    return this.act((u) => this.api.resetProfile(u._id, [...this.resetFields()], this.reason()), 'Profile fields reset.');
+  async submit(): Promise<void> {
+    const d = this.dialog();
+    if (!d || !this.canSubmit()) return;
+    const u = d.user;
+    this.busy.set(true);
+    let res: { success: boolean; error?: string };
+    let done = '';
+    switch (d.kind) {
+      case 'warn':
+        res = await this.api.warn(u._id, this.reason());
+        done = `Warned ${u.username}.`;
+        break;
+      case 'deactivate':
+      case 'ban':
+      case 'reactivate': {
+        const status = d.kind === 'ban' ? 'banned' : d.kind === 'deactivate' ? 'deactivated' : 'active';
+        res = await this.api.setStatus(u._id, status, this.reason());
+        done = d.kind === 'reactivate' ? `Reactivated ${u.username}.` : `${d.kind === 'ban' ? 'Banned' : 'Deactivated'} ${u.username}.`;
+        break;
+      }
+      case 'profile':
+        res = await this.api.resetProfile(u._id, [...this.resetFields()], this.reason());
+        done = `Reset ${[...this.resetFields()].join(', ')} for ${u.username}.`;
+        break;
+      case 'role':
+        res = await this.api.setRole(u._id, this.roleChoice());
+        done = `${u.username} is now ${this.roleChoice()}.`;
+        break;
+      case 'permissions': {
+        const base = this.dialogBase();
+        const held = this.effective();
+        res = await this.api.setPermissions(u._id, [...held].filter((p) => !base.has(p)), [...base].filter((p) => !held.has(p)));
+        done = `Saved permissions for ${u.username}.`;
+        break;
+      }
+      case 'xp': {
+        const points = this.xpPoints()!;
+        const out = await this.api.grantXp(u._id, points, this.reason());
+        res = out;
+        done = out.data && out.data.level > out.data.levelBefore
+          ? `Granted ${points.toLocaleString()} XP to ${u.username}: now level ${out.data.level}.`
+          : `Granted ${points.toLocaleString()} XP to ${u.username}.`;
+        break;
+      }
+    }
+    this.busy.set(false);
+    if (!res.success) return this.fail(res.error);
+    this.dialog.set(null);
+    this.ok(done);
+    await this.loadUsers();
+    this.opener?.focus?.();
+  }
+
+  onDialogKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      this.closeDialog();
+    }
   }
 
   // ---- races
@@ -249,8 +357,18 @@ export class AdminComponent {
     else this.fail(res.error);
   }
 
+  onRaceReason(event: Event): void {
+    this.raceReason.set((event.target as HTMLInputElement).value);
+  }
+
+  roomPlayerMenu = (room: AdminRoom, p: AdminRoom['players'][number]): MenuItem[] => [
+    { label: p.displayName, heading: true },
+    { label: p.muted ? 'Unmute' : 'Mute', action: () => void this.moderate(room, p.userId, p.muted ? 'unmute' : 'mute') },
+    { label: 'Remove from room', danger: true, action: () => void this.moderate(room, p.userId, 'kick') },
+  ];
+
   async moderate(room: AdminRoom, userId: string, action: 'kick' | 'mute' | 'unmute'): Promise<void> {
-    const res = await this.api.moderateRoom(room.code, action, userId, this.reason());
+    const res = await this.api.moderateRoom(room.code, action, userId, this.raceReason());
     if (!res.success) this.fail(res.error);
     else this.ok(action === 'kick' ? 'Player removed.' : action === 'mute' ? 'Player muted.' : 'Player unmuted.');
     await this.loadRooms();
@@ -272,9 +390,5 @@ export class AdminComponent {
 
   when(iso: string): string {
     return this.tz.dateTime(iso);
-  }
-
-  permissionLabel(id: string): string {
-    return this.catalog()?.permissions.find((p) => p.id === id)?.description ?? id;
   }
 }

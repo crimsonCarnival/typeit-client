@@ -548,6 +548,8 @@ export interface AdminUser {
   statusReason?: string;
   permissionGrants?: string[];
   permissionRevokes?: string[];
+  level?: LevelInfo;
+  stats?: UserStats;
   createdAt: string;
 }
 

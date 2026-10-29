@@ -1,7 +1,7 @@
 <div class="admin">
   <div class="head">
     <h1 class="title">Admin</h1>
-    <p class="subtitle">Signed in as {{ auth.user()?.role }}. You can only see and do what your permissions allow.</p>
+    <p class="subtitle">Signed in as {{ auth.user()?.role }}. Right-click a row, or use its ⋯ button, for what you can do.</p>
   </div>
 
   <div class="tabs" role="tablist" aria-label="Admin sections">
@@ -15,157 +15,76 @@
   }
 
   @if (tab() === 'users') {
-    <div class="layout">
-      <section class="panel" aria-label="Players">
-        <div class="filters">
-          <input type="search" class="input grow" placeholder="Search username or email" aria-label="Search players" [value]="search()" (input)="onSearch($event)" />
-          <select class="input" aria-label="Filter by role" (change)="onFilter('role', $event)">
-            <option value="">Any role</option>
-            @for (r of roles; track r) {
-              <option [value]="r">{{ r }}</option>
-            }
-          </select>
-          <select class="input" aria-label="Filter by status" (change)="onFilter('status', $event)">
-            <option value="">Any status</option>
-            <option value="active">active</option>
-            <option value="deactivated">deactivated</option>
-            <option value="banned">banned</option>
-          </select>
-        </div>
-
-        <div class="table-wrap">
-          <table class="table">
-            <caption class="sr-only">Players</caption>
-            <thead>
-              <tr><th scope="col">Player</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Manage</span></th></tr>
-            </thead>
-            <tbody>
-              @for (u of users(); track u._id) {
-                <tr [class.current]="selected()?._id === u._id">
-                  <th scope="row" class="who">
-                    <span class="name">{{ u.username }}</span>
-                    <span class="sub">{{ u.email }}</span>
-                  </th>
-                  <td><span class="chip role-{{ u.role }}">{{ u.role }}</span></td>
-                  <td><span class="chip status-{{ u.status }}">{{ u.status }}</span></td>
-                  <td class="right"><button type="button" class="btn small" [attr.aria-label]="'Manage ' + u.username" (click)="select(u)">Manage</button></td>
-                </tr>
-              } @empty {
-                <tr><td colspan="4" class="empty">No players match.</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <div class="pager">
-          <span class="hint">{{ total() }} players</span>
-          <button type="button" class="btn small" [disabled]="page() <= 1" (click)="loadUsers(page() - 1)">Previous</button>
-          <span class="hint">{{ page() }} / {{ pages() }}</span>
-          <button type="button" class="btn small" [disabled]="page() >= pages()" (click)="loadUsers(page() + 1)">Next</button>
-        </div>
-      </section>
-
-      <section class="panel side" aria-label="Manage player">
-        @if (selected(); as u) {
-          <h2 class="section-title">{{ u.username }}</h2>
-          <p class="hint">
-            <a [routerLink]="['/user', u._id]">View profile</a>
-            &#183; {{ u.role }} &#183; {{ u.status }}{{ u.statusReason ? ' (' + u.statusReason + ')' : '' }}
-          </p>
-
-          @if (isSelf()) {
-            <p class="hint">This is you. You can't act on your own account here.</p>
-          } @else if (!canActOnSelected()) {
-            <p class="hint">{{ u.role === 'founder' ? 'Founders can only be changed through the server settings.' : "You can only act on players of a lower rank than yours." }}</p>
-          } @else {
-            <label class="field">
-              <span>Reason {{ auth.can('users.moderate') ? '(required to warn; recorded in the audit log)' : '' }}</span>
-              <textarea class="input" rows="2" maxlength="500" [value]="reason()" (input)="onReason($event)"></textarea>
-            </label>
-
-            @if (auth.can('users.moderate')) {
-              <div class="group">
-                <h3 class="group-title">Moderation</h3>
-                <div class="actions">
-                  <button type="button" class="btn" [disabled]="busy() || !reason().trim()" (click)="warn()">Warn</button>
-                  @if (u.status === 'active') {
-                    <button type="button" class="btn" [disabled]="busy()" (click)="setStatus('deactivated')">Deactivate</button>
-                    <button type="button" class="btn danger" [disabled]="busy()" (click)="setStatus('banned')">Ban</button>
-                  } @else {
-                    <button type="button" class="btn" [disabled]="busy()" (click)="setStatus('active')">Reactivate</button>
-                  }
-                </div>
-              </div>
-            }
-
-            @if (auth.can('content.moderate')) {
-              <div class="group">
-                <h3 class="group-title">Reset profile</h3>
-                <div class="checks">
-                  @for (f of profileFields; track f.id) {
-                    <label class="check"><input type="checkbox" [checked]="resetFields().has(f.id)" (change)="toggleResetField(f.id, $event)" /> {{ f.label }}</label>
-                  }
-                </div>
-                <button type="button" class="btn" [disabled]="busy() || !resetFields().size || !reason().trim()" (click)="resetProfile()">Reset selected</button>
-              </div>
-            }
-
-            @if (auth.can('users.role')) {
-              <div class="group">
-                <h3 class="group-title">Role</h3>
-                <select class="input" aria-label="Role" [disabled]="busy()" (change)="setRole($event)">
-                  @for (r of assignableRoles(); track r) {
-                    <option [value]="r" [selected]="u.role === r">{{ r }}</option>
-                  }
-                </select>
-                @if (!assignableRoles().includes('admin')) {
-                  <p class="hint">Only a founder can make admins.</p>
-                }
-              </div>
-            }
-
-            @if (auth.can('users.permissions')) {
-              <div class="group">
-                <h3 class="group-title">Permissions</h3>
-                @if (selectedIsAdmin()) {
-                  <p class="hint">Admins always have every permission.</p>
-                } @else {
-                  <p class="hint">Start from the {{ u.role }} role; tick or untick to grant or revoke single ones.</p>
-                  <div class="checks column">
-                    @for (p of catalog()?.permissions ?? []; track p.id) {
-                      <label class="check">
-                        <input type="checkbox" [checked]="effective().has(p.id)" (change)="togglePermission(p.id, $event)" />
-                        <span>{{ p.description }} <span class="tag">{{ baseOf().has(p.id) ? 'from role' : 'extra' }}</span></span>
-                      </label>
-                    }
-                  </div>
-                  <button type="button" class="btn" [disabled]="busy()" (click)="savePermissions()">Save permissions</button>
-                }
-              </div>
-            }
+    <section class="panel" aria-label="Players">
+      <div class="filters">
+        <input type="search" class="input grow" placeholder="Search username or email" aria-label="Search players" [value]="search()" (input)="onSearch($event)" />
+        <select class="input" aria-label="Filter by role" (change)="onFilter('role', $event)">
+          <option value="">Any role</option>
+          @for (r of roles; track r) {
+            <option [value]="r">{{ r }}</option>
           }
+        </select>
+        <select class="input" aria-label="Filter by status" (change)="onFilter('status', $event)">
+          <option value="">Any status</option>
+          <option value="active">active</option>
+          <option value="deactivated">deactivated</option>
+          <option value="banned">banned</option>
+        </select>
+      </div>
 
-          @if (auth.can('users.xp') && !isSelf()) {
-            <div class="group">
-              <h3 class="group-title">Grant XP</h3>
-              <p class="hint">Needs a reason above. The player is told, and it is recorded in the audit log.</p>
-              <div class="filters">
-                <input type="number" class="input grow" min="1" max="50000" step="1" placeholder="Amount (1 to 50,000)" aria-label="XP to grant" [value]="xpAmount()" (input)="onXpAmount($event)" />
-                <button type="button" class="btn" [disabled]="busy() || xpPoints() === null || !reason().trim()" (click)="grantXp()">Grant</button>
-              </div>
-            </div>
-          }
-        } @else {
-          <p class="hint">Pick a player to manage.</p>
-        }
-      </section>
-    </div>
+      <div class="table-wrap">
+        <table class="table">
+          <caption class="sr-only">Players</caption>
+          <thead>
+            <tr>
+              <th scope="col">Player</th>
+              <th scope="col">Role</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="num">Level</th>
+              <th scope="col" class="num">Tests</th>
+              <th scope="col">Joined</th>
+              <th scope="col" class="actions"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of users(); track u._id) {
+              <tr [appContextMenu]="menuFor(u)" tabindex="-1">
+                <th scope="row" class="who">
+                  <span class="name">{{ u.username }}{{ isSelf(u) ? ' (you)' : '' }}</span>
+                  <span class="sub">{{ u.email }}</span>
+                </th>
+                <td><span class="chip role-{{ u.role }}">{{ u.role }}</span></td>
+                <td>
+                  <span class="chip status-{{ u.status }}">{{ u.status }}</span>
+                  @if (u.statusReason) {
+                    <span class="sub reason-note" [title]="u.statusReason">{{ u.statusReason }}</span>
+                  }
+                </td>
+                <td class="num">{{ u.level?.level ?? 0 }}</td>
+                <td class="num">{{ u.stats?.gamesPlayed ?? 0 }}</td>
+                <td class="nowrap">{{ joined(u) }}</td>
+                <td class="actions"><app-kebab [items]="menuFor(u)" [label]="'Actions for ' + u.username" /></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="empty">No players match.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager">
+        <span class="hint">{{ total() }} players</span>
+        <button type="button" class="btn small" [disabled]="page() <= 1" (click)="loadUsers(page() - 1)">Previous</button>
+        <span class="hint">{{ page() }} / {{ pages() }}</span>
+        <button type="button" class="btn small" [disabled]="page() >= pages()" (click)="loadUsers(page() + 1)">Next</button>
+      </div>
+    </section>
   }
 
   @if (tab() === 'races') {
     <section class="panel" aria-label="Race rooms">
       <div class="filters">
-        <input type="text" class="input grow" placeholder="Reason (optional, recorded in the audit log)" aria-label="Reason" maxlength="500" [value]="reason()" (input)="onReason($event)" />
+        <input type="text" class="input grow" placeholder="Reason (optional, recorded in the audit log)" aria-label="Reason" maxlength="500" [value]="raceReason()" (input)="onRaceReason($event)" />
         <button type="button" class="btn" (click)="loadRooms()">Refresh</button>
       </div>
       @for (room of rooms(); track room.code) {
@@ -176,10 +95,9 @@
           </header>
           <ul class="room-players">
             @for (p of room.players; track p.userId) {
-              <li>
+              <li [appContextMenu]="roomPlayerMenu(room, p)">
                 <span class="grow">{{ p.displayName }}{{ p.userId === room.hostId ? ' (host)' : '' }}{{ p.muted ? ' · muted' : '' }}</span>
-                <button type="button" class="btn small" (click)="moderate(room, p.userId, p.muted ? 'unmute' : 'mute')">{{ p.muted ? 'Unmute' : 'Mute' }}</button>
-                <button type="button" class="btn small danger" (click)="moderate(room, p.userId, 'kick')">Remove</button>
+                <app-kebab [items]="roomPlayerMenu(room, p)" [label]="'Actions for ' + p.displayName" />
               </li>
             }
           </ul>
@@ -228,3 +146,75 @@
     </section>
   }
 </div>
+
+@if (dialog(); as d) {
+  <div class="overlay" (click)="closeDialog()">
+    <div #dialogEl class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="onDialogKeydown($event)">
+      <h2 id="dialog-title" class="dialog-title">{{ dialogTitle() }}</h2>
+
+      @switch (d.kind) {
+        @case ('warn') {
+          <p class="hint">The player sees your reason in their notifications. It is also recorded in the audit log.</p>
+        }
+        @case ('deactivate') {
+          <p class="hint">They can't sign in until reactivated. A reason is optional.</p>
+        }
+        @case ('ban') {
+          <p class="hint">They can't sign in. A reason is optional but kept in the audit log.</p>
+        }
+        @case ('reactivate') {
+          <p class="hint">They can sign in again.</p>
+        }
+        @case ('profile') {
+          <div class="checks">
+            @for (f of profileFields; track f.id) {
+              <label class="check"><input type="checkbox" [checked]="resetFields().has(f.id)" (change)="toggleResetField(f.id, $event)" /> {{ f.label }}</label>
+            }
+          </div>
+        }
+        @case ('role') {
+          <label class="field">
+            <span>New role (now {{ d.user.role }})</span>
+            <select class="input" (change)="onRoleChoice($event)">
+              @for (r of assignableRoles(); track r) {
+                <option [value]="r" [selected]="roleChoice() === r">{{ r }}</option>
+              }
+            </select>
+          </label>
+          @if (!assignableRoles().includes('admin')) {
+            <p class="hint">Only a founder can make admins.</p>
+          }
+        }
+        @case ('permissions') {
+          <p class="hint">Starts from the {{ d.user.role }} role. Tick or untick to grant or revoke single permissions.</p>
+          <div class="checks column">
+            @for (p of catalog()?.permissions ?? []; track p.id) {
+              <label class="check">
+                <input type="checkbox" [checked]="effective().has(p.id)" [disabled]="adminsOnly.includes(p.id)" (change)="togglePermission(p.id, $event)" />
+                <span>{{ p.description }} <span class="tag">{{ adminsOnly.includes(p.id) ? 'admins only' : dialogBase().has(p.id) ? 'from role' : 'extra' }}</span></span>
+              </label>
+            }
+          </div>
+        }
+        @case ('xp') {
+          <label class="field">
+            <span>Amount (1 to 50,000)</span>
+            <app-stepper><input type="number" class="input" min="1" max="50000" step="50" [value]="xpAmount()" (input)="onXpAmount($event)" /></app-stepper>
+          </label>
+        }
+      }
+
+      @if (d.kind !== 'role' && d.kind !== 'permissions') {
+        <label class="field">
+          <span>Reason{{ d.kind === 'warn' || d.kind === 'profile' || d.kind === 'xp' ? ' (required)' : ' (optional)' }}</span>
+          <textarea class="input" rows="3" maxlength="500" [value]="reason()" (input)="onReason($event)"></textarea>
+        </label>
+      }
+
+      <div class="dialog-actions">
+        <button type="button" class="btn" [disabled]="busy()" (click)="closeDialog()">Cancel</button>
+        <button type="button" class="btn" [class.danger]="d.kind === 'ban'" [class.primary]="d.kind !== 'ban'" [disabled]="!canSubmit()" (click)="submit()">{{ busy() ? 'Working…' : 'Confirm' }}</button>
+      </div>
+    </div>
+  </div>
+}

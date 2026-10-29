@@ -12,7 +12,7 @@
       }
       @if (showCustomInput()) {
         <form (submit)="handleCustomSubmit($event)">
-          <input
+          <app-stepper><input
             #customInput
             type="number"
             min="10"
@@ -23,7 +23,7 @@
             [value]="customValue()"
             (input)="onCustomInput($event)"
             (keydown)="handleCustomKeyDown($event)"
-          />
+          /></app-stepper>
         </form>
       } @else if (isCustomTime()) {
         <button type="button" class="tb-btn tb-custom" [class.active]="!locked()" aria-pressed="true" aria-label="Custom time limit, change" [disabled]="disabled() || locked()" (click)="handleCustomClick($event)">{{ timeMax() }}</button>

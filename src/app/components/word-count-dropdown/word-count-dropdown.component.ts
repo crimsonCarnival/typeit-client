@@ -1,3 +1,4 @@
+import { StepperComponent } from '../stepper/stepper.component';
 import { Component, effect, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { GameMode } from '../../models/models';
 
@@ -5,6 +6,7 @@ const PRESET_COUNTS = [25, 50, 75, 100];
 
 @Component({
   selector: 'app-word-count-dropdown',
+  imports: [StepperComponent],
   templateUrl: './word-count-dropdown.component.html',
   styleUrl: './word-count-dropdown.component.css',
 })

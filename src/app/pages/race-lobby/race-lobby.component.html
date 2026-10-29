@@ -227,7 +227,7 @@
         } @else if (room(); as r) {
           <ul class="players">
             @for (p of r.players; track p.userId; let i = $index) {
-              <li class="player" [class.me]="isMe(p)">
+              <li class="player" [class.me]="isMe(p)" [appContextMenu]="playerMenu(p)">
                 <span class="avatar" aria-hidden="true" [style.background]="avatarColor(i, p)" [appStaffRing]="p.role">{{ initial(p.displayName) }}</span>
                 <span class="player-name">
                   {{ p.displayName }}
@@ -254,6 +254,7 @@
                 } @else {
                   <span class="badge">Not ready</span>
                 }
+                <app-kebab [items]="playerMenu(p)" [label]="'Actions for ' + p.displayName" />
                 @if (canKick(p)) {
                   <button type="button" class="btn-outline small kick" [class.armed]="kickArmed() === p.userId" [attr.aria-label]="(kickArmed() === p.userId ? 'Confirm kick ' : 'Kick ') + p.displayName" (click)="kick(p)" (blur)="kickArmed.set(null)">
                     {{ kickArmed() === p.userId ? 'Sure? Kick' : 'Kick' }}
@@ -342,7 +343,7 @@
         } @else {
           <ul class="friend-list">
             @for (f of friends(); track f.userId) {
-              <li class="friend" [class.offline]="!f.online">
+              <li class="friend" [class.offline]="!f.online" [appContextMenu]="friendMenu(f)">
                 <span class="avatar small" aria-hidden="true" [style.background]="'var(--color-avatar-' + (($index % 7) + 2) + ')'">{{ initial(f.displayName) }}</span>
                 <div class="friend-name">
                   <span>{{ f.displayName }}</span>

@@ -7,7 +7,7 @@
       }
       @if (showCustomInput()) {
         <form (submit)="handleCustomSubmit($event)">
-          <input
+          <app-stepper><input
             #customInput
             type="number"
             min="5"
@@ -18,7 +18,7 @@
             [value]="customValue()"
             (input)="onCustomInput($event)"
             (keydown)="handleCustomKeyDown($event)"
-          />
+          /></app-stepper>
         </form>
       } @else if (isCustomCount()) {
         <button type="button" class="tb-btn tb-custom active" aria-pressed="true" aria-label="Custom word count, change" [disabled]="isTyping()" (click)="handleCustomClick($event)">{{ wordCount() }}</button>

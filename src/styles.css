@@ -1784,3 +1784,86 @@ button,
   letter-spacing: 0.04em;
   color: var(--color-wpm);
 }
+
+/* ------------------------------------------------------------------
+   Custom scrollbars: thin, themed, out of the way. Firefox gets the
+   standard properties; Chromium/Safari the pseudo-elements.
+   ------------------------------------------------------------------ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  /* The transparent border keeps the thumb slim inside a roomier hit area. */
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--color-border-strong);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-subtle);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------------
+   Number inputs: the browser's spinner is hidden; <app-stepper> draws ours.
+   ------------------------------------------------------------------ */
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+app-stepper > input[type='number'] {
+  padding-right: 32px;
+}
+
+/* ------------------------------------------------------------------
+   Tooltips (components/tooltip): replace the browser's native title text.
+   ------------------------------------------------------------------ */
+.app-tooltip {
+  position: fixed;
+  z-index: 300;
+  max-width: 280px;
+  padding: 7px 11px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.app-tooltip.visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .app-tooltip {
+    transition: opacity 0.12s ease-out;
+  }
+}

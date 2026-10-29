@@ -1,0 +1,27 @@
+@if (menu.state(); as state) {
+  <div
+    #panel
+    class="menu"
+    role="menu"
+    [class.ready]="pos().ready"
+    [style.left.px]="pos().ready ? pos().x : state.x"
+    [style.top.px]="pos().ready ? pos().y : state.y"
+    (keydown)="onKeydown($event)"
+    (contextmenu)="$event.preventDefault()"
+  >
+    @for (item of state.items; track $index) {
+      @if (item.separator) {
+        <div class="separator" role="separator"></div>
+      } @else if (item.heading) {
+        <div class="heading" role="presentation">{{ item.label }}</div>
+      } @else {
+        <button type="button" role="menuitem" class="item" [class.danger]="item.danger" [disabled]="item.disabled" [attr.aria-disabled]="item.disabled || null" tabindex="-1" (click)="choose(item)">
+          <span class="label">{{ item.label }}</span>
+          @if (item.hint) {
+            <span class="hint">{{ item.hint }}</span>
+          }
+        </button>
+      }
+    }
+  </div>
+}

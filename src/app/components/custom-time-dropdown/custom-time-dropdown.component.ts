@@ -1,3 +1,4 @@
+import { StepperComponent } from '../stepper/stepper.component';
 import { Component, effect, ElementRef, input, output, signal, viewChild } from '@angular/core';
 
 // 15s is a burst test: short enough to type flat out.
@@ -5,6 +6,7 @@ const PRESET_TIMES = [15, 30, 60, 90, 120];
 
 @Component({
   selector: 'app-custom-time-dropdown',
+  imports: [StepperComponent],
   templateUrl: './custom-time-dropdown.component.html',
   styleUrl: './custom-time-dropdown.component.css',
 })

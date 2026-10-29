@@ -18,7 +18,7 @@
       } @else {
         <ul class="list">
           @for (n of notifications.items(); track n.id) {
-            <li>
+            <li [appContextMenu]="menuFor(n)">
               <button type="button" class="item" [class.unread]="!n.read" (click)="go(n)">
                 <span class="dot" aria-hidden="true"></span>
                 <span class="item-text">

@@ -1,7 +1,7 @@
 .admin {
   width: 100%;
-  max-width: 1500px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 32px 30px 40px;
   display: flex;
   flex-direction: column;
@@ -76,13 +76,6 @@
 .message.error {
   border-color: rgba(255, 59, 79, 0.5);
   color: var(--color-accent-hover);
-}
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
-  gap: 20px;
-  align-items: start;
 }
 
 .panel {
@@ -361,12 +354,6 @@ textarea.input {
   white-space: nowrap;
 }
 
-@media (max-width: 960px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 @media (max-width: 720px) {
   .admin {
     padding: 20px 4px 32px;
@@ -375,4 +362,98 @@ textarea.input {
   .title {
     font-size: 40px;
   }
+}
+
+/* The user table spans the page. */
+.table {
+  min-width: 760px;
+}
+
+.table th.num,
+.table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th.actions,
+.table td.actions {
+  width: 56px;
+  text-align: right;
+}
+
+.table tbody tr:hover {
+  background: var(--color-surface-raised);
+}
+
+.reason-note {
+  display: block;
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn.primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  color: #fff;
+}
+
+.room-players li {
+  padding: 2px 0 2px 4px;
+  border-radius: 8px;
+}
+
+.room-players li:hover {
+  background: var(--color-surface-raised);
+}
+
+/* Action dialog */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.dialog {
+  width: min(520px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 16px;
+  background: var(--color-surface-solid);
+  color: var(--color-text);
+}
+
+.dialog:focus {
+  outline: none;
+}
+
+.dialog-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }

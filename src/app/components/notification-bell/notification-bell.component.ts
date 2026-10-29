@@ -2,10 +2,13 @@ import { Component, ElementRef, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../services/notification.service';
 import { AppNotification } from '../../models/models';
+import { ContextMenuDirective } from '../menu/context-menu.directive';
+import { MenuItem } from '../menu/menu.service';
 
 /** Header bell: unread count, and a panel with the inbox. */
 @Component({
   selector: 'app-notification-bell',
+  imports: [ContextMenuDirective],
   templateUrl: './notification-bell.component.html',
   styleUrl: './notification-bell.component.css',
   host: {
@@ -25,7 +28,9 @@ export class NotificationBellComponent {
   }
 
   onDocumentClick(event: Event): void {
-    if (this.open() && !this.host.nativeElement.contains(event.target as Node)) this.open.set(false);
+    const target = event.target as Element;
+    // A click inside the popup menu (opened from an item here) is not a click away from the panel.
+    if (this.open() && !this.host.nativeElement.contains(target) && !target.closest?.('app-menu-host')) this.open.set(false);
   }
 
   /** Opens what the notification is about, and marks it read. */
@@ -36,6 +41,12 @@ export class NotificationBellComponent {
       void this.router.navigateByUrl(n.link);
     }
   }
+
+  menuFor = (n: AppNotification): MenuItem[] => [
+    ...(n.link ? [{ label: 'Open', action: () => this.go(n) }] : []),
+    { label: 'Mark as read', disabled: n.read, action: () => void this.notifications.markRead([n.id]) },
+    { label: 'Mark all as read', disabled: !this.notifications.hasUnread(), action: () => void this.notifications.markRead() },
+  ];
 
   /** "5m", "3h", "2d": how long ago, short. */
   ago(iso: string): string {
