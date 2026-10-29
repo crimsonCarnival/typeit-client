@@ -43,6 +43,7 @@
       </div>
     }
 
+    <div class="field-pair">
     <div class="field" role="group" aria-label="Players">
       <span>Max players</span>
       <div class="chips">
@@ -60,19 +61,23 @@
         }
       </div>
     </div>
+    </div>
 
     @if (settings().mode !== 'phrases') {
-      <div class="toggle-row">
-        <span id="punct-label">Punctuation</span>
-        <button type="button" role="switch" class="switch" [class.on]="settings().punctuation" [attr.aria-checked]="settings().punctuation" aria-labelledby="punct-label" (click)="change({ punctuation: !settings().punctuation })">
-          <span class="switch-knob"></span>
-        </button>
-      </div>
-      <div class="toggle-row">
-        <span id="nums-label">Numbers</span>
-        <button type="button" role="switch" class="switch" [class.on]="settings().numbers" [attr.aria-checked]="settings().numbers" aria-labelledby="nums-label" (click)="change({ numbers: !settings().numbers })">
-          <span class="switch-knob"></span>
-        </button>
+      <div class="toggles">
+        <div class="toggle-row">
+          <span id="punct-label">Punctuation</span>
+          <button type="button" role="switch" class="switch" [class.on]="settings().punctuation" [attr.aria-checked]="settings().punctuation" aria-labelledby="punct-label" (click)="change({ punctuation: !settings().punctuation })">
+            <span class="switch-knob"></span>
+          </button>
+        </div>
+        <div class="toggle-row">
+          <span id="nums-label">Numbers</span>
+          <button type="button" role="switch" class="switch" [class.on]="settings().numbers" [attr.aria-checked]="settings().numbers" aria-labelledby="nums-label" (click)="change({ numbers: !settings().numbers })">
+            <span class="switch-knob"></span>
+          </button>
+        </div>
+    
       </div>
     }
   </fieldset>
@@ -299,6 +304,7 @@
         }
       </section>
 
+      <div class="side">
       <!-- Quick-match ratings -->
       @if (leaderboard().length) {
         <section class="panel ratings" aria-labelledby="ratings-title">
@@ -339,6 +345,7 @@
           </ul>
         }
       </section>
+      </div>
     </div>
   }
 </div>

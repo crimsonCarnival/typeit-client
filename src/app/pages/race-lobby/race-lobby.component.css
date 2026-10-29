@@ -1,6 +1,6 @@
 .lobby {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1680px;
   margin: 0 auto;
   padding: 32px 30px 40px;
   display: flex;
@@ -76,38 +76,31 @@
   color: var(--color-text);
 }
 
+/* Three columns: room setup | waiting room | ratings + friends. The sidebar
+   drops under the first two below 1200px, and everything stacks below 760px. */
 .layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(400px, 1fr) minmax(0, 1.25fr) minmax(260px, 340px);
   gap: 20px;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: start;
 }
 
-.setup {
-  flex: 1 1 320px;
-  min-width: 0;
-  padding: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.waiting {
-  flex: 1.4 1 420px;
-  min-width: 0;
-  padding: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
+.setup,
+.waiting,
+.ratings,
 .friends {
-  flex: 1 1 280px;
   min-width: 0;
-  padding: 30px;
+  padding: 26px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
 }
 
 /* Buttons and inputs */
@@ -235,8 +228,8 @@
 }
 
 .chip {
-  height: 44px;
-  padding: 0 18px;
+  height: 40px;
+  padding: 0 16px;
   border: 1px solid #34343a;
   border-radius: var(--radius-sm);
   background: var(--color-surface-solid);
@@ -561,6 +554,7 @@
 
   .setup,
   .waiting,
+  .ratings,
   .friends {
     padding: 20px;
   }
@@ -572,7 +566,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
   padding: 20px 24px;
 }
 
@@ -628,12 +621,6 @@
   border-top: 1px solid var(--color-border-subtle);
 }
 
-.ratings {
-  flex: 1 1 280px;
-  min-width: 0;
-  padding: 30px;
-}
-
 .ratings .rating-list {
   margin: 8px 0 0;
   padding: 0;
@@ -673,7 +660,7 @@
 .rules {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -685,4 +672,48 @@
 .rules:disabled .switch {
   cursor: default;
   opacity: 0.7;
+}
+
+.field-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px 20px;
+}
+
+.field-pair .chips {
+  gap: 6px;
+}
+
+.field-pair .chip {
+  min-width: 40px;
+  padding: 0 12px;
+}
+
+.toggles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 28px;
+}
+
+@media (max-width: 1200px) {
+  .layout {
+    grid-template-columns: minmax(340px, 1fr) minmax(0, 1.25fr);
+  }
+
+  .side {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: start;
+  }
+
+  .side > * {
+    flex: 1 1 320px;
+  }
+}
+
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

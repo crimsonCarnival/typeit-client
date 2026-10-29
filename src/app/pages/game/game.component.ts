@@ -22,7 +22,9 @@ import { botCharsAt } from '../../utils/pace-bot';
 import { ghostCharsAt } from '../../utils/ghost';
 import { RaceService } from '../../services/race.service';
 import { RacePlayer } from '../../models/models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { skip } from 'rxjs';
 
 const BOT_TICK_MS = 100;
 
@@ -100,6 +102,16 @@ export class GameComponent implements AfterViewInit {
     if (gs.botWpm) return '/play/bot-race';
     return '/play';
   });
+
+  /** The typed session the game holds (bot, daily or practice), as its URL segment. */
+  private sessionKind(): string | null {
+    const gs = this.gameState();
+    return gs.dailyDate ? 'daily' : gs.practice ? 'practice' : gs.botWpm ? 'bot-race' : null;
+  }
+
+  private abandonSession(): void {
+    this.game.abandonSession(this.race.room()?.state === 'racing');
+  }
 
   /** Seconds until a live race starts, or 0 once it has. */
   readonly raceStartsIn = computed(() => {
@@ -247,6 +259,16 @@ export class GameComponent implements AfterViewInit {
       }
     });
 
+    // A race that ended while we were away has nothing left to show.
+    if (this.gameState().race && this.race.room()?.state !== 'racing') this.abandonSession();
+
+    // /play and /play/<type> share this component, so a nav click from a typed
+    // session to plain /play reuses it. If the URL no longer matches the
+    // session the game holds, drop the session instead of re-routing back to it.
+    this.route.url.pipe(skip(1), takeUntilDestroyed()).subscribe((segments) => {
+      if ((segments[1]?.path ?? null) !== this.sessionKind()) this.abandonSession();
+    });
+
     // Advance the bot while a run is in progress; reset it between runs.
     // The same tick drives the race countdown.
     const tick = setInterval(() => {
@@ -266,7 +288,14 @@ export class GameComponent implements AfterViewInit {
       });
     });
 
-    inject(DestroyRef).onDestroy(() => clearInterval(tick));
+    inject(DestroyRef).onDestroy(() => {
+      clearInterval(tick);
+      // The game service outlives this page. Leaving for anywhere but the
+      // results of the run just finished ends the session (the bot, daily
+      // text, etc.), so coming back to /play is a plain run.
+      const next = this.router.currentNavigation()?.finalUrl;
+      if (!next || !this.router.serializeUrl(next).startsWith('/results')) this.abandonSession();
+    });
   }
 
   ngAfterViewInit(): void {

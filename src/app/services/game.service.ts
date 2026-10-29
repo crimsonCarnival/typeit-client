@@ -686,6 +686,22 @@ export class GameService {
     this.gameStateSignal.update(prev => ({ ...prev, race: null }));
   }
 
+  /**
+   * Drops what a bot race, ghost, daily, practice or finished race left on
+   * this singleton, so the next plain run starts clean. A race still live
+   * stays: the server is waiting on it.
+   */
+  abandonSession(raceIsLive: boolean): void {
+    const gs = this.gameState();
+    const staleRace = !!gs.race && !raceIsLive;
+    if (!gs.botWpm && !this.ghost() && !gs.dailyDate && !gs.practice && !staleRace) return;
+    this.setBot(null);
+    this.ghost.set(null);
+    this.lastBotOutcome.set(null);
+    if (staleRace) this.clearRace();
+    void this.resetGame();
+  }
+
   /** Bot race outcome of the run that just finished, shown on the results page. */
   readonly lastBotOutcome = signal<string | null>(null);
 
