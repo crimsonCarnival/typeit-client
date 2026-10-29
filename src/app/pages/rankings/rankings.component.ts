@@ -17,9 +17,10 @@ type Tab = 'global' | 'monthly' | 'modifiers';
 const TIME_LIMITS = [30, 60, 90, 120];
 const AVATAR_COLORS = 8; // --color-avatar-1 .. --color-avatar-8
 
+import { StaffRingDirective } from '../../components/staff-ring/staff-ring.directive';
 @Component({
   selector: 'app-rankings',
-  imports: [RouterLink, NgTemplateOutlet],
+  imports: [RouterLink, NgTemplateOutlet, StaffRingDirective],
   templateUrl: './rankings.component.html',
   styleUrl: './rankings.component.css',
 })

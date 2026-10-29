@@ -18,6 +18,11 @@
   --font-body: 'Hapna Demibold', 'Zilla Slab', Rockwell, Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
+  /* Staff rings: one hue per rank, never the theme's own accent. */
+  --color-staff-moderator: #35c4a8;
+  --color-staff-admin: #b388ff;
+  --color-staff-founder: #ffc53d;
+
   --color-bg: #0a0a0b;
   --color-surface: rgba(16, 16, 18, 0.94);
   --color-surface-solid: #141416;
@@ -114,6 +119,9 @@
 }
 
 :root[data-theme='light'] {
+  --color-staff-moderator: #0f8f78;
+  --color-staff-admin: #7a45d6;
+  --color-staff-founder: #c58a00;
   --color-bg: #f4f1ec;
   --color-surface: rgba(255, 255, 255, 0.94);
   --color-surface-solid: #ffffff;
@@ -1727,4 +1735,52 @@ button,
   .shortcuts-footer {
     display: none;
   }
+}
+
+/* Staff avatar rings (components/staff-ring). Line style differs by rank as well as colour. */
+[data-staff] {
+  outline: 3px solid var(--staff-ring);
+  outline-offset: 2px;
+}
+
+[data-staff='moderator'] {
+  --staff-ring: var(--color-staff-moderator);
+  outline-style: dashed;
+}
+
+[data-staff='admin'] {
+  --staff-ring: var(--color-staff-admin);
+}
+
+[data-staff='founder'] {
+  --staff-ring: var(--color-staff-founder);
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-staff-founder) 55%, transparent);
+}
+
+/* A text cue beside names, for anyone who can't tell the rings apart. */
+.staff-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--staff-ring);
+  border-radius: 6px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--staff-ring);
+}
+
+.staff-tag.moderator { --staff-ring: var(--color-staff-moderator); }
+.staff-tag.admin { --staff-ring: var(--color-staff-admin); }
+.staff-tag.founder { --staff-ring: var(--color-staff-founder); }
+
+/* Level chip */
+.level-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-wpm);
 }

@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
+import { StaffRingDirective } from '../../components/staff-ring/staff-ring.directive';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TimezoneService } from '../../services/timezone.service';
 import { AuthService } from '../../services/auth.service';
@@ -12,7 +13,7 @@ import { membershipAge } from '../../utils/time';
 
 @Component({
   selector: 'app-public-profile',
-  imports: [RouterLink, FollowersFollowingModalComponent, StatsSectionsComponent],
+  imports: [RouterLink, FollowersFollowingModalComponent, StatsSectionsComponent, StaffRingDirective],
   templateUrl: './public-profile.component.html',
   styleUrl: './public-profile.component.css',
 })

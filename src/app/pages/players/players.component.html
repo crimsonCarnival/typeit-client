@@ -33,12 +33,12 @@
         <li>
           <a class="result" [routerLink]="['/user', p.id]">
             @if (p.avatar) {
-              <img class="avatar" [src]="p.avatar" alt="" />
+              <img class="avatar" [src]="p.avatar" alt="" [appStaffRing]="p.role" />
             } @else {
-              <span class="avatar" aria-hidden="true" [style.background]="avatarColor(p)">{{ initial(p) }}</span>
+              <span class="avatar" aria-hidden="true" [style.background]="avatarColor(p)" [appStaffRing]="p.role">{{ initial(p) }}</span>
             }
             <span class="names">
-              <span class="name">{{ p.displayName }}</span>
+              <span class="name">{{ p.displayName }} @if (p.level) { <span class="level-chip">Lv {{ p.level }}</span> }</span>
               <span class="handle">&#64;{{ p.username }}</span>
             </span>
             <span class="stat"><b>{{ p.bestWpm }}</b> best WPM</span>

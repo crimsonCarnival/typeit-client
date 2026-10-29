@@ -3,9 +3,10 @@ import { RouterLink } from '@angular/router';
 import { FollowListUser } from '../../models/models';
 import { UserApiService } from '../../services/user-api.service';
 
+import { StaffRingDirective } from '../staff-ring/staff-ring.directive';
 @Component({
   selector: 'app-followers-following-modal',
-  imports: [RouterLink],
+  imports: [RouterLink, StaffRingDirective],
   templateUrl: './followers-following-modal.component.html',
   styleUrl: './followers-following-modal.component.css',
 })

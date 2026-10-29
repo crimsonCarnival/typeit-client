@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { RaceService } from '../../services/race.service';
 import { RaceFriend, RaceMode, RacePlayer, RaceRatingEntry, RaceSettings } from '../../models/models';
 import { RaceMistakesComponent } from '../../components/race-mistakes/race-mistakes.component';
+import { StaffRingDirective } from '../../components/staff-ring/staff-ring.directive';
 import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
 
 // These mirror the server's lists in config/race.js; the server is the one
@@ -54,7 +55,7 @@ const settingsFromQuery = (q: (key: string) => string | null): RaceSettings => {
 
 @Component({
   selector: 'app-race-lobby',
-  imports: [NgTemplateOutlet, RaceChatComponent, RaceMistakesComponent],
+  imports: [NgTemplateOutlet, RaceChatComponent, RaceMistakesComponent, StaffRingDirective],
   templateUrl: './race-lobby.component.html',
   styleUrl: './race-lobby.component.css',
 })

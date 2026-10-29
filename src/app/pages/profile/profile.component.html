@@ -8,12 +8,24 @@
       </div>
       <div class="identity-body">
         @if (user()?.avatar) {
-          <img [src]="user()?.avatar" [alt]="user()?.username" class="avatar" />
+          <img [src]="user()?.avatar" [alt]="user()?.username" class="avatar" [appStaffRing]="user()?.role" />
         } @else {
-          <span class="avatar avatar-initial" aria-hidden="true">{{ displayName() ? displayName().charAt(0).toUpperCase() : '?' }}</span>
+          <span class="avatar avatar-initial" aria-hidden="true" [appStaffRing]="user()?.role">{{ displayName() ? displayName().charAt(0).toUpperCase() : '?' }}</span>
         }
         <div class="identity-info">
           <h1 class="name">{{ displayName() }}</h1>
+          @if (user()?.level; as lv) {
+            <div class="level" role="group" [attr.aria-label]="'Level ' + lv.level">
+              <span class="level-chip">Level {{ lv.level }}</span>
+              <div class="level-bar" role="progressbar" aria-label="Progress to the next level" aria-valuemin="0" [attr.aria-valuemax]="lv.needed" [attr.aria-valuenow]="lv.into">
+                <div class="level-fill" [style.width.%]="lv.progress * 100"></div>
+              </div>
+              <span class="level-text">{{ lv.into.toLocaleString() }} / {{ lv.needed.toLocaleString() }} XP</span>
+            </div>
+          }
+          @if (user()?.role === 'moderator' || user()?.role === 'admin' || user()?.role === 'founder') {
+            <span class="staff-tag" [class]="'staff-tag ' + user()?.role">{{ user()?.role }}</span>
+          }
           <p class="meta">
             <span class="handle">&#64;{{ user()?.username }}</span>
             <span>{{ user()?.email }}</span>

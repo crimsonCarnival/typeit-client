@@ -16,6 +16,7 @@ import { GameMode } from '../../models/models';
 import { CaretPickerComponent } from '../../components/caret-picker/caret-picker.component';
 import { RulesPatch, RulesPickerComponent } from '../../components/rules-picker/rules-picker.component';
 import { RaceMistakesComponent } from '../../components/race-mistakes/race-mistakes.component';
+import { StaffRingDirective } from '../../components/staff-ring/staff-ring.directive';
 import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
 import { LanguagePatch, LanguagePickerComponent } from '../../components/language-picker/language-picker.component';
 import { Ghost } from '../../components/typing-area/typing-area.component';
@@ -47,6 +48,7 @@ const BOT_TICK_MS = 100;
     LanguagePickerComponent,
     RaceChatComponent,
     RaceMistakesComponent,
+    StaffRingDirective,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',

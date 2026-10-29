@@ -201,3 +201,10 @@
     font-size: 40px;
   }
 }
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0;
+}

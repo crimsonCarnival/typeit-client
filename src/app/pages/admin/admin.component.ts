@@ -22,6 +22,7 @@ const AUDIT_LABELS: Record<string, string> = {
   'user.reactivate': 'reactivated',
   'user.permissions': 'changed the permissions of',
   'user.profile-reset': 'reset the profile of',
+  'user.xp': 'granted XP to',
   'user.delete': 'deleted',
   'race.kick': 'removed from a race',
   'race.mute': 'muted in a race',
@@ -79,6 +80,7 @@ export class AdminComponent {
   readonly statusFilter = signal('');
   readonly selected = signal<AdminUser | null>(null);
   readonly reason = signal('');
+  readonly xpAmount = signal('');
   readonly catalog = signal<PermissionCatalog | null>(null);
   /** Permissions ticked in the editor: what the player would effectively hold. */
   readonly effective = signal<Set<string>>(new Set());
@@ -167,14 +169,36 @@ export class AdminComponent {
     const user = this.selected();
     if (!user || this.busy()) return;
     this.busy.set(true);
+    this.message.set(null);
     const res = await run(user);
     this.busy.set(false);
     if (!res.success) return this.fail(res.error);
-    this.ok(done);
+    if (!this.message() || this.message()!.error) this.ok(done);
     this.reason.set('');
     await this.loadUsers();
     const fresh = this.users().find((u) => u._id === user._id);
     if (fresh) this.select(fresh);
+  }
+
+  onXpAmount(event: Event): void {
+    this.xpAmount.set((event.target as HTMLInputElement).value);
+  }
+
+  /** Whole points from the field, or null when it is not a usable amount. */
+  readonly xpPoints = computed(() => {
+    const n = Number(this.xpAmount());
+    return Number.isInteger(n) && n >= 1 && n <= 50_000 ? n : null;
+  });
+
+  async grantXp(): Promise<void> {
+    const points = this.xpPoints();
+    if (points === null) return;
+    await this.act(async (u) => {
+      const res = await this.api.grantXp(u._id, points, this.reason());
+      if (res.success && res.data) this.xpAmount.set('');
+      if (res.success && res.data && res.data.level > res.data.levelBefore) this.ok(`Granted ${points.toLocaleString()} XP: now level ${res.data.level}.`);
+      return res;
+    }, `Granted ${points.toLocaleString()} XP.`);
   }
 
   warn(): Promise<void> {

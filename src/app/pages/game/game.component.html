@@ -202,7 +202,7 @@
       <div class="race-cards">
         @for (p of raceStandings(); track p.userId) {
           <div class="race-card" [class.me]="p.userId === race.myId()">
-            <span class="race-avatar" aria-hidden="true">{{ p.displayName.charAt(0).toUpperCase() }}</span>
+            <span class="race-avatar" aria-hidden="true" [appStaffRing]="p.role">{{ p.displayName.charAt(0).toUpperCase() }}</span>
             <div class="race-name">
               <span>{{ p.displayName }}{{ p.userId === race.myId() ? ' (you)' : '' }}</span>
               <span class="race-place">

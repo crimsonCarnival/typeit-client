@@ -18,6 +18,7 @@ export const normalizeUser = (raw: any): User | null => {
     bio: raw.bio || '',
     role: raw.role,
     permissions: Array.isArray(raw.permissions) ? raw.permissions : [],
+    level: raw.level,
     timezone: raw.timezone,
     timezoneManual: !!raw.timezoneManual,
     stats: raw.stats,

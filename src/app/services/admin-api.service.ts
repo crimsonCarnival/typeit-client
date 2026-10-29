@@ -52,6 +52,10 @@ export class AdminApiService {
     return this.call(this.http.post<ApiResponse<AdminUser>>(`${this.base}/users/${userId}/profile-reset`, { fields, reason }));
   }
 
+  grantXp(userId: string, amount: number, reason: string): Promise<ApiResponse<{ xp: number; level: number; levelBefore: number }>> {
+    return this.call(this.http.post<ApiResponse<{ xp: number; level: number; levelBefore: number }>>(`${this.base}/users/${userId}/xp`, { amount, reason }));
+  }
+
   rooms(): Promise<ApiResponse<{ rooms: AdminRoom[] }>> {
     return this.call(this.http.get<ApiResponse<{ rooms: AdminRoom[] }>>(`${this.base}/races`));
   }

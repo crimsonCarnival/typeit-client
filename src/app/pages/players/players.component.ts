@@ -11,9 +11,10 @@ const AVATAR_COLORS = 8; // --color-avatar-1 .. --color-avatar-8
  * Find players by username or display name and open their profiles. The
  * query lives in the URL (?q=) so a search can be shared or reloaded.
  */
+import { StaffRingDirective } from '../../components/staff-ring/staff-ring.directive';
 @Component({
   selector: 'app-players',
-  imports: [RouterLink],
+  imports: [RouterLink, StaffRingDirective],
   templateUrl: './players.component.html',
   styleUrl: './players.component.css',
 })

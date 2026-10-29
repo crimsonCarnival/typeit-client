@@ -10,12 +10,20 @@
       </div>
       <div class="identity-body">
         @if (profile()?.avatar) {
-          <img [src]="profile()?.avatar" [alt]="profile()?.displayName" class="avatar" />
+          <img [src]="profile()?.avatar" [alt]="profile()?.displayName" class="avatar" [appStaffRing]="profile()?.role" />
         } @else {
-          <span class="avatar avatar-initial" aria-hidden="true">{{ (profile()?.displayName || profile()?.username || '?').charAt(0).toUpperCase() }}</span>
+          <span class="avatar avatar-initial" aria-hidden="true" [appStaffRing]="profile()?.role">{{ (profile()?.displayName || profile()?.username || '?').charAt(0).toUpperCase() }}</span>
         }
         <div class="identity-info">
           <h1 class="name">{{ profile()?.displayName }}</h1>
+          <p class="badges">
+            @if (profile()?.level !== undefined) {
+              <span class="level-chip">Level {{ profile()?.level }}</span>
+            }
+            @if (profile()?.role; as role) {
+              <span class="staff-tag" [class]="'staff-tag ' + role">{{ role }}</span>
+            }
+          </p>
           <p class="meta">
             <span class="handle">&#64;{{ profile()?.username }}</span>
             @if (joined()) {

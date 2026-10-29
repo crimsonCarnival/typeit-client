@@ -13,9 +13,9 @@
       (click)="toggleOpen()"
     >
       @if (user()?.avatar) {
-        <img [src]="user()?.avatar" [alt]="user()?.username" class="user-avatar" />
+        <img [src]="user()?.avatar" [alt]="user()?.username" class="user-avatar" [appStaffRing]="user()?.role" />
       } @else {
-        <span class="user-avatar user-avatar-placeholder" aria-hidden="true">{{ initial() }}</span>
+        <span class="user-avatar user-avatar-placeholder" aria-hidden="true" [appStaffRing]="user()?.role">{{ initial() }}</span>
       }
       <span class="user-menu-username">{{ displayName() }}</span>
       <svg
@@ -40,13 +40,13 @@
       <div class="user-menu-dropdown" role="menu" aria-label="Account">
         <div class="user-menu-header">
           @if (user()?.avatar) {
-            <img [src]="user()?.avatar" [alt]="user()?.username" class="user-avatar user-avatar-lg" />
+            <img [src]="user()?.avatar" [alt]="user()?.username" class="user-avatar user-avatar-lg" [appStaffRing]="user()?.role" />
           } @else {
-            <span class="user-avatar user-avatar-placeholder user-avatar-lg" aria-hidden="true">{{ initial() }}</span>
+            <span class="user-avatar user-avatar-placeholder user-avatar-lg" aria-hidden="true" [appStaffRing]="user()?.role">{{ initial() }}</span>
           }
           <div class="user-menu-info">
             <span class="user-menu-name">{{ displayName() }}</span>
-            <span class="user-menu-handle">&#64;{{ user()?.username }}</span>
+            <span class="user-menu-handle">&#64;{{ user()?.username }} @if (user()?.level; as lv) { <span class="level-chip">Level {{ lv.level }}</span> }</span>
           </div>
         </div>
 

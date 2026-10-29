@@ -1,9 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { StaffRingDirective } from '../staff-ring/staff-ring.directive';
 
 @Component({
   selector: 'app-user-menu',
+  imports: [StaffRingDirective],
   templateUrl: './user-menu.component.html',
   styleUrl: './user-menu.component.css',
 })

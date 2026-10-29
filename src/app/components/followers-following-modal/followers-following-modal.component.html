@@ -26,9 +26,9 @@
             <li>
               <a class="follow-list-item" [routerLink]="['/user', u._id]" (click)="close.emit()">
                 @if (u.avatar) {
-                  <img [src]="u.avatar" [alt]="u.username" class="follow-avatar" />
+                  <img [src]="u.avatar" [alt]="u.username" class="follow-avatar" [appStaffRing]="u.role" />
                 } @else {
-                  <div class="follow-avatar follow-avatar-placeholder">
+                  <div class="follow-avatar follow-avatar-placeholder" [appStaffRing]="u.role">
                     {{ avatarText(u) }}
                   </div>
                 }

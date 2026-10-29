@@ -52,6 +52,7 @@ export interface User {
   role?: string;
   /** What this player may do in the admin area (role plus per-user overrides). */
   permissions?: string[];
+  level?: LevelInfo;
   timezone?: string;
   /** True when the player chose their zone instead of following the browser. */
   timezoneManual?: boolean;
@@ -228,8 +229,20 @@ export interface Punishment {
   count: number;
 }
 
+/** Where a player stands: their level, how far into it, and what the next needs. */
+export interface LevelInfo {
+  level: number;
+  xp: number;
+  into: number;
+  needed: number;
+  progress: number;
+}
+
 export interface PublicProfile {
   id: string;
+  /** Only set for staff. */
+  role?: string;
+  level?: number;
   displayName: string;
   username: string;
   avatar?: string;
@@ -245,6 +258,8 @@ export interface PublicProfile {
 /** A player found by GET /users/search. */
 export interface PlayerSearchResult {
   id: string;
+  role?: string;
+  level?: number;
   username: string;
   displayName: string;
   avatar: string;
@@ -255,6 +270,7 @@ export interface PlayerSearchResult {
 
 export interface FollowListUser {
   _id: string;
+  role?: string;
   username: string;
   displayName?: string;
   avatar?: string;
@@ -301,6 +317,7 @@ export interface RankingQuery {
 
 export interface RankingEntry {
   rank: number;
+  role?: string;
   /** The run behind the entry (for its replay). */
   resultId?: string | null;
   userId: string;
@@ -470,6 +487,7 @@ export type RaceState = 'lobby' | 'countdown' | 'racing' | 'finished';
 
 export interface RacePlayer {
   userId: string;
+  role?: string;
   /** Quick-match rating when the player joined (null outside rated rooms). */
   rating?: number | null;
   username: string;

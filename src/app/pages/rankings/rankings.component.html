@@ -140,9 +140,9 @@
     <td>
       <div class="player">
         @if (e.avatar) {
-          <img class="avatar" [src]="e.avatar" alt="" />
+          <img class="avatar" [src]="e.avatar" alt="" [appStaffRing]="e.role" />
         } @else {
-          <span class="avatar" aria-hidden="true" [style.background]="avatarColor(e)">{{ initial(e) }}</span>
+          <span class="avatar" aria-hidden="true" [style.background]="avatarColor(e)" [appStaffRing]="e.role">{{ initial(e) }}</span>
         }
         <div class="player-names">
           <a class="player-name" [routerLink]="['/user', e.userId]">

@@ -144,6 +144,17 @@
               </div>
             }
           }
+
+          @if (auth.can('users.xp') && !isSelf()) {
+            <div class="group">
+              <h3 class="group-title">Grant XP</h3>
+              <p class="hint">Needs a reason above. The player is told, and it is recorded in the audit log.</p>
+              <div class="filters">
+                <input type="number" class="input grow" min="1" max="50000" step="1" placeholder="Amount (1 to 50,000)" aria-label="XP to grant" [value]="xpAmount()" (input)="onXpAmount($event)" />
+                <button type="button" class="btn" [disabled]="busy() || xpPoints() === null || !reason().trim()" (click)="grantXp()">Grant</button>
+              </div>
+            </div>
+          }
         } @else {
           <p class="hint">Pick a player to manage.</p>
         }

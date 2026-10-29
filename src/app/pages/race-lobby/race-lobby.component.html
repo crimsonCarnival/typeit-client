@@ -228,7 +228,7 @@
           <ul class="players">
             @for (p of r.players; track p.userId; let i = $index) {
               <li class="player" [class.me]="isMe(p)">
-                <span class="avatar" aria-hidden="true" [style.background]="avatarColor(i, p)">{{ initial(p.displayName) }}</span>
+                <span class="avatar" aria-hidden="true" [style.background]="avatarColor(i, p)" [appStaffRing]="p.role">{{ initial(p.displayName) }}</span>
                 <span class="player-name">
                   {{ p.displayName }}
                   @if (p.userId === r.hostId) {

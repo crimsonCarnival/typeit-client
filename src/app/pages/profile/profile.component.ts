@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { StaffRingDirective } from '../../components/staff-ring/staff-ring.directive';
 import { AuthService } from '../../services/auth.service';
 import { FollowersFollowingModalComponent } from '../../components/followers-following-modal/followers-following-modal.component';
 import { membershipAge } from '../../utils/time';
@@ -11,7 +12,7 @@ import { RaceHistoryEntry, UserStats } from '../../models/models';
 
 @Component({
   selector: 'app-profile',
-  imports: [RouterLink, FollowersFollowingModalComponent, RaceMistakesComponent],
+  imports: [RouterLink, FollowersFollowingModalComponent, RaceMistakesComponent, StaffRingDirective],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })
