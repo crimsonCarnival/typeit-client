@@ -1,0 +1,68 @@
+<div class="about">
+  <p class="intro">Made for typists who want to get faster. Every result is checked by the server, so the numbers mean something.</p>
+
+  <dl class="totals">
+    <div><dt>total tests started</dt><dd>{{ started().value }}</dd><dd class="unit">{{ started().unit }}</dd></div>
+    <div><dt>total typing time</dt><dd>{{ time().value }}</dd><dd class="unit">{{ time().unit }}</dd></div>
+    <div><dt>total tests completed</dt><dd>{{ completed().value }}</dd><dd class="unit">{{ completed().unit }}</dd></div>
+  </dl>
+
+  @if (stats()?.distribution?.bands?.length) {
+    <figure class="dist">
+      <div class="canvas-wrap"><canvas #dist role="img" aria-label="How many players have their best 60-second speed in each band"></canvas></div>
+      <figcaption>Distribution of the best verified 60-second speeds (WPM) &#183; {{ stats()!.distribution.results.toLocaleString() }} players</figcaption>
+    </figure>
+  }
+
+  <section aria-labelledby="about-title">
+    <h1 id="about-title" class="h">about</h1>
+    <p>TypeIt is a typing test with words, phrases and code, live races against other players, a daily challenge, lessons and drills built from your own mistakes, and an account that keeps your history so you can see yourself improve.</p>
+
+    <h2 class="sub">word set</h2>
+    <p>Words tests use the most common words of the chosen language. Phrases use real passages (classics, quotes, speeches), and code tests use short snippets in several languages.</p>
+
+    <h2 class="sub">keybinds</h2>
+    <p><kbd>Esc</kbd> gives you new text, <kbd>Tab</kbd> restarts the same text and <kbd>M</kbd> toggles the sound. In zen mode, <kbd>Shift</kbd> + <kbd>Enter</kbd> ends the run. Right-click (or the &#8943; button) on players, notifications and admin rows opens a menu of actions.</p>
+
+    <h2 class="sub">stats</h2>
+    <dl class="defs">
+      <dt>wpm</dt><dd>correctly typed characters (including spaces) divided by 5, normalised to 60 seconds.</dd>
+      <dt>raw wpm</dt><dd>calculated like wpm, but counting every typed character, mistakes included.</dd>
+      <dt>acc</dt><dd>percentage of keys pressed correctly.</dd>
+      <dt>char</dt><dd>correct characters / mistakes / backspaces, worked out after the test.</dd>
+      <dt>consistency</dt><dd>how steady your speed was, from the variation of your raw speed second by second. Closer to 100% is better.</dd>
+    </dl>
+
+    <h2 class="sub">results screen</h2>
+    <p>After a test you see your speed, raw speed, accuracy, character counts and how your speed moved over the run, plus your slowest words. Verified runs count for rankings and badges; runs that fail the integrity checks are saved but never ranked.</p>
+
+    <h2 class="sub">bug report or feature request</h2>
+    <p>Found a bug or have an idea? Use the contact options below.</p>
+  </section>
+
+  <section aria-labelledby="contact-title">
+    <h1 id="contact-title" class="h">contact</h1>
+    <p>Questions, feedback or help with your account. Most account changes (name, email, password, personal bests, deleting it) you can do yourself in <a routerLink="/account">account settings</a>.</p>
+    @if (contactEmail()) {
+      <button type="button" class="big-btn" (click)="contactOpen.set(true)">Contact us</button>
+    } @else {
+      <p class="muted">No contact address is set up yet.</p>
+    }
+  </section>
+</div>
+
+@if (contactOpen()) {
+  <div class="overlay" (click)="contactOpen.set(false)" (keydown.escape)="contactOpen.set(false)">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="contact-dialog-title" (click)="$event.stopPropagation()">
+      <h2 id="contact-dialog-title" class="dialog-title">Contact</h2>
+      <p>Send an email to <b>{{ contactEmail() }}</b> (the buttons below open your mail app).</p>
+      <p>Please <span class="warn">do not send</span> requests to delete your account, change your email or name, or clear personal bests: you can do that in <a routerLink="/account" (click)="contactOpen.set(false)">account settings</a>.</p>
+      <div class="topics">
+        @for (t of topics; track t.id) {
+          <a class="topic" [href]="mailto(t.id)"><span class="topic-icon" aria-hidden="true">{{ t.icon }}</span>{{ t.id }}</a>
+        }
+      </div>
+      <button type="button" class="close" (click)="contactOpen.set(false)">Close</button>
+    </div>
+  </div>
+}

@@ -33,6 +33,7 @@ const AUDIT_LABELS: Record<string, string> = {
   'race.kick': 'removed from a race',
   'race.mute': 'muted in a race',
   'race.unmute': 'unmuted in a race',
+  'changelog.refresh': 'recompiled the release notes',
 };
 const DIALOG_TITLES: Record<DialogKind, string> = {
   warn: 'Warn',
@@ -372,6 +373,19 @@ export class AdminComponent {
     if (!res.success) this.fail(res.error);
     else this.ok(action === 'kick' ? 'Player removed.' : action === 'mute' ? 'Player muted.' : 'Player unmuted.');
     await this.loadRooms();
+  }
+
+  readonly isFounder = computed(() => this.auth.user()?.role === 'founder');
+  readonly compiling = signal(false);
+
+  /** Founders: recompile the release notes from the repos now, instead of waiting for the weekly run. */
+  async refreshChangelog(): Promise<void> {
+    if (this.compiling()) return;
+    this.compiling.set(true);
+    const res = await this.api.refreshChangelog();
+    this.compiling.set(false);
+    if (res.success && res.data) this.ok(`Release notes compiled: ${res.data.releases} releases from ${res.data.commits} commits.`);
+    else this.fail(res.error);
   }
 
   // ---- audit

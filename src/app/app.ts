@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, untracked } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -10,12 +10,16 @@ import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
 import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
 import { MenuHostComponent } from './components/menu/menu-host.component';
+import { ChangelogModalComponent } from './components/changelog-modal/changelog-modal.component';
+import { ChangelogService } from './services/changelog.service';
+import { ThemePickerComponent } from './components/theme-picker/theme-picker.component';
+import { themeById } from './utils/themes';
 import { TooltipService } from './components/tooltip/tooltip.service';
 import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, UserMenuComponent, AuthModalComponent, NotificationBellComponent, MenuHostComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, UserMenuComponent, AuthModalComponent, NotificationBellComponent, MenuHostComponent, ChangelogModalComponent, ThemePickerComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -25,6 +29,10 @@ export class App {
   readonly race = inject(RaceService);
   private readonly router = inject(Router);
   readonly notifications = inject(NotificationService);
+  readonly changelog = inject(ChangelogService);
+  readonly changelogOpen = signal(false);
+  readonly themePickerOpen = signal(false);
+  readonly themeName = computed(() => themeById(this.settings.settings().theme).name);
   private readonly game = inject(GameService);
 
   // Applies saved settings (theme, typing font) from the first render.
@@ -33,6 +41,8 @@ export class App {
   constructor() {
     // Custom hover tooltips for every element with a title.
     inject(TooltipService).start();
+    // The footer shows the latest version.
+    void this.changelog.load();
 
     // The account's settings, once signed in, also set the game's rules, caret and sound.
     effect(() => {

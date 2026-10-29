@@ -54,7 +54,7 @@
 
 .tab.active {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .tab:focus-visible,
@@ -396,12 +396,12 @@ textarea.input {
 .btn.primary {
   border-color: var(--color-primary);
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .btn.primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .room-players li {
@@ -456,4 +456,11 @@ textarea.input {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.founder-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
 }

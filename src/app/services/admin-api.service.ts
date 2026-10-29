@@ -64,6 +64,10 @@ export class AdminApiService {
     return this.call(this.http.post(`${this.base}/races/${encodeURIComponent(code)}/moderate`, { action, userId, reason }) as Observable<ApiResponse<unknown>>);
   }
 
+  refreshChangelog(): Promise<ApiResponse<{ releases: number; commits: number }>> {
+    return this.call(this.http.post<ApiResponse<{ releases: number; commits: number }>>(`${this.base}/changelog/refresh`, {}));
+  }
+
   audit(page: number): Promise<ApiResponse<AdminAudit>> {
     return this.call(this.http.get<ApiResponse<AdminAudit>>(`${this.base}/audit`, { params: { page, limit: 25 } }));
   }

@@ -10,6 +10,13 @@
     }
   </div>
 
+  @if (isFounder()) {
+    <div class="founder-bar">
+      <span class="hint">Release notes recompile from the repos' commits every week.</span>
+      <button type="button" class="btn small" [disabled]="compiling()" (click)="refreshChangelog()">{{ compiling() ? 'Compiling…' : 'Refresh changelog now' }}</button>
+    </div>
+  }
+
   @if (message(); as m) {
     <p class="message" [class.error]="m.error" [attr.role]="m.error ? 'alert' : 'status'">{{ m.text }}</p>
   }
