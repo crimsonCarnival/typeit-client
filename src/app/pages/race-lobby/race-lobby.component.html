@@ -294,6 +294,14 @@
             <p class="notice" role="status">Race in progress&#8230;</p>
           }
 
+          @if (r.state === 'finished') {
+            <button type="button" class="btn-outline" [attr.aria-expanded]="showMistakes()" (click)="showMistakes.set(!showMistakes())">
+              {{ showMistakes() ? 'Hide mistakes' : 'Compare mistakes' }}
+            </button>
+            @if (showMistakes()) {
+              <app-race-mistakes [raceRef]="r.code" />
+            }
+          }
           @if (r.state === 'finished' && !race.spectating()) {
             <button type="button" class="btn-primary ready-btn" (click)="race.rematch()">Rematch</button>
           }

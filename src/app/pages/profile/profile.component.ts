@@ -3,12 +3,15 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { FollowersFollowingModalComponent } from '../../components/followers-following-modal/followers-following-modal.component';
 import { membershipAge } from '../../utils/time';
+import { RaceService } from '../../services/race.service';
+import { RaceMistakesComponent } from '../../components/race-mistakes/race-mistakes.component';
+import { TimezoneService } from '../../services/timezone.service';
 import { TimeDisplayService } from '../../services/time-display.service';
-import { UserStats } from '../../models/models';
+import { RaceHistoryEntry, UserStats } from '../../models/models';
 
 @Component({
   selector: 'app-profile',
-  imports: [RouterLink, FollowersFollowingModalComponent],
+  imports: [RouterLink, FollowersFollowingModalComponent, RaceMistakesComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })
@@ -16,6 +19,20 @@ export class ProfileComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly timeDisplay = inject(TimeDisplayService);
+  private readonly tz = inject(TimezoneService);
+  private readonly raceService = inject(RaceService);
+
+  readonly races = signal<RaceHistoryEntry[]>([]);
+  /** The race whose mistake comparison is expanded. */
+  readonly openRace = signal<string | null>(null);
+
+  raceDate(value: string): string {
+    return this.tz.dateTime(value);
+  }
+
+  raceLength(r: RaceHistoryEntry): string {
+    return r.mode === 'time' ? `${r.timeLimit}s timed` : r.mode === 'phrases' ? 'Phrase' : `${r.wordCount} words`;
+  }
 
   readonly user = this.auth.user;
   readonly loading = this.auth.loading;
@@ -31,10 +48,12 @@ export class ProfileComponent {
   readonly age = computed(() => membershipAge(this.user()?.createdAt));
   readonly joined = computed(() => {
     const created = this.user()?.createdAt;
-    return created ? new Date(created).toLocaleDateString() : '\u2014';
+    return created ? this.tz.date(created) : '\u2014';
   });
 
   readonly s = computed<Partial<UserStats>>(() => this.user()?.stats ?? {});
+  /** Accounts from before started tests were counted have at least as many started as finished. */
+  readonly startedTests = computed(() => Math.max(this.s().testsStarted || 0, this.s().gamesPlayed || 0));
 
   /** Durations in the chosen time format (1m 24s or 84s). */
   fmt(seconds: number): string {
@@ -52,6 +71,7 @@ export class ProfileComponent {
     effect(() => {
       if (this.isAuthenticated()) {
         void this.auth.refreshProfile();
+        void this.raceService.loadHistory().then((races) => this.races.set(races));
       }
     });
     effect(() => {

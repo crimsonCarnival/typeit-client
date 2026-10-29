@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { RaceService } from '../../services/race.service';
 import { RaceFriend, RaceMode, RacePlayer, RaceRatingEntry, RaceSettings } from '../../models/models';
+import { RaceMistakesComponent } from '../../components/race-mistakes/race-mistakes.component';
 import { RaceChatComponent } from '../../components/race-chat/race-chat.component';
 
 // These mirror the server's lists in config/race.js; the server is the one
@@ -53,7 +54,7 @@ const settingsFromQuery = (q: (key: string) => string | null): RaceSettings => {
 
 @Component({
   selector: 'app-race-lobby',
-  imports: [NgTemplateOutlet, RaceChatComponent],
+  imports: [NgTemplateOutlet, RaceChatComponent, RaceMistakesComponent],
   templateUrl: './race-lobby.component.html',
   styleUrl: './race-lobby.component.css',
 })
@@ -79,6 +80,7 @@ export class RaceLobbyComponent {
   readonly isPrivate = signal(this.query.get('public') !== '1');
   readonly draft = signal<RaceSettings>(settingsFromQuery((k) => this.query.get(k)));
   readonly joinCode = signal(this.linkCode);
+  readonly showMistakes = signal(false);
   readonly copied = signal<'' | 'code' | 'link'>('');
   readonly friends = signal<RaceFriend[]>([]);
   readonly invited = signal<Set<string>>(new Set());

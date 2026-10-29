@@ -76,7 +76,7 @@
       <div class="card best"><span class="best-value wpm">{{ s().bestWpm || 0 }}</span><span class="best-label">Best WPM</span></div>
       <div class="card best"><span class="best-value">{{ s().highScore || 0 }}</span><span class="best-label">High score</span></div>
       <div class="card best"><span class="best-value acc">{{ s().bestAccuracy || 0 }}%</span><span class="best-label">Best accuracy</span></div>
-      <div class="card best"><span class="best-value">{{ s().gamesPlayed || 0 }}</span><span class="best-label">Games played</span></div>
+      <div class="card best"><span class="best-value">{{ s().gamesPlayed || 0 }}<span class="best-of"> / {{ startedTests() }}</span></span><span class="best-label">Tests finished / started</span></div>
     </div>
 
     <div class="time-grid">
@@ -96,6 +96,32 @@
       </svg>
       <svg class="arrow" aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
     </a>
+
+    @if (races().length) {
+      <section class="card recent-races" aria-labelledby="races-title">
+        <h2 id="races-title" class="races-title">Recent races</h2>
+        <ul class="race-list">
+          @for (r of races(); track r.raceId) {
+            <li>
+              <div class="race-row">
+                <span class="race-place">{{ r.place ? '#' + r.place : 'DNF' }}</span>
+                <span class="race-info">
+                  <span class="race-name">{{ r.name || r.code }}</span>
+                  <span class="race-meta">{{ raceDate(r.finishedAt) }} &#183; {{ raceLength(r) }} &#183; {{ r.racers }} racers{{ r.rated ? ' · rated' : '' }}</span>
+                </span>
+                <span class="race-wpm">{{ r.wpm ?? '–' }} <small>WPM</small></span>
+                <button type="button" class="race-compare" [attr.aria-expanded]="openRace() === r.raceId" (click)="openRace.set(openRace() === r.raceId ? null : r.raceId)">
+                  {{ openRace() === r.raceId ? 'Hide' : 'Mistakes' }}
+                </button>
+              </div>
+              @if (openRace() === r.raceId) {
+                <app-race-mistakes [raceRef]="r.raceId" />
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
   }
 
   @if (modal()) {
