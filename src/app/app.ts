@@ -1,5 +1,7 @@
 import { Component, computed, effect, inject, untracked } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { RaceService } from './services/race.service';
 import { GameService } from './services/game.service';
@@ -39,7 +41,20 @@ export class App {
   }
 
   /** While a run is in progress the header steps back (design: focus mode). */
-  readonly focusMode = computed(() => this.game.gameState().isTyping);
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  /**
+   * The header steps back only on the game page, where the run is. The run
+   * itself can outlive the page (a live race keeps going), and must not hide
+   * the header on every other page.
+   */
+  readonly focusMode = computed(() => this.game.gameState().isTyping && this.url().split(/[?#]/)[0].startsWith('/play'));
 
   /** A toast opens what the notification is about. */
   openToast(link: string | null, id: string): void {

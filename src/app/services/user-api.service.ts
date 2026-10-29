@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ApiResponse, FollowListUser, PlayerSearchResult, PlayerSettings, PublicProfile, User } from '../models/models';
+import { ApiResponse, FollowListUser, PlayerSearchResult, PlayerSettings, PublicProfile, TestOutcomes, User } from '../models/models';
 import { ls } from '../utils/storage';
 
 /**
@@ -76,6 +76,10 @@ export class UserApiService {
 
   searchUsers(query: string, limit = 20): Promise<ApiResponse<PlayerSearchResult[]>> {
     return this.call(this.http.get<ApiResponse<PlayerSearchResult[]>>(`${this.base}/users/search`, { params: { q: query, limit: String(limit) } }));
+  }
+
+  getMyOutcomes(): Promise<ApiResponse<TestOutcomes>> {
+    return this.call(this.http.get<ApiResponse<TestOutcomes>>(`${this.base}/users/profile/outcomes`));
   }
 
   getPublicProfile(userId: string): Promise<ApiResponse<PublicProfile>> {

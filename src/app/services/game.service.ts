@@ -695,7 +695,9 @@ export class GameService {
   abandonSession(raceIsLive: boolean): void {
     const gs = this.gameState();
     const staleRace = !!gs.race && !raceIsLive;
-    if (!gs.botWpm && !this.ghost() && !gs.dailyDate && !gs.practice && !staleRace) return;
+    // A test left half-typed is abandoned too (a live race is not: it runs on without us).
+    const abandonedRun = gs.isTyping && !(gs.race && raceIsLive);
+    if (!gs.botWpm && !this.ghost() && !gs.dailyDate && !gs.practice && !staleRace && !abandonedRun) return;
     this.setBot(null);
     this.ghost.set(null);
     this.lastBotOutcome.set(null);

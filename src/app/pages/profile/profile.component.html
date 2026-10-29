@@ -88,8 +88,17 @@
       <div class="card best"><span class="best-value wpm">{{ s().bestWpm || 0 }}</span><span class="best-label">Best WPM</span></div>
       <div class="card best"><span class="best-value">{{ s().highScore || 0 }}</span><span class="best-label">High score</span></div>
       <div class="card best"><span class="best-value acc">{{ s().bestAccuracy || 0 }}%</span><span class="best-label">Best accuracy</span></div>
-      <div class="card best"><span class="best-value">{{ s().gamesPlayed || 0 }}<span class="best-of"> / {{ startedTests() }}</span></span><span class="best-label">Tests finished / started</span></div>
+      <div class="card best"><span class="best-value">{{ outcomes()?.finished ?? s().gamesPlayed ?? 0 }}</span><span class="best-label">Tests finished</span></div>
     </div>
+
+    @if (outcomes(); as o) {
+      <div class="outcome-grid" role="group" aria-label="Tests started and how they ended">
+        <div class="card time" title="Tests you typed at least one key in"><span class="best-label">Started</span><span class="time-value">{{ o.started }}</span></div>
+        <div class="card time" title="Started but never finished"><span class="best-label">Abandoned</span><span class="time-value afk">{{ o.abandoned }}</span></div>
+        <div class="card time" title="Finished and passed the integrity checks"><span class="best-label">Approved</span><span class="time-value ok">{{ o.approved }}</span></div>
+        <div class="card time" title="Finished but flagged by the integrity checks"><span class="best-label">Failed</span><span class="time-value afk">{{ o.failed }}</span></div>
+      </div>
+    }
 
     <div class="time-grid">
       <div class="card time"><span class="best-label">Total time typing</span><span class="time-value">{{ fmt(s().totalTimeTyping || 0) }}</span></div>

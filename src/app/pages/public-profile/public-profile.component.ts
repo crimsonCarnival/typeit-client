@@ -44,11 +44,19 @@ export class PublicProfileComponent {
 
   readonly publicStats = computed(() => {
     const s = this.profile()?.stats || {};
+    const o = this.profile()?.outcomes;
     return [
       { label: 'Best WPM', value: s.bestWpm || 0 },
       { label: 'High Score', value: s.highScore || 0 },
       { label: 'Best Accuracy', value: `${s.bestAccuracy || 0}%` },
-      { label: 'Tests done / started', value: `${s.gamesPlayed || 0} / ${Math.max(s.testsStarted || 0, s.gamesPlayed || 0)}` },
+      ...(o
+        ? [
+            { label: 'Tests started', value: o.started },
+            { label: 'Abandoned', value: o.abandoned },
+            { label: 'Approved', value: o.approved },
+            { label: 'Failed', value: o.failed },
+          ]
+        : [{ label: 'Tests finished', value: s.gamesPlayed || 0 }]),
     ];
   });
 

@@ -8,7 +8,8 @@ import { RaceService } from '../../services/race.service';
 import { RaceMistakesComponent } from '../../components/race-mistakes/race-mistakes.component';
 import { TimezoneService } from '../../services/timezone.service';
 import { TimeDisplayService } from '../../services/time-display.service';
-import { RaceHistoryEntry, UserStats } from '../../models/models';
+import { UserApiService } from '../../services/user-api.service';
+import { RaceHistoryEntry, TestOutcomes, UserStats } from '../../models/models';
 
 @Component({
   selector: 'app-profile',
@@ -21,6 +22,10 @@ export class ProfileComponent {
   private readonly router = inject(Router);
   private readonly timeDisplay = inject(TimeDisplayService);
   private readonly tz = inject(TimezoneService);
+  private readonly userApi = inject(UserApiService);
+
+  /** Started / abandoned / finished (approved, failed), from the server. */
+  readonly outcomes = signal<TestOutcomes | null>(null);
   private readonly raceService = inject(RaceService);
 
   readonly races = signal<RaceHistoryEntry[]>([]);
@@ -53,8 +58,6 @@ export class ProfileComponent {
   });
 
   readonly s = computed<Partial<UserStats>>(() => this.user()?.stats ?? {});
-  /** Accounts from before started tests were counted have at least as many started as finished. */
-  readonly startedTests = computed(() => Math.max(this.s().testsStarted || 0, this.s().gamesPlayed || 0));
 
   /** Durations in the chosen time format (1m 24s or 84s). */
   fmt(seconds: number): string {
@@ -73,6 +76,7 @@ export class ProfileComponent {
       if (this.isAuthenticated()) {
         void this.auth.refreshProfile();
         void this.raceService.loadHistory().then((races) => this.races.set(races));
+        void this.userApi.getMyOutcomes().then((res) => res.data && this.outcomes.set(res.data));
       }
     });
     effect(() => {

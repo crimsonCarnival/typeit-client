@@ -238,8 +238,21 @@ export interface LevelInfo {
   progress: number;
 }
 
+/** Tests a player started, and what became of them. */
+export interface TestOutcomes {
+  started: number;
+  /** Started but never finished. */
+  abandoned: number;
+  finished: number;
+  /** Finished and passed the integrity checks. */
+  approved: number;
+  /** Finished but flagged by the integrity checks. */
+  failed: number;
+}
+
 export interface PublicProfile {
   id: string;
+  outcomes?: TestOutcomes;
   /** Only set for staff. */
   role?: string;
   level?: number;

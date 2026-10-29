@@ -285,11 +285,6 @@
   color: var(--color-text);
 }
 
-.best-of {
-  font-size: 0.6em;
-  color: var(--color-text-subtle);
-}
-
 .best-value.wpm { color: var(--color-wpm); }
 .best-value.acc { color: var(--color-accuracy); }
 
@@ -530,4 +525,14 @@
   .level-fill {
     transition: none;
   }
+}
+
+.outcome-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.time-value.ok {
+  color: var(--color-accuracy);
 }
