@@ -2,18 +2,19 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { StaffRingDirective } from '../../components/staff-ring/staff-ring.directive';
+import { ProfileOverviewComponent } from '../../components/profile-overview/profile-overview.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TimezoneService } from '../../services/timezone.service';
 import { AuthService } from '../../services/auth.service';
 import { UserApiService } from '../../services/user-api.service';
-import { PublicProfile } from '../../models/models';
+import { ProfileOverview, PublicProfile } from '../../models/models';
 import { FollowersFollowingModalComponent } from '../../components/followers-following-modal/followers-following-modal.component';
 import { StatsSectionsComponent } from '../../components/stats-sections/stats-sections.component';
 import { membershipAge } from '../../utils/time';
 
 @Component({
   selector: 'app-public-profile',
-  imports: [RouterLink, FollowersFollowingModalComponent, StatsSectionsComponent, StaffRingDirective],
+  imports: [RouterLink, FollowersFollowingModalComponent, StatsSectionsComponent, StaffRingDirective, ProfileOverviewComponent],
   templateUrl: './public-profile.component.html',
   styleUrl: './public-profile.component.css',
 })
@@ -51,7 +52,6 @@ export class PublicProfileComponent {
       { label: 'Best Accuracy', value: `${s.bestAccuracy || 0}%` },
       ...(o
         ? [
-            { label: 'Tests started', value: o.started },
             { label: 'Abandoned', value: o.abandoned },
             { label: 'Approved', value: o.approved },
             { label: 'Failed', value: o.failed },
@@ -60,11 +60,31 @@ export class PublicProfileComponent {
     ];
   });
 
+  /** Totals, personal bests and the activity graph. */
+  readonly overview = signal<ProfileOverview | null>(null);
+  private year: number | null = null;
+
+  private loadOverview(id: string): void {
+    void this.api.getOverview(id, this.year).then((res) => {
+      // A slow answer for the player we just left must not replace the one on screen.
+      if (res.success && res.data && this.userId() === id) this.overview.set(res.data);
+    });
+  }
+
+  onYear(year: number | null): void {
+    this.year = year;
+    const id = this.userId();
+    if (id) this.loadOverview(id);
+  }
+
   constructor() {
     effect(() => {
       const id = this.userId();
       if (!id) return;
       let cancelled = false;
+      this.overview.set(null);
+      this.year = null;
+      this.loadOverview(id);
 
       this.loading.set(true);
       this.error.set('');
@@ -97,6 +117,28 @@ export class PublicProfileComponent {
     } catch {
       // Clipboard can be blocked; the URL is in the address bar.
     }
+  }
+
+  readonly blockPending = signal(false);
+
+  /**
+   * Blocks or unblocks this player. Blocking asks first: it also removes
+   * follows both ways, and stops race invites and chat between you.
+   */
+  async toggleBlock(): Promise<void> {
+    const p = this.profile();
+    if (!p || p.isOwner || this.blockPending()) return;
+    const next = !p.isBlocked;
+    if (next && !confirm(`Block ${p.displayName}? You will stop following each other, and you won't see their race chat or invites.`)) return;
+    this.blockPending.set(true);
+    const res = await this.api.setBlocked(p.id, next);
+    this.blockPending.set(false);
+    if (!res.success) {
+      this.error.set(res.error || 'Something went wrong');
+      return;
+    }
+    this.profile.update((prev) => prev && { ...prev, isBlocked: next, isFollowing: next ? false : prev.isFollowing });
+    void this.auth.refreshProfile();
   }
 
   async handleFollowToggle(): Promise<void> {

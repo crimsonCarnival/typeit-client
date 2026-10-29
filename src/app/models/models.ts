@@ -27,18 +27,40 @@ export interface UserStats {
 
 /** Display and typing preferences, kept on the account (server config/settings.js). */
 export interface PlayerSettings {
-  theme: 'crimson' | 'ocean' | 'forest' | 'light';
+  /** A theme id from utils/themes.ts. */
+  theme: string;
   typingFont: 'default' | 'mono' | 'serif';
   fontSize: 's' | 'm' | 'l' | 'xl';
   /** What the in-run head shows: everything, speed and timer, or the timer only. */
   liveStats: 'all' | 'speed' | 'timer';
-  soundPack: 'typewriter' | 'click' | 'soft';
+  soundPack: 'typewriter' | 'click' | 'soft' | 'beep' | 'pop' | 'sine' | 'square' | 'triangle' | 'sawtooth';
   keyboardLayout: 'qwerty' | 'dvorak' | 'colemak';
   caretStyle: CaretStyle;
   difficulty: Difficulty;
   stopOnError: StopOnError;
   spaceSkips: boolean;
   soundMuted: boolean;
+  soundVolume: 0.1 | 0.25 | 0.5 | 0.75 | 1;
+  errorSound: boolean;
+  /** Seconds left when a warning sounds in a timed test (0 = off). */
+  timeWarning: 0 | 1 | 3 | 5 | 10;
+  blindMode: boolean;
+  typedEffect: 'keep' | 'fade' | 'hide';
+  timerColor: 'main' | 'text' | 'sub';
+  timerOpacity: 0.25 | 0.5 | 0.75 | 1;
+  /** Which restart shortcuts work: Esc (new text), Tab (same text), both or neither. */
+  quickRestart: 'both' | 'esc' | 'tab' | 'off';
+  smoothCaret: 'off' | 'slow' | 'medium' | 'fast';
+  highlightMode: 'letter' | 'word';
+  tapeMode: boolean;
+  paceCaret: 'off' | 'pb' | 'average' | 'last' | 'custom';
+  paceCaretWpm: number;
+  /** Expert fails a test on a word finished with a mistake; master on any wrong key. */
+  failMode: 'normal' | 'expert' | 'master';
+  /** 0 = off. */
+  minWpm: number;
+  minAccuracy: number;
+  saveResults: boolean;
 }
 
 export interface User {
@@ -56,6 +78,13 @@ export interface User {
   timezone?: string;
   /** True when the player chose their zone instead of following the browser. */
   timezoneManual?: boolean;
+  /** Sign-in methods: a password, and the Google account linked (if any). */
+  hasPassword?: boolean;
+  googleEmail?: string | null;
+  leaderboardOptOut?: boolean;
+  streakHourOffset?: number;
+  streakOffsetSet?: boolean;
+  usernameChangedAt?: string | null;
   stats?: UserStats;
   followersCount: number;
   followingCount: number;
@@ -238,6 +267,82 @@ export interface LevelInfo {
   progress: number;
 }
 
+/** One saved result, in the short form the stats dashboard works with. */
+export interface ResultRow {
+  id: string;
+  /** When it was saved (ms). */
+  t: number;
+  wpm: number;
+  raw: number;
+  acc: number;
+  cons: number;
+  /** Seconds spent typing. */
+  secs: number;
+  mode: GameMode;
+  timeMax: number;
+  words: number;
+  mods: 'none' | 'punctuation' | 'numbers' | 'both';
+  lang: string | null;
+  /** Passed the integrity checks and is eligible for rankings. */
+  verified: boolean;
+  /** The integrity checks flagged it. */
+  flagged: boolean;
+  practice: string | null;
+  daily: boolean;
+  correct: number;
+  incorrect: number;
+  backspaces: number;
+  replay: boolean;
+}
+
+export interface PersonalBest {
+  /** The time limit (s) or word count the best belongs to. */
+  limit: number;
+  wpm: number;
+  accuracy: number;
+}
+
+/** What a profile shows beside the player's name: totals, personal bests and activity. */
+export interface ProfileOverview {
+  totals: {
+    started: number;
+    completed: number;
+    completionRate: number | null;
+    restartsPerTest: number | null;
+    timeTyping: number;
+    estimatedWords: number;
+  };
+  personalBests: {
+    time: (PersonalBest | null)[];
+    words: (PersonalBest | null)[];
+  };
+  activity: {
+    from: string;
+    to: string;
+    year: number | null;
+    years: number[];
+    total: number;
+    days: { date: string; count: number }[];
+  };
+}
+
+/** One release of the in-app changelog. */
+export interface ChangelogEntry {
+  scope: string | null;
+  text: string;
+  breaking: boolean;
+  pr: number | null;
+  hash: string;
+  repo: string | null;
+}
+
+export interface ChangelogRelease {
+  version: string;
+  date: string;
+  /** Section id (features, fixes, security, ...) to its entries; empty sections may be missing. */
+  sections: Record<string, ChangelogEntry[]>;
+}
+
 /** Tests a player started, and what became of them. */
 export interface TestOutcomes {
   started: number;
@@ -248,6 +353,14 @@ export interface TestOutcomes {
   approved: number;
   /** Finished but flagged by the integrity checks. */
   failed: number;
+}
+
+export interface BlockedUser {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+  blockedAt: string;
 }
 
 export interface PublicProfile {
@@ -265,6 +378,8 @@ export interface PublicProfile {
   followersCount: number;
   followingCount: number;
   isFollowing: boolean;
+  /** The viewer has blocked this player. */
+  isBlocked?: boolean;
   isOwner: boolean;
 }
 

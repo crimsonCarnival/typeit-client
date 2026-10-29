@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ElementRef, computed, effect, inject, input, output, signal } from '@angular/core';
+import { UserApiService } from '../../services/user-api.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -22,6 +23,20 @@ export class AuthModalComponent implements AfterViewInit {
   showPassword = false;
   readonly formError = signal('');
   readonly isSubmitting = signal(false);
+  readonly googleEnabled = signal(false);
+  readonly googleError = signal('');
+  private readonly userApi = inject(UserApiService);
+
+  /** Leaves for Google; the player comes back signed in to the page they were on. */
+  async continueWithGoogle(): Promise<void> {
+    this.googleError.set('');
+    this.isSubmitting.set(true);
+    const error = await this.auth.startGoogle('login', location.pathname + location.search);
+    if (error) {
+      this.googleError.set(error);
+      this.isSubmitting.set(false);
+    }
+  }
 
   readonly displayError = computed(() => this.formError() || this.auth.error() || '');
 
@@ -30,7 +45,8 @@ export class AuthModalComponent implements AfterViewInit {
     // mode reactively instead of reading the input in a field initializer.
     effect(() => {
       this.mode = this.initialMode();
-    });
+    });    // Only offer Google when the server has it set up.
+    void this.userApi.googleEnabled().then((res) => this.googleEnabled.set(!!res.data?.enabled));
   }
 
   ngAfterViewInit(): void {

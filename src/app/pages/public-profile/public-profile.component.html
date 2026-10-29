@@ -46,7 +46,7 @@
           </button>
           @if (profile()?.isOwner) {
             <a class="btn btn-outline" routerLink="/profile">Edit profile</a>
-          } @else if (isAuthenticated()) {
+          } @else if (isAuthenticated() && !profile()?.isBlocked) {
             <button
               type="button"
               class="btn"
@@ -59,9 +59,18 @@
             </button>
           }
           <button type="button" class="btn btn-outline" (click)="copyLink()">{{ copied() ? 'Link copied' : 'Share' }}</button>
+          @if (isAuthenticated() && !profile()?.isOwner) {
+            <button type="button" class="btn btn-outline" [class.btn-danger]="!profile()?.isBlocked" [disabled]="blockPending()" (click)="toggleBlock()">
+              {{ profile()?.isBlocked ? 'Unblock' : 'Block' }}
+            </button>
+          }
         </div>
       </div>
     </section>
+
+    @if (overview(); as ov) {
+      <app-profile-overview [overview]="ov" (yearChange)="onYear($event)" />
+    }
 
     <app-stats-sections [stats]="profile()?.stats ?? null" [overall]="publicStats()" />
   }

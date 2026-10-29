@@ -3,6 +3,7 @@ import { Component, DestroyRef, computed, effect, inject, signal } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { RaceService } from '../../services/race.service';
+import { UserApiService } from '../../services/user-api.service';
 import { RaceFriend, RaceMode, RacePlayer, RaceRatingEntry, RaceSettings } from '../../models/models';
 import { RaceMistakesComponent } from '../../components/race-mistakes/race-mistakes.component';
 import { ContextMenuDirective } from '../../components/menu/context-menu.directive';
@@ -246,6 +247,7 @@ export class RaceLobbyComponent {
     { label: p.displayName, heading: true },
     { label: 'View profile', action: () => void this.router.navigate(['/user', p.userId]) },
     ...(this.canKick(p) ? [{ separator: true }, { label: 'Kick from room', danger: true, hint: 'locks them out', action: () => this.race.kick(p.userId) } as MenuItem] : []),
+    ...(this.isMe(p) ? [] : [{ label: 'Block', danger: true, hint: 'hides their chat', action: () => void this.blockPlayer(p) } as MenuItem]),
   ];
 
   friendMenu = (f: RaceFriend): MenuItem[] => [
@@ -253,6 +255,15 @@ export class RaceLobbyComponent {
     { label: 'View profile', action: () => void this.router.navigate(['/user', f.userId]) },
     { label: this.invited().has(f.userId) ? 'Invited' : 'Invite to race', disabled: !f.online || this.room()?.state !== 'lobby' || this.invited().has(f.userId), hint: f.online ? undefined : 'offline', action: () => this.invite(f) },
   ];
+
+  private readonly userApi = inject(UserApiService);
+
+  /** Blocks a racer: no more chat or invites from them, and they can't join rooms you host. */
+  async blockPlayer(p: RacePlayer): Promise<void> {
+    if (!confirm(`Block ${p.displayName}? You won't see their chat or invites, and they can't join rooms you host.`)) return;
+    const res = await this.userApi.setBlocked(p.userId, true);
+    if (!res.success) this.race.error.set(res.error || 'Could not block that player.');
+  }
 
   invite(friend: RaceFriend): void {
     this.race.inviteFriend(friend.userId);

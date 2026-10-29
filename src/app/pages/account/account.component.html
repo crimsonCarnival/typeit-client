@@ -1,0 +1,201 @@
+<div class="account">
+  <nav class="side" aria-label="Account sections">
+    @for (t of tabs; track t.id) {
+      <button type="button" class="side-link" [class.active]="tab() === t.id" [class.danger]="t.id === 'danger'" [attr.aria-current]="tab() === t.id ? 'page' : null" (click)="show(t.id)">{{ t.label }}</button>
+    }
+  </nav>
+
+  <div class="content">
+    @if (notice()) {
+      <p class="notice" role="status">{{ notice() }}</p>
+    }
+
+    @if (user(); as u) {
+      @switch (tab()) {
+        @case ('account') {
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Account</h2>
+              <p>&#64;{{ u.username }} &#183; joined {{ joined() || '–' }}{{ u.level ? ' · level ' + u.level.level : '' }}. Change your display name, bio or avatar from your <a routerLink="/profile">profile</a>.</p>
+            </div>
+          </section>
+
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Update account name</h2>
+              <p>Change your username. <span class="warn">You can only do this once every 30 days.</span>
+                @if (usernameWait()) { <span>Next change: {{ usernameWait() }}.</span> }
+              </p>
+            </div>
+            <button type="button" class="btn" [disabled]="!!usernameWait()" (click)="open('username')">Update name</button>
+          </section>
+
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Set streak hour offset</h2>
+              <p>Streaks reset at midnight UTC by default. If that splits your evening, move where your day starts. <span class="warn">You can only do this once!</span>
+                @if (u.streakOffsetSet) { <span>Your offset: {{ (u.streakHourOffset ?? 0) >= 0 ? '+' : '' }}{{ u.streakHourOffset }}h.</span> }
+              </p>
+            </div>
+            <button type="button" class="btn" [disabled]="u.streakOffsetSet" (click)="open('streak')">{{ u.streakOffsetSet ? 'Already set' : 'Update hour offset' }}</button>
+          </section>
+
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Opt out of leaderboards</h2>
+              <p>Use this if you'd rather never appear on any ranking, daily board or race ladder. <span class="warn">You can't undo this action!</span></p>
+            </div>
+            <button type="button" class="btn" [disabled]="u.leaderboardOptOut" (click)="open('optout')">{{ u.leaderboardOptOut ? 'Opted out' : 'Opt out' }}</button>
+          </section>
+
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Reset personal bests</h2>
+              <p>Resets all your personal bests (but doesn't delete any tests from your history). <span class="warn">You can't undo this!</span></p>
+            </div>
+            <button type="button" class="btn" (click)="open('resetpbs')">Reset personal bests</button>
+          </section>
+        }
+
+        @case ('authentication') {
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Password authentication</h2>
+              <p>{{ u.hasPassword ? 'Change your password or the email you sign in with.' : 'Add a password, so you can sign in without Google.' }}</p>
+              @if (u.email) {
+                <p class="sub">
+                  Email:
+                  @if (showEmail()) { {{ u.email }} } @else { •••••••• }
+                  <button type="button" class="link" (click)="showEmail.set(!showEmail())">{{ showEmail() ? 'hide' : 'show' }}</button>
+                </p>
+              }
+            </div>
+            <div class="stack">
+              <button type="button" class="btn" (click)="open('password')">{{ u.hasPassword ? 'Change password' : 'Add password authentication' }}</button>
+              @if (u.hasPassword) {
+                <button type="button" class="btn" (click)="open('email')">Update email</button>
+              }
+            </div>
+          </section>
+
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Google</h2>
+              <p>Add or remove Google authentication.</p>
+              @if (!googleEnabled()) {
+                <p class="sub">Google sign-in is not set up on this server.</p>
+              }
+            </div>
+            <div class="stack">
+              @if (u.googleEmail) {
+                <span class="sub" [title]="'Linked Google account'">{{ maskedGoogle() }}</span>
+                <button type="button" class="btn" [disabled]="!u.hasPassword" [title]="u.hasPassword ? null : 'Add a password first, or you could not sign in again'" (click)="open('unlink')">Remove Google authentication</button>
+              } @else {
+                <button type="button" class="btn" [disabled]="!googleEnabled()" (click)="linkGoogle()">Add Google authentication</button>
+              }
+            </div>
+          </section>
+
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Revoke all tokens</h2>
+              <p>Signs your account out everywhere. Do this if you think someone else has access to your account. <span class="warn">This will log you out of all devices.</span></p>
+            </div>
+            <button type="button" class="btn danger solid" (click)="open('revoke')">Revoke all tokens</button>
+          </section>
+        }
+
+        @case ('blocked') {
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Blocked users</h2>
+              <p>Blocked players can't follow you, invite you to races or join rooms you host, and you don't see their race chat. They aren't told. Block someone from their profile, or from a race lobby.</p>
+            </div>
+          </section>
+          @if (blocked() === null) {
+            <p class="sub">Loading&#8230;</p>
+          } @else if (blocked()!.length === 0) {
+            <p class="sub">You haven't blocked anyone.</p>
+          } @else {
+            <ul class="blocked-list">
+              @for (b of blocked(); track b.userId) {
+                <li>
+                  <a class="blocked-name" [routerLink]="['/user', b.userId]">{{ b.displayName }} <span class="sub">&#64;{{ b.username }}</span></a>
+                  <span class="sub">since {{ when(b.blockedAt) }}</span>
+                  <button type="button" class="btn" (click)="unblock(b)">Unblock</button>
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @case ('danger') {
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Reset account</h2>
+              <p>Completely resets your progress to a blank state: results, statistics, level, achievements, streaks, lessons and daily attempts. Your name, avatar, follows, word lists and settings stay. <span class="warn">You can't undo this action!</span></p>
+            </div>
+            <button type="button" class="btn danger solid" (click)="open('reset')">Reset account</button>
+          </section>
+
+          <section class="row">
+            <div class="text">
+              <h2 class="label">Delete account</h2>
+              <p>Deletes your account and all data connected to it. <span class="warn">You can't undo this action!</span></p>
+            </div>
+            <button type="button" class="btn danger solid" (click)="open('delete')">Delete account</button>
+          </section>
+        }
+      }
+    }
+  </div>
+</div>
+
+@if (dialog(); as kind) {
+  <div class="overlay" (click)="close()">
+    <div #dialogEl class="dialog" [class.is-danger]="dialogs[kind].danger" role="dialog" aria-modal="true" aria-labelledby="acct-dialog-title" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="onKeydown($event)">
+      <h2 id="acct-dialog-title" class="dialog-title">{{ dialogs[kind].title }}</h2>
+      @if (dialogs[kind].text) {
+        <p class="dialog-text">{{ dialogs[kind].text }}</p>
+      }
+
+      @switch (kind) {
+        @case ('username') {
+          <input class="input" type="text" maxlength="20" autocomplete="username" aria-label="New username" [value]="field()" (input)="field.set(value($event))" (keydown.enter)="confirm()" />
+        }
+        @case ('streak') {
+          <label class="field"><span>Offset in hours (-11 to +12)</span>
+            <app-stepper><input class="input" type="number" min="-11" max="12" step="1" [value]="hours()" (input)="hours.set(value($event))" /></app-stepper>
+          </label>
+        }
+        @case ('password') {
+          @if (user()?.hasPassword) {
+            <input class="input" type="password" autocomplete="current-password" placeholder="Current password" aria-label="Current password" [value]="current()" (input)="current.set(value($event))" />
+          }
+          <input class="input" type="password" autocomplete="new-password" placeholder="New password (6+ characters)" aria-label="New password" [value]="next()" (input)="next.set(value($event))" />
+          <input class="input" type="password" autocomplete="new-password" placeholder="Repeat new password" aria-label="Repeat new password" [value]="repeat()" (input)="repeat.set(value($event))" (keydown.enter)="confirm()" />
+          @if (repeat() && next() !== repeat()) {
+            <p class="error">The passwords don't match.</p>
+          }
+        }
+        @case ('email') {
+          <input class="input" type="email" autocomplete="email" placeholder="New email" aria-label="New email" [value]="field()" (input)="field.set(value($event))" />
+          <input class="input" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" [value]="current()" (input)="current.set(value($event))" (keydown.enter)="confirm()" />
+        }
+      }
+
+      @if (dialogs[kind].typeName) {
+        <p class="dialog-text">To confirm, type your username, <b>{{ user()?.username }}</b>.</p>
+        <input class="input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Type your username to confirm" [value]="typed()" (input)="typed.set(value($event))" (keydown.enter)="confirm()" />
+      }
+
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="btn" [disabled]="busy()" (click)="close()">Cancel</button>
+        <button type="button" class="btn solid" [class.danger]="dialogs[kind].danger" [disabled]="!canSubmit()" (click)="confirm()">{{ busy() ? 'Working…' : dialogs[kind].confirm }}</button>
+      </div>
+    </div>
+  </div>
+}

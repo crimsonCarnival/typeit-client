@@ -63,7 +63,7 @@
   display: grid;
   place-items: center;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 64px;
 }
@@ -160,7 +160,7 @@
 .btn-primary {
   border: 0;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -207,4 +207,9 @@
   flex-wrap: wrap;
   gap: 8px;
   margin: 4px 0;
+}
+
+.btn-danger {
+  border-color: var(--color-error);
+  color: var(--color-error);
 }

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ApiResponse, FollowListUser, PlayerSearchResult, PlayerSettings, PublicProfile, TestOutcomes, User } from '../models/models';
+import { ApiResponse, FollowListUser, PlayerSearchResult, PlayerSettings, BlockedUser, ProfileOverview, PublicProfile, TestOutcomes, User } from '../models/models';
 import { ls } from '../utils/storage';
 
 /**
@@ -66,16 +66,49 @@ export class UserApiService {
     return this.call(this.http.patch<ApiResponse<User>>(`${this.base}/users/profile`, updates));
   }
 
-  deleteAccount(): Promise<ApiResponse<null>> {
-    return this.call(this.http.delete<ApiResponse<null>>(`${this.base}/users/account`));
-  }
-
   getLeaderboard(limit = 10, sortBy = 'highScore'): Promise<ApiResponse<any[]>> {
     return this.call(this.http.get<ApiResponse<any[]>>(`${this.base}/users/leaderboard`, { params: { limit: String(limit), sortBy } }));
   }
 
   searchUsers(query: string, limit = 20): Promise<ApiResponse<PlayerSearchResult[]>> {
     return this.call(this.http.get<ApiResponse<PlayerSearchResult[]>>(`${this.base}/users/search`, { params: { q: query, limit: String(limit) } }));
+  }
+
+  getOverview(userId: string, year?: number | null): Promise<ApiResponse<ProfileOverview>> {
+    const query = year ? `?year=${year}` : '';
+    return this.call(this.http.get<ApiResponse<ProfileOverview>>(`${this.base}/users/${userId}/overview${query}`));
+  }
+
+  /** Wipes the player's progress and keeps the account. `confirm` is their username. */
+  resetAccount(confirm: string): Promise<ApiResponse<{ reset: boolean }>> {
+    return this.call(this.http.post<ApiResponse<{ reset: boolean }>>(`${this.base}/users/account/reset`, { confirm }));
+  }
+
+  /** Deletes the account for good. `confirm` is the player's username. */
+  deleteAccount(confirm: string): Promise<ApiResponse<{ deleted: boolean }>> {
+    return this.call(this.http.delete<ApiResponse<{ deleted: boolean }>>(`${this.base}/users/account`, { body: { confirm } }));
+  }
+
+  googleEnabled(): Promise<ApiResponse<{ enabled: boolean }>> {
+    return this.call(this.http.get<ApiResponse<{ enabled: boolean }>>(`${this.base}/auth/google/enabled`));
+  }
+
+  googleUrl(mode: 'login' | 'link', nonce: string): Promise<ApiResponse<{ url: string }>> {
+    return this.call(this.http.post<ApiResponse<{ url: string }>>(`${this.base}/auth/google/url`, { mode, nonce }));
+  }
+
+  /** Account actions that answer only success or a reason. */
+  accountAction(path: string, body: Record<string, unknown> = {}, method: 'post' | 'delete' = 'post'): Promise<ApiResponse<unknown>> {
+    const url = `${this.base}${path}`;
+    return this.call((method === 'delete' ? this.http.delete<ApiResponse<unknown>>(url) : this.http.post<ApiResponse<unknown>>(url, body)) as Observable<ApiResponse<unknown>>);
+  }
+
+  listBlocked(): Promise<ApiResponse<{ users: BlockedUser[] }>> {
+    return this.call(this.http.get<ApiResponse<{ users: BlockedUser[] }>>(`${this.base}/users/blocks`));
+  }
+
+  setBlocked(userId: string, blocked: boolean): Promise<ApiResponse<unknown>> {
+    return this.accountAction(`/users/${userId}/block`, {}, blocked ? 'post' : 'delete');
   }
 
   getMyOutcomes(): Promise<ApiResponse<TestOutcomes>> {
