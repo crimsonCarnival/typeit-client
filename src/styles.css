@@ -1735,22 +1735,31 @@ button,
 /* ------------------------------------------------------------------
    Custom scrollbars: thin, themed, out of the way. Firefox gets the
    standard properties; Chromium/Safari the pseudo-elements.
+   The html and body selectors are listed explicitly so the page-level
+   (document root) scrollbar is also styled — a bare * does not reach it
+   in all Chromium versions.
    ------------------------------------------------------------------ */
-* {
+*, html, body {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-strong) transparent;
 }
 
-::-webkit-scrollbar {
+::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
-::-webkit-scrollbar-track {
+::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
   /* The transparent border keeps the thumb slim inside a roomier hit area. */
   border: 3px solid transparent;
   border-radius: 999px;
@@ -1758,12 +1767,16 @@ button,
   background-clip: padding-box;
 }
 
-::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-subtle);
   background-clip: padding-box;
 }
 
-::-webkit-scrollbar-corner {
+::-webkit-scrollbar-corner,
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner {
   background: transparent;
 }
 
