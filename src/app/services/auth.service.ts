@@ -9,6 +9,7 @@ import { UserApiService } from './user-api.service';
  */
 const GOOGLE_NONCE_KEY = 'google-nonce';
 const GOOGLE_RETURN_KEY = 'google-return';
+export const GOOGLE_REAUTH_KEY = 'google-reauth';
 const GOOGLE_ERRORS: Record<string, string> = {
   cancelled: 'Google sign-in was cancelled.',
   expired: 'That sign-in took too long. Please try again.',
@@ -18,6 +19,7 @@ const GOOGLE_ERRORS: Record<string, string> = {
   banned: 'This account is banned.',
   deactivated: 'This account is deactivated.',
   'no-account': 'Your account could not be found.',
+  'wrong-google': 'That is not the Google account linked to you.',
 };
 
 export const normalizeUser = (raw: any): User | null => {
@@ -179,11 +181,11 @@ export class AuthService {
    * A random nonce kept in this tab must come back with the result, so a
    * sign-in started elsewhere can't be slipped into this browser.
    */
-  async startGoogle(mode: 'login' | 'link', returnTo = '/'): Promise<string | null> {
+  async startGoogle(mode: 'login' | 'link' | 'reauth', returnTo = '/', password?: string): Promise<string | null> {
     const nonce = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
     sessionStorage.setItem(GOOGLE_NONCE_KEY, nonce);
     sessionStorage.setItem(GOOGLE_RETURN_KEY, returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/');
-    const res = await this.api.googleUrl(mode, nonce);
+    const res = await this.api.googleUrl(mode, nonce, password);
     if (!res.success || !res.data) return res.error === 'not-configured' ? 'Google sign-in is not set up on this server.' : res.error || 'Could not reach Google.';
     window.location.assign(res.data.url);
     return null;
@@ -202,6 +204,12 @@ export class AuthService {
     if (!expected || params.get('nonce') !== expected) return { next: '/', error: 'This sign-in was not started from this browser tab. Please try again.' };
     const error = params.get('error');
     if (error) return { next, error: GOOGLE_ERRORS[error] ?? 'Google sign-in failed.' };
+    const reauth = params.get('reauth');
+    if (reauth) {
+      // Confirmed with Google: the account page uses this to add a password.
+      sessionStorage.setItem(GOOGLE_REAUTH_KEY, reauth);
+      return { next };
+    }
     const ticket = params.get('ticket');
     if (ticket) {
       // Linking is completed by this signed-in session, never by the redirect alone.

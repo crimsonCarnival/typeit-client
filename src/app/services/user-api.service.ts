@@ -93,14 +93,19 @@ export class UserApiService {
     return this.call(this.http.get<ApiResponse<{ enabled: boolean }>>(`${this.base}/auth/google/enabled`));
   }
 
-  googleUrl(mode: 'login' | 'link', nonce: string): Promise<ApiResponse<{ url: string }>> {
-    return this.call(this.http.post<ApiResponse<{ url: string }>>(`${this.base}/auth/google/url`, { mode, nonce }));
+  googleUrl(mode: 'login' | 'link' | 'reauth', nonce: string, password?: string): Promise<ApiResponse<{ url: string }>> {
+    return this.call(this.http.post<ApiResponse<{ url: string }>>(`${this.base}/auth/google/url`, { mode, nonce, ...(password ? { password } : {}) }));
   }
 
   /** Account actions that answer only success or a reason. */
-  accountAction(path: string, body: Record<string, unknown> = {}, method: 'post' | 'delete' = 'post'): Promise<ApiResponse<unknown>> {
+  accountAction(path: string, body: Record<string, unknown> = {}, method: 'post' | 'delete' = 'post'): Promise<ApiResponse<{ token?: string }>> {
     const url = `${this.base}${path}`;
-    return this.call((method === 'delete' ? this.http.delete<ApiResponse<unknown>>(url) : this.http.post<ApiResponse<unknown>>(url, body)) as Observable<ApiResponse<unknown>>);
+    const request = method === 'delete' ? this.http.delete<ApiResponse<{ token?: string }>>(url) : this.http.post<ApiResponse<{ token?: string }>>(url, body);
+    return this.call(request).then((res) => {
+      // Changing a sign-in method signs out every other session; this one carries on with the fresh token.
+      if (res.success && res.data?.token) this.setToken(res.data.token);
+      return res;
+    });
   }
 
   listBlocked(): Promise<ApiResponse<{ users: BlockedUser[] }>> {

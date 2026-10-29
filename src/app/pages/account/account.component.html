@@ -71,7 +71,7 @@
               }
             </div>
             <div class="stack">
-              <button type="button" class="btn" (click)="open('password')">{{ u.hasPassword ? 'Change password' : 'Add password authentication' }}</button>
+              <button type="button" class="btn" (click)="addPassword()">{{ u.hasPassword ? 'Change password' : 'Add password authentication' }}</button>
               @if (u.hasPassword) {
                 <button type="button" class="btn" (click)="open('email')">Update email</button>
               }
@@ -177,6 +177,9 @@
           @if (repeat() && next() !== repeat()) {
             <p class="error">The passwords don't match.</p>
           }
+        }
+        @case ('link') {
+          <input class="input" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" [value]="current()" (input)="current.set(value($event))" (keydown.enter)="confirm()" />
         }
         @case ('email') {
           <input class="input" type="email" autocomplete="email" placeholder="New email" aria-label="New email" [value]="field()" (input)="field.set(value($event))" />

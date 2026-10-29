@@ -1,6 +1,6 @@
 import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, GOOGLE_REAUTH_KEY } from '../../services/auth.service';
 import { TimezoneService } from '../../services/timezone.service';
 import { UserApiService } from '../../services/user-api.service';
 import { GameService } from '../../services/game.service';
@@ -13,7 +13,7 @@ type Tab = 'account' | 'authentication' | 'blocked' | 'danger';
  * Every account action: dialogs ask for what each needs. Irreversible ones
  * need the username typed; security ones the current password.
  */
-type DialogKind = 'username' | 'streak' | 'optout' | 'resetpbs' | 'password' | 'email' | 'unlink' | 'revoke' | 'reset' | 'delete';
+type DialogKind = 'username' | 'streak' | 'optout' | 'resetpbs' | 'password' | 'email' | 'link' | 'unlink' | 'revoke' | 'reset' | 'delete';
 
 const DIALOGS: Record<DialogKind, { title: string; confirm: string; text: string; typeName?: boolean; danger?: boolean }> = {
   username: { title: 'Update username', confirm: 'Update', text: 'You can only do this once every 30 days.' },
@@ -22,6 +22,7 @@ const DIALOGS: Record<DialogKind, { title: string; confirm: string; text: string
   resetpbs: { title: 'Reset personal bests', confirm: 'Reset personal bests', text: 'Clears all your personal bests. Your test history stays. You can\'t undo this!', typeName: true, danger: true },
   password: { title: 'Password', confirm: 'Save password', text: '' },
   email: { title: 'Update email', confirm: 'Update email', text: 'Enter your password to change the email you sign in with.' },
+  link: { title: 'Add Google authentication', confirm: 'Continue to Google', text: 'Enter your password to link a Google account.' },
   unlink: { title: 'Remove Google authentication', confirm: 'Remove', text: 'You will sign in with your username or email and password only.' },
   revoke: { title: 'Revoke all tokens', confirm: 'Revoke all tokens', text: 'Signs your account out on every device, including this one.', danger: true },
   reset: { title: 'Reset account', confirm: 'Reset account', text: 'This erases all your progress and cannot be undone.', typeName: true, danger: true },
@@ -103,6 +104,7 @@ export class AccountComponent {
       case 'streak': return /^-?\d{1,2}$/.test(this.hours()) && Number(this.hours()) >= -11 && Number(this.hours()) <= 12;
       case 'password': return this.next().length >= 6 && this.next() === this.repeat() && (!u.hasPassword || this.current().length > 0);
       case 'email': return this.current().length > 0 && this.field().includes('@');
+      case 'link': return this.current().length > 0;
       default: return true;
     }
   });
@@ -116,6 +118,8 @@ export class AccountComponent {
       if (el) queueMicrotask(() => (el.querySelector<HTMLElement>('input') ?? el).focus());
     });
     void this.api.googleEnabled().then((res) => this.googleEnabled.set(!!res.data?.enabled));
+    // Back from confirming with Google to add a password.
+    if (sessionStorage.getItem(GOOGLE_REAUTH_KEY)) queueMicrotask(() => this.open('password'));
     if (this.tab() === 'blocked') void this.loadBlocked();
   }
 
@@ -176,9 +180,23 @@ export class AccountComponent {
     return this.tz.date(iso);
   }
 
+  /** Linking needs the password when there is one: a session alone must not add a way in. */
   async linkGoogle(): Promise<void> {
-    this.error.set('');
+    if (this.user()?.hasPassword) {
+      this.open('link');
+      return;
+    }
     const error = await this.auth.startGoogle('link', '/account?tab=authentication');
+    if (error) this.notice.set(error);
+  }
+
+  /** A Google-only account adds its first password after confirming with Google. */
+  async addPassword(): Promise<void> {
+    if (this.user()?.hasPassword || sessionStorage.getItem(GOOGLE_REAUTH_KEY)) {
+      this.open('password');
+      return;
+    }
+    const error = await this.auth.startGoogle('reauth', '/account?tab=authentication');
     if (error) this.notice.set(error);
   }
 
@@ -196,9 +214,21 @@ export class AccountComponent {
       case 'streak': res = await call('/users/account/streak-offset', { hours: Number(this.hours()) }); done = 'Streak offset set.'; break;
       case 'optout': res = await call('/users/account/leaderboard-opt-out'); done = 'You are off the leaderboards.'; break;
       case 'resetpbs': res = await call('/users/account/reset-pbs'); done = 'Personal bests reset.'; break;
-      case 'password': res = await call('/auth/password', { current: this.current() || undefined, next: this.next() }); done = 'Password saved.'; break;
-      case 'email': res = await call('/auth/email', { password: this.current(), email: this.field() }); done = 'Email updated.'; break;
-      case 'unlink': res = await call('/auth/google', {}, 'delete'); done = 'Google removed.'; break;
+      case 'password': {
+        const reauth = sessionStorage.getItem(GOOGLE_REAUTH_KEY) ?? undefined;
+        res = await call('/auth/password', { current: this.current() || undefined, next: this.next(), reauth });
+        if (res.success) sessionStorage.removeItem(GOOGLE_REAUTH_KEY);
+        done = 'Password saved. Other devices were signed out.';
+        break;
+      }
+      case 'link': {
+        this.busy.set(false);
+        const error = await this.auth.startGoogle('link', '/account?tab=authentication', this.current());
+        if (error) this.error.set(error);
+        return;
+      }
+      case 'email': res = await call('/auth/email', { password: this.current(), email: this.field() }); done = 'Email updated. Other devices were signed out.'; break;
+      case 'unlink': res = await call('/auth/google', {}, 'delete'); done = 'Google removed. Other devices were signed out.'; break;
       case 'revoke': res = await call('/auth/revoke-all'); break;
       case 'reset': res = await this.api.resetAccount(u.username); done = 'Your account was reset.'; break;
       case 'delete': res = await this.api.deleteAccount(u.username); break;
