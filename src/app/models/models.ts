@@ -15,6 +15,8 @@ export interface UserStats {
   bestAccuracy?: number;
   totalTimeTyping?: number;
   incompleteSessions?: number;
+  /** Tests whose first key was typed; gamesPlayed counts the finished ones. */
+  testsStarted?: number;
   afkTime?: number;
   afkPeriods?: number;
   byTime?: Record<string, StatsBucket | undefined>;
@@ -49,6 +51,8 @@ export interface User {
   bio?: string;
   role?: string;
   timezone?: string;
+  /** True when the player chose their zone instead of following the browser. */
+  timezoneManual?: boolean;
   stats?: UserStats;
   followersCount: number;
   followingCount: number;
@@ -287,7 +291,8 @@ export type RankingRegion = 'all' | 'africa' | 'americas' | 'asia' | 'europe' | 
 export interface RankingQuery {
   period: RankingPeriod;
   mode: GameMode;
-  time: number;
+  /** null for phrases, which have no time limit. */
+  time: number | null;
   modifiers: RankingModifiers;
   region: RankingRegion;
 }
@@ -329,6 +334,24 @@ export interface DailyLeader {
   avatar: string;
   wpm: number;
   accuracy: number;
+}
+
+export interface DailyDay {
+  date: string;
+  settings: DailySettings;
+  started: number;
+  finished: number;
+  rankedCount: number;
+  averageWpm: number | null;
+  winner: DailyLeader | null;
+  entries: DailyLeader[];
+  me: {
+    status: 'not-played' | 'in-progress' | 'finished';
+    wpm: number | null;
+    accuracy: number | null;
+    ranked: boolean;
+    rank: number | null;
+  } | null;
 }
 
 export interface DailyOverview {
@@ -472,6 +495,48 @@ export interface RaceSettings {
   countdownSec: number;
   punctuation: boolean;
   numbers: boolean;
+}
+
+export interface RaceMistakePlayer {
+  userId: string;
+  displayName: string;
+  username: string;
+  place: number | null;
+  wpm: number | null;
+  accuracy: number | null;
+  /** False when the run has no keystroke log (DNF, or never saved). */
+  hasData: boolean;
+  mistakes?: number;
+  backspaces?: number;
+  blocked?: number;
+  worstKeys?: { key: string; count: number }[];
+  /** Mistakes made in each word of the shared text. */
+  wordErrors?: number[];
+}
+
+export interface RaceMistakes {
+  raceId: string;
+  code: string;
+  name: string;
+  finishedAt: string;
+  players: RaceMistakePlayer[];
+  words: string[];
+  hardestWords: { word: string; errors: number }[];
+}
+
+export interface RaceHistoryEntry {
+  raceId: string;
+  code: string;
+  name: string;
+  finishedAt: string;
+  mode: RaceMode;
+  wordCount: number;
+  timeLimit: number | null;
+  rated: boolean;
+  racers: number;
+  place: number | null;
+  wpm: number | null;
+  accuracy: number | null;
 }
 
 export interface RaceRoom extends RaceSettings {

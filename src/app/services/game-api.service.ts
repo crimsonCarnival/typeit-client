@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Achievement, ApiResponse, ErrorTrends, GhostTimeline, LiveStats, Replay, DailyOverview, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
+import { Achievement, ApiResponse, ErrorTrends, GhostTimeline, LiveStats, Replay, DailyOverview, DailyDay, ErrorMap, LearnOverview, PracticeKind, WordList, RankingQuery, RankingsResponse, SessionHistoryResponse } from '../models/models';
 
 /**
  * Game HTTP service. Mirrors the React typeIt.api wrapper: every method
@@ -34,7 +34,7 @@ export class GameApiService {
   }
 
   getRankings(query: RankingQuery): Promise<ApiResponse<RankingsResponse>> {
-    const params = new HttpParams({ fromObject: { ...query, time: String(query.time) } });
+    const params = new HttpParams({ fromObject: { ...query, time: String(query.time ?? 60) } });
     return this.call(this.http.get<ApiResponse<RankingsResponse>>(`${this.base}/rankings`, { params }));
   }
 
@@ -81,6 +81,10 @@ export class GameApiService {
 
   getDaily(): Promise<ApiResponse<DailyOverview>> {
     return this.call(this.http.get<ApiResponse<DailyOverview>>(`${this.base}/daily`));
+  }
+
+  getDailyDay(date: string): Promise<ApiResponse<DailyDay>> {
+    return this.call(this.http.get<ApiResponse<DailyDay>>(`${this.base}/daily/day/${encodeURIComponent(date)}`));
   }
 
   getReplay(resultId: string): Promise<ApiResponse<Replay>> {

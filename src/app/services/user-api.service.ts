@@ -62,7 +62,7 @@ export class UserApiService {
     return this.call(this.http.get<ApiResponse<User>>(`${this.base}/users/profile`));
   }
 
-  updateProfile(updates: Partial<Pick<User, 'displayName' | 'bio' | 'avatar' | 'timezone'>>): Promise<ApiResponse<User>> {
+  updateProfile(updates: Partial<Pick<User, 'displayName' | 'bio' | 'avatar' | 'timezone' | 'timezoneManual'>>): Promise<ApiResponse<User>> {
     return this.call(this.http.patch<ApiResponse<User>>(`${this.base}/users/profile`, updates));
   }
 

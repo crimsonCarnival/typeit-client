@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { GameService } from './game.service';
-import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceInvite, RaceRatingEntry, RaceRoom, RaceSettings } from '../models/models';
+import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceHistoryEntry, RaceInvite, RaceMistakes, RaceRatingEntry, RaceRoom, RaceSettings } from '../models/models';
 import { ls } from '../utils/storage';
 
 const SOCKET_PATH = '/ws/race';
@@ -251,6 +251,35 @@ export class RaceService {
 
   emote(emote: RaceEmote): void {
     this.send({ type: 'emote', emote });
+  }
+
+  /** Every racer's mistakes in a finished race (id, or the room code for its latest race). */
+  async loadMistakes(ref: string): Promise<{ data: RaceMistakes | null; error: string }> {
+    try {
+      const res = await firstValueFrom(
+        this.http.get<ApiResponse<RaceMistakes>>(`${environment.apiUrl}/race/${encodeURIComponent(ref)}/mistakes`)
+      );
+      return { data: res.data ?? null, error: res.data ? '' : res.error || 'Could not load the comparison' };
+    } catch (err) {
+      // The race is saved a moment after the last finisher, so an early request can miss it.
+      const status = (err as { status?: number }).status;
+      return {
+        data: null,
+        error: status === 404 ? 'This race is still being saved.' : status === 403 ? 'Only the racers can compare mistakes.' : 'Could not load the comparison.',
+      };
+    }
+  }
+
+  /** The player's latest finished races. */
+  async loadHistory(): Promise<RaceHistoryEntry[]> {
+    try {
+      const res = await firstValueFrom(
+        this.http.get<ApiResponse<{ races: RaceHistoryEntry[] }>>(`${environment.apiUrl}/race/history`)
+      );
+      return res.data?.races ?? [];
+    } catch {
+      return [];
+    }
   }
 
   async loadLeaderboard(): Promise<RaceRatingEntry[]> {

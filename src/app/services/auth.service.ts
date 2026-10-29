@@ -18,6 +18,7 @@ export const normalizeUser = (raw: any): User | null => {
     bio: raw.bio || '',
     role: raw.role,
     timezone: raw.timezone,
+    timezoneManual: !!raw.timezoneManual,
     stats: raw.stats,
     settings: raw.settings ?? {},
     followersCount: Array.isArray(raw.followers)
@@ -69,7 +70,8 @@ export class AuthService {
   private async persistTimezone(user: User | null): Promise<void> {
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (user && user.timezone !== tz) {
+      // A zone the player picked in Settings is not overwritten by the browser's.
+      if (user && !user.timezoneManual && user.timezone !== tz) {
         await this.api.updateProfile({ timezone: tz });
       }
     } catch {
@@ -164,7 +166,7 @@ export class AuthService {
     }
   }
 
-  async updateProfile(updates: Partial<Pick<User, 'displayName' | 'bio' | 'avatar' | 'timezone'>>): Promise<{ success: boolean; error?: string }> {
+  async updateProfile(updates: Partial<Pick<User, 'displayName' | 'bio' | 'avatar' | 'timezone' | 'timezoneManual'>>): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await this.api.updateProfile(updates);
       if (response.success) {
