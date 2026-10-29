@@ -13,12 +13,15 @@ export class ChangelogService {
   readonly loaded = signal(false);
   readonly failed = signal(false);
   readonly latest = computed(() => this.releases()[0]?.version ?? null);
+  /** Whether the release notes modal is showing (opened from the footer or a notification). */
+  readonly open = signal(false);
   private started = false;
 
-  /** Loads the notes once. Safe to call from several places. */
-  async load(): Promise<void> {
-    if (this.started) return;
+  /** Loads the notes once (or again with `fresh`, when a new release was announced). Safe to call from several places. */
+  async load(fresh = false): Promise<void> {
+    if (this.started && !fresh) return;
     this.started = true;
+    this.failed.set(false);
     try {
       const res = await fetch(`${environment.apiUrl}/changelog`);
       if (!res.ok) throw new Error(String(res.status));

@@ -2,19 +2,25 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
+import { ChangelogService } from './changelog.service';
 import { ApiResponse, AppNotification, NotificationPrefs } from '../models/models';
 
 const PAGE = 30;
 const TOAST_MS = 6000;
 // Types already shown by their own live UI (the race invite banner), so no toast.
 const NO_TOAST = new Set(['race-invite']);
+// Where notices stored before every type carried a link lead.
+const FALLBACK_LINK: Record<string, string> = { account: '/account' };
 
 /** The inbox: loaded when signed in, kept current by notifications pushed over the race socket. */
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly changelog = inject(ChangelogService);
   private readonly base = `${environment.apiUrl}/notifications`;
 
   readonly items = signal<AppNotification[]>([]);
@@ -74,11 +80,30 @@ export class NotificationService {
     }
   }
 
+  /** Whether clicking the notification leads anywhere. */
+  opens(n: AppNotification): boolean {
+    return n.type === 'changelog' || !!this.linkOf(n);
+  }
+
+  /** Opens what the notification is about (a page, or the release notes), and marks it read. */
+  open(n: AppNotification): void {
+    if (!n.read) void this.markRead([n.id]);
+    const link = this.linkOf(n);
+    if (n.type === 'changelog') this.changelog.open.set(true);
+    else if (link) void this.router.navigateByUrl(link);
+  }
+
+  private linkOf(n: AppNotification): string | null {
+    return n.link ?? FALLBACK_LINK[n.type] ?? null;
+  }
+
   /** A notification pushed live. */
   receive(n: AppNotification): void {
     if (this.items().some((x) => x.id === n.id)) return;
     this.items.update((list) => [n, ...list]);
     this.unread.update((c) => c + 1);
+    // The notes loaded at startup predate the release just announced.
+    if (n.type === 'changelog') void this.changelog.load(true);
     if (NO_TOAST.has(n.type)) return;
     this.toasts.update((list) => [...list, n].slice(-3));
     setTimeout(() => this.dismissToast(n.id), TOAST_MS);

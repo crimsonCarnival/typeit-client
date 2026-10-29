@@ -48,7 +48,7 @@
       {{ themeName() }}
     </button>
     @if (changelog.latest(); as version) {
-      <button type="button" class="version" title="See what's new" (click)="changelogOpen.set(true)">{{ version }}</button>
+      <button type="button" class="version" title="See what's new" (click)="changelog.open.set(true)">{{ version }}</button>
     }
   </footer>
 }
@@ -57,14 +57,14 @@
   <app-theme-picker (closed)="themePickerOpen.set(false)" />
 }
 
-@if (changelogOpen()) {
-  <app-changelog-modal (closed)="changelogOpen.set(false)" />
+@if (changelog.open()) {
+  <app-changelog-modal (closed)="changelog.open.set(false)" />
 }
 
 <div class="toasts" aria-live="polite" aria-atomic="false">
   @for (t of notifications.toasts(); track t.id) {
     <div class="toast" role="status">
-      <button type="button" class="toast-main" (click)="openToast(t.link, t.id)">
+      <button type="button" class="toast-main" (click)="openToast(t)">
         <span class="toast-title">{{ t.title }}</span>
         @if (t.body) {
           <span class="toast-body">{{ t.body }}</span>

@@ -1,5 +1,4 @@
 import { Component, ElementRef, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import { NotificationService } from '../../services/notification.service';
 import { AppNotification } from '../../models/models';
 import { ContextMenuDirective } from '../menu/context-menu.directive';
@@ -18,7 +17,6 @@ import { MenuItem } from '../menu/menu.service';
 })
 export class NotificationBellComponent {
   readonly notifications = inject(NotificationService);
-  private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly open = signal(false);
@@ -35,15 +33,12 @@ export class NotificationBellComponent {
 
   /** Opens what the notification is about, and marks it read. */
   go(n: AppNotification): void {
-    if (!n.read) void this.notifications.markRead([n.id]);
-    if (n.link) {
-      this.open.set(false);
-      void this.router.navigateByUrl(n.link);
-    }
+    if (this.notifications.opens(n)) this.open.set(false);
+    this.notifications.open(n);
   }
 
   menuFor = (n: AppNotification): MenuItem[] => [
-    ...(n.link ? [{ label: 'Open', action: () => this.go(n) }] : []),
+    ...(this.notifications.opens(n) ? [{ label: 'Open', action: () => this.go(n) }] : []),
     { label: 'Mark as read', disabled: n.read, action: () => void this.notifications.markRead([n.id]) },
     { label: 'Mark all as read', disabled: !this.notifications.hasUnread(), action: () => void this.notifications.markRead() },
   ];

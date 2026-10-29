@@ -16,6 +16,7 @@ import { ThemePickerComponent } from './components/theme-picker/theme-picker.com
 import { themeById } from './utils/themes';
 import { TooltipService } from './components/tooltip/tooltip.service';
 import { NotificationService } from './services/notification.service';
+import { AppNotification } from './models/models';
 
 @Component({
   selector: 'app-root',
@@ -30,7 +31,6 @@ export class App {
   private readonly router = inject(Router);
   readonly notifications = inject(NotificationService);
   readonly changelog = inject(ChangelogService);
-  readonly changelogOpen = signal(false);
   readonly themePickerOpen = signal(false);
   readonly themeName = computed(() => themeById(this.settings.settings().theme).name);
   private readonly game = inject(GameService);
@@ -67,10 +67,9 @@ export class App {
   readonly focusMode = computed(() => this.game.gameState().isTyping && this.url().split(/[?#]/)[0].startsWith('/play'));
 
   /** A toast opens what the notification is about. */
-  openToast(link: string | null, id: string): void {
-    void this.notifications.markRead([id]);
-    this.notifications.dismissToast(id);
-    if (link) void this.router.navigateByUrl(link);
+  openToast(n: AppNotification): void {
+    this.notifications.dismissToast(n.id);
+    this.notifications.open(n);
   }
 
   acceptInvite(): void {
