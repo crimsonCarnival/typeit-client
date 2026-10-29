@@ -336,6 +336,8 @@ export interface ChangelogEntry {
   repo: string | null;
   /** ISO date ('YYYY-MM-DD') of the commit — used to group entries by weekday. */
   day?: string;
+  /** Exact commit time (ISO), so entries group by the player's local day. Missing on notes compiled before it existed. */
+  at?: string;
 }
 
 export interface ChangelogRelease {

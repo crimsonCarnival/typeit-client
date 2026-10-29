@@ -23,67 +23,47 @@
       } @else if (changelog.failed() || !changelog.releases().length) {
         <p class="note">{{ changelog.failed() ? 'Could not load the release notes.' : 'No release notes yet.' }}</p>
       } @else {
-        @for (release of visible(); track release.version) {
-          <article class="release" [id]="'release-' + release.version">
+        @for (release of releases(); track release.version) {
+          <article class="release" [id]="'release-' + release.version" [attr.aria-labelledby]="'v-' + release.version">
             <header class="release-head">
-              <h3 class="version">{{ release.version }}</h3>
-              <time class="when" [attr.datetime]="release.date">{{ date(release.date) }}</time>
+              <h3 class="version" [id]="'v-' + release.version">{{ release.version }}</h3>
+              <span class="when">{{ release.range }} &#183; {{ release.total }} {{ release.total === 1 ? 'change' : 'changes' }}</span>
             </header>
 
-            @for (s of sections; track s.id) {
-              @if (has(release, s.id)) {
-                <section class="section" [attr.aria-label]="s.title">
-                  <h4 class="section-title">{{ s.title }}</h4>
-                  @if (s.note) {
-                    <p class="section-note">{{ s.note }}</p>
-                  }
+            @for (day of release.days; track day.key) {
+              <section class="day" [attr.aria-label]="day.weekday + ', ' + day.date">
+                <h4 class="day-head">
+                  <span class="weekday">{{ day.weekday }}</span>
+                  <time class="day-date" [attr.datetime]="day.key">{{ day.date }}</time>
+                </h4>
 
-                  @if (isMultiDay(release, s.id)) {
-                    <!-- Multiple days: render a labelled day bucket per day -->
-                    @for (group of dayGroups(release, s.id); track group.day) {
-                      <div class="day-group">
-                        <span class="day-label">{{ group.label }}</span>
-                        <ul class="entries">
-                          @for (e of group.entries; track $index) {
+                @for (s of day.sections; track s.id) {
+                  <div class="kind" [attr.data-kind]="s.id">
+                    <h5 class="kind-title" [attr.title]="s.note ?? null">{{ s.title }}</h5>
+                    <div class="scopes">
+                      @for (g of s.scopes; track g.scope) {
+                        <span class="scope">{{ g.scope ?? 'general' }}</span>
+                        <ul class="items">
+                          @for (item of g.items; track $index) {
                             <li>
-                              @if (e.breaking) {
+                              @if (item.breaking) {
                                 <span class="breaking" title="A breaking change">breaking</span>
                               }
-                              @if (e.scope) {
-                                <b class="scope">{{ e.scope }}:</b>
+                              {{ item.text }}
+                              @for (pr of item.prs; track pr) {
+                                <span class="ref">#{{ pr }}</span>
                               }
-                              {{ e.text }}
-                              @if (e.pr) {
-                                <span class="ref">(#{{ e.pr }})</span>
+                              @for (r of item.refs; track r.hash) {
+                                <span class="ref" [attr.title]="r.repo ? 'Commit in ' + r.repo : null">{{ r.hash.slice(0, 7) }}</span>
                               }
-                              <span class="ref" [attr.title]="e.repo ? 'Commit in the ' + e.repo + ' repository' : null">({{ e.hash }})</span>
                             </li>
                           }
                         </ul>
-                      </div>
-                    }
-                  } @else {
-                    <!-- Single day or undated: flat list, no day headers -->
-                    <ul class="entries">
-                      @for (e of release.sections[s.id] ?? []; track $index) {
-                        <li>
-                          @if (e.breaking) {
-                            <span class="breaking" title="A breaking change">breaking</span>
-                          }
-                          @if (e.scope) {
-                            <b class="scope">{{ e.scope }}:</b>
-                          }
-                          {{ e.text }}
-                          @if (e.pr) {
-                            <span class="ref">(#{{ e.pr }})</span>
-                          }
-                          <span class="ref" [attr.title]="e.repo ? 'Commit in the ' + e.repo + ' repository' : null">({{ e.hash }})</span>
-                        </li>
                       }
-                    </ul>
-                  }
-                </section>
-              }
+                    </div>
+                  </div>
+                }
+              </section>
             }
           </article>
         }

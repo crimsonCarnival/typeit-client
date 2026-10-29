@@ -20,14 +20,14 @@ const SECTIONS: { id: string; title: string; note?: string }[] = [
 
 const PAGE = 5;
 
-/** Day bucket: a weekday label and its entries. */
-export interface DayGroup {
-  day: string;     // 'YYYY-MM-DD' or '' for entries without a date
-  label: string;   // e.g. 'Monday' or 'Other'
-  entries: ChangelogEntry[];
-}
+/** One line in the notes. The same subject committed to both repos is one item with two refs. */
+type Item = { scope: string | null; text: string; breaking: boolean; prs: number[]; refs: { hash: string; repo: string | null }[]; at: string };
+type ScopeGroup = { scope: string | null; items: Item[] };
+type DaySection = { id: string; title: string; note?: string; scopes: ScopeGroup[] };
+type Day = { key: string; weekday: string; date: string; sections: DaySection[] };
+type ReleaseView = { version: string; range: string; total: number; days: Day[] };
 
-/** The release notes: every version, newest first, grouped into features, fixes, security and more. */
+/** The release notes: every version, newest first, split by weekday, then by kind of change. */
 @Component({
   selector: 'app-changelog-modal',
   templateUrl: './changelog-modal.component.html',
@@ -39,9 +39,8 @@ export class ChangelogModalComponent {
   private readonly tz = inject(TimezoneService);
 
   readonly closed = output<void>();
-  readonly sections = SECTIONS;
   readonly count = signal(PAGE);
-  readonly visible = computed(() => this.changelog.releases().slice(0, this.count()));
+  readonly releases = computed(() => this.changelog.releases().slice(0, this.count()).map((r) => this.view(r)));
   readonly hasMore = computed(() => this.count() < this.changelog.releases().length);
   private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
 
@@ -57,48 +56,6 @@ export class ChangelogModalComponent {
     this.count.update((n) => n + PAGE);
   }
 
-  date(iso: string): string {
-    return this.tz.date(`${iso}T12:00:00Z`);
-  }
-
-  /** Whether a release has anything in a section. */
-  has(release: ChangelogRelease, id: string): boolean {
-    return (release.sections[id]?.length ?? 0) > 0;
-  }
-
-  /**
-   * Groups entries in a section by their commit day (newest first).
-   * Entries without a `day` fall into a trailing "Other" bucket.
-   */
-  dayGroups(release: ChangelogRelease, sectionId: string): DayGroup[] {
-    const entries = release.sections[sectionId] ?? [];
-    const map = new Map<string, ChangelogEntry[]>();
-    for (const e of entries) {
-      const key = e.day ?? '';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(e);
-    }
-
-    const days = [...map.keys()].sort((a, b) => {
-      if (!a) return 1;   // undated last
-      if (!b) return -1;
-      return a < b ? 1 : a > b ? -1 : 0; // newest first
-    });
-
-    return days.map((day) => ({
-      day,
-      label: day ? this.weekdayLabel(day) : 'Other',
-      entries: map.get(day)!,
-    }));
-  }
-
-  /** Returns `true` when a section has more than one distinct day so the day headers are worth showing. */
-  isMultiDay(release: ChangelogRelease, sectionId: string): boolean {
-    const entries = release.sections[sectionId] ?? [];
-    const days = new Set(entries.map((e) => e.day ?? ''));
-    return days.size > 1;
-  }
-
   /** Jumps to a release, loading older ones as far as needed. */
   jump(event: Event): void {
     const version = (event.target as HTMLSelectElement).value;
@@ -108,10 +65,73 @@ export class ChangelogModalComponent {
     queueMicrotask(() => document.getElementById(`release-${version}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
 
-  private weekdayLabel(iso: string): string {
-    const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    // Parse as noon UTC to avoid timezone shifting the day.
-    const d = new Date(`${iso}T12:00:00Z`);
-    return DAYS[d.getUTCDay()] ?? iso;
+  /** A release as days (newest first), each with its sections and the entries grouped by scope. */
+  private view(release: ChangelogRelease): ReleaseView {
+    const days = new Map<string, Map<string, Map<string, Item>>>();
+    let total = 0;
+    for (const s of SECTIONS) {
+      for (const e of release.sections[s.id] ?? []) {
+        const key = this.dayOf(e, release.date);
+        const sections = days.get(key) ?? days.set(key, new Map()).get(key)!;
+        const items = sections.get(s.id) ?? sections.set(s.id, new Map()).get(s.id)!;
+        // Same scope and subject on the same day is the same change (often one commit per repo).
+        // fix(security) lands in Security already: its scope would only repeat the heading.
+        const id = `${e.scope ?? ''}\u0000${e.text.trim().toLowerCase()}`;
+        const item = items.get(id);
+        if (item) {
+          if (!item.refs.some((r) => r.hash === e.hash)) item.refs.push({ hash: e.hash, repo: e.repo });
+          if (e.pr && !item.prs.includes(e.pr)) item.prs.push(e.pr);
+          item.breaking ||= e.breaking;
+          continue;
+        }
+        items.set(id, { scope: e.scope === s.id ? null : e.scope, text: e.text.charAt(0).toUpperCase() + e.text.slice(1), breaking: e.breaking, prs: e.pr ? [e.pr] : [], refs: [{ hash: e.hash, repo: e.repo }], at: e.at ?? '' });
+        total++;
+      }
+    }
+
+    const keys = [...days.keys()].sort().reverse();
+    return {
+      version: release.version,
+      range: this.range(keys),
+      total,
+      days: keys.map((key) => ({
+        key,
+        weekday: this.label(key, { weekday: 'long' }),
+        date: this.label(key, { month: 'short', day: 'numeric' }),
+        sections: SECTIONS.filter((s) => days.get(key)!.has(s.id)).map((s) => ({ ...s, scopes: this.byScope([...days.get(key)!.get(s.id)!.values()]) })),
+      })),
+    };
+  }
+
+  /** Scoped entries first, alphabetically by scope; within a scope, newest first. */
+  private byScope(items: Item[]): ScopeGroup[] {
+    const groups = new Map<string | null, Item[]>();
+    for (const item of items) {
+      (groups.get(item.scope) ?? groups.set(item.scope, []).get(item.scope)!).push(item);
+    }
+    return [...groups.entries()]
+      .sort(([a], [b]) => (a === null ? 1 : b === null ? -1 : a.localeCompare(b)))
+      .map(([scope, list]) => ({ scope, items: list.sort((x, y) => y.at.localeCompare(x.at)) }));
+  }
+
+  /** The player's local day of a commit; older notes only carry the UTC day. */
+  private dayOf(e: ChangelogEntry, fallback: string): string {
+    if (e.at) {
+      // en-CA formats as YYYY-MM-DD, which also sorts.
+      return new Intl.DateTimeFormat('en-CA', { timeZone: this.tz.zone(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(e.at));
+    }
+    return e.day ?? fallback;
+  }
+
+  private label(key: string, options: Intl.DateTimeFormatOptions): string {
+    return new Intl.DateTimeFormat(undefined, { ...options, timeZone: 'UTC' }).format(new Date(`${key}T12:00:00Z`));
+  }
+
+  private range(keys: string[]): string {
+    if (!keys.length) return '';
+    const first = keys[keys.length - 1];
+    const last = keys[0];
+    const fmt = (k: string) => this.label(k, { month: 'short', day: 'numeric' });
+    return first === last ? fmt(last) : `${fmt(first)} – ${fmt(last)}`;
   }
 }
