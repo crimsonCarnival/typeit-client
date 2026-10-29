@@ -1734,14 +1734,15 @@ button,
 
 /* ------------------------------------------------------------------
    Custom scrollbars: thin, themed, out of the way. Firefox gets the
-   standard properties; Chromium/Safari the pseudo-elements.
-   The html and body selectors are listed explicitly so the page-level
-   (document root) scrollbar is also styled — a bare * does not reach it
-   in all Chromium versions.
+   standard properties; Chromium/Safari the pseudo-elements. The standard
+   properties must stay away from Chromium: since Chrome 121, an element
+   with scrollbar-color or scrollbar-width ignores ::-webkit-scrollbar.
    ------------------------------------------------------------------ */
-*, html, body {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border-strong) transparent;
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
 }
 
 ::-webkit-scrollbar,
