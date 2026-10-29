@@ -12,7 +12,7 @@
 
       <div class="hero-main">
         <span class="hero-date">
-          {{ longDate(d.date) }} &#183; Resets in <span class="hero-countdown">{{ countdown() }}</span>
+          {{ longDate(d.date) }} &#183; Resets in <span class="hero-countdown">{{ countdown() }}</span> <span class="reset-local">({{ resetLocal() }})</span>
         </span>
         <h1 class="hero-title">One test.<br />Everyone.<br />Today.</h1>
 
@@ -81,7 +81,7 @@
       </div>
       <div class="strip">
         @for (p of pastDaysChronological(); track p.date) {
-          <div class="day-card">
+          <button type="button" class="day-card day-card-btn" [attr.aria-label]="'Details for ' + longDate(p.date)" (click)="openDay(p.date)">
             <span class="day-card-date">{{ dayLabel(p.date) }}</span>
             @if (p.winner) {
               <div class="day-card-body">
@@ -99,7 +99,8 @@
                 You: {{ p.myWpm !== null ? p.myWpm + ' WPM' : '–' }}
               </span>
             }
-          </div>
+            <span class="day-card-more" aria-hidden="true">Details &#8250;</span>
+          </button>
         }
         <div class="day-card day-card-today">
           <span class="day-card-date">Today</span>
@@ -144,5 +145,8 @@
         </ol>
       }
     </section>
+  }
+  @if (openedDay(); as date) {
+    <app-daily-day-modal [date]="date" [title]="longDate(date)" (closed)="openedDay.set(null)" />
   }
 </div>

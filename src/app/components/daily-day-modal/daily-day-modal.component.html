@@ -1,0 +1,55 @@
+<div class="overlay" (click)="closed.emit()">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="day-title" (click)="$event.stopPropagation()">
+    <button type="button" class="close" aria-label="Close" (click)="closed.emit()">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+    </button>
+
+    <h2 id="day-title" class="title">{{ title() }}</h2>
+
+    @if (loading()) {
+      <p class="hint" role="status">Loading&#8230;</p>
+    } @else if (error()) {
+      <p class="hint" role="alert">{{ error() }}</p>
+    } @else if (day(); as d) {
+      <p class="hint">{{ d.settings.wordCount }} words &#183; {{ d.settings.timeMax }}s &#183; {{ modifiers() }}</p>
+
+      <dl class="facts">
+        <div><dt>Started</dt><dd>{{ d.started }}</dd></div>
+        <div><dt>Finished</dt><dd>{{ d.finished }}@if (finishRate() !== null) { <small>{{ finishRate() }}%</small> }</dd></div>
+        <div><dt>Ranked</dt><dd>{{ d.rankedCount }}</dd></div>
+        <div><dt>Average</dt><dd>{{ d.averageWpm ?? '–' }}@if (d.averageWpm !== null) { <small>WPM</small> }</dd></div>
+      </dl>
+
+      @if (d.me; as me) {
+        <p class="me" [class.played]="me.status === 'finished'">
+          @if (me.status === 'finished') {
+            You: {{ me.wpm }} WPM &#183; {{ me.accuracy }}%{{ me.rank ? ' · #' + me.rank : me.ranked ? '' : ' · not ranked' }}
+          } @else if (me.status === 'in-progress') {
+            You started this day but didn't finish.
+          } @else {
+            You didn't play this day.
+          }
+        </p>
+      }
+
+      @if (d.entries.length === 0) {
+        <p class="hint">Nobody has a verified run for this day.</p>
+      } @else {
+        <ol class="entries">
+          @for (e of d.entries; track e.userId) {
+            <li [class.me]="auth.user()?.id === e.userId">
+              <span class="rank" [class.rank-1]="e.rank === 1" [class.rank-2]="e.rank === 2" [class.rank-3]="e.rank === 3">{{ e.rank }}</span>
+              <a class="name" [routerLink]="['/user', e.userId]" (click)="closed.emit()">{{ e.displayName }}</a>
+              <span class="acc">{{ e.accuracy.toFixed(1) }}%</span>
+              @if (e.resultId) {
+                <a class="wpm" [routerLink]="['/replay', e.resultId]" (click)="closed.emit()" title="Watch replay">{{ e.wpm }}</a>
+              } @else {
+                <span class="wpm">{{ e.wpm }}</span>
+              }
+            </li>
+          }
+        </ol>
+      }
+    }
+  </div>
+</div>

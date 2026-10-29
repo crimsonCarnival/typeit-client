@@ -3,6 +3,8 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameApiService } from '../../services/game-api.service';
 import { GameService } from '../../services/game.service';
+import { TimezoneService } from '../../services/timezone.service';
+import { DailyDayModalComponent } from '../../components/daily-day-modal/daily-day-modal.component';
 import { DailyOverview } from '../../models/models';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -10,7 +12,7 @@ const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', '
 
 @Component({
   selector: 'app-daily',
-  imports: [RouterLink],
+  imports: [RouterLink, DailyDayModalComponent],
   templateUrl: './daily.component.html',
   styleUrl: './daily.component.css',
   host: { '(document:keydown.enter)': 'onEnter($event)' },
@@ -20,6 +22,7 @@ export class DailyComponent {
   private readonly gameApi = inject(GameApiService);
   private readonly game = inject(GameService);
   private readonly router = inject(Router);
+  private readonly tz = inject(TimezoneService);
 
   readonly data = signal<DailyOverview | null>(null);
   readonly loading = signal(true);
@@ -40,6 +43,14 @@ export class DailyComponent {
     const s = Math.floor(ms / 1000);
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+  });
+
+  /** When the next challenge starts on the player's clock, e.g. "02:00 GMT+2". */
+  readonly resetLocal = computed(() => {
+    const d = this.data();
+    if (!d) return '';
+    const at = new Date(d.resetsAt);
+    return `${new Intl.DateTimeFormat(undefined, { timeStyle: 'short', timeZone: this.tz.zone() }).format(at)} ${this.tz.label(at)}`;
   });
 
   readonly modifierLabel = computed(() => {
@@ -92,6 +103,13 @@ export class DailyComponent {
       this.startError.set(res.error || 'Could not start the challenge');
       void this.load();
     }
+  }
+
+  /** The past day whose details are open ('YYYY-MM-DD'), or null. */
+  readonly openedDay = signal<string | null>(null);
+
+  openDay(date: string): void {
+    this.openedDay.set(date);
   }
 
   readonly startingGhost = signal(false);
