@@ -37,23 +37,51 @@
                   @if (s.note) {
                     <p class="section-note">{{ s.note }}</p>
                   }
-                  <ul class="entries">
-                    @for (e of release.sections[s.id] ?? []; track $index) {
-                      <li>
-                        @if (e.breaking) {
-                          <span class="breaking" title="A breaking change">breaking</span>
-                        }
-                        @if (e.scope) {
-                          <b class="scope">{{ e.scope }}:</b>
-                        }
-                        {{ e.text }}
-                        @if (e.pr) {
-                          <span class="ref">(#{{ e.pr }})</span>
-                        }
-                        <span class="ref" [attr.title]="e.repo ? 'Commit in the ' + e.repo + ' repository' : null">({{ e.hash }})</span>
-                      </li>
+
+                  @if (isMultiDay(release, s.id)) {
+                    <!-- Multiple days: render a labelled day bucket per day -->
+                    @for (group of dayGroups(release, s.id); track group.day) {
+                      <div class="day-group">
+                        <span class="day-label">{{ group.label }}</span>
+                        <ul class="entries">
+                          @for (e of group.entries; track $index) {
+                            <li>
+                              @if (e.breaking) {
+                                <span class="breaking" title="A breaking change">breaking</span>
+                              }
+                              @if (e.scope) {
+                                <b class="scope">{{ e.scope }}:</b>
+                              }
+                              {{ e.text }}
+                              @if (e.pr) {
+                                <span class="ref">(#{{ e.pr }})</span>
+                              }
+                              <span class="ref" [attr.title]="e.repo ? 'Commit in the ' + e.repo + ' repository' : null">({{ e.hash }})</span>
+                            </li>
+                          }
+                        </ul>
+                      </div>
                     }
-                  </ul>
+                  } @else {
+                    <!-- Single day or undated: flat list, no day headers -->
+                    <ul class="entries">
+                      @for (e of release.sections[s.id] ?? []; track $index) {
+                        <li>
+                          @if (e.breaking) {
+                            <span class="breaking" title="A breaking change">breaking</span>
+                          }
+                          @if (e.scope) {
+                            <b class="scope">{{ e.scope }}:</b>
+                          }
+                          {{ e.text }}
+                          @if (e.pr) {
+                            <span class="ref">(#{{ e.pr }})</span>
+                          }
+                          <span class="ref" [attr.title]="e.repo ? 'Commit in the ' + e.repo + ' repository' : null">({{ e.hash }})</span>
+                        </li>
+                      }
+                    </ul>
+                  }
                 </section>
               }
             }
