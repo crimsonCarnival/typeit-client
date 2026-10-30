@@ -29,7 +29,7 @@
     <p>To know which features are worth keeping, we count how many people use each one: test modes and their options, the daily challenge, lessons, practice, races, and some pages such as rankings or the error map. We count both how many times and how many different people.</p>
     <p>To tell people apart, your browser keeps a random id, made up on this device and not linked to your name or account. Before storing anything, the server scrambles that id with a secret key (a keyed hash), so the stored value can't be turned back into the id. We store only which features were used each day, the scrambled ids, and whether the person was signed in. We never store your IP address, account, or anything you typed with these counts.</p>
     <p>The scrambled ids are kept for 180 days. After that, only the daily totals remain.</p>
-    <p>It is <b>on by default</b>, and you can switch it off at any time in <a routerLink="/settings" fragment="privacy-title">Settings → Privacy</a>. Off removes the id from this device and stops the counting. If you are signed in, turning it off also applies to your account, and the server ignores anything still sent for it. If your browser sends a Global Privacy Control signal, it starts off.</p>
+    <p>It is <b>on by default</b>, and you can switch it off at any time with "Share anonymous usage data" in <a routerLink="/settings" fragment="privacy-title">Settings → Privacy</a>. Off removes the id from this device and stops the counting. If you are signed in, turning it off also applies to your account, and the server ignores anything still sent for it. If your browser sends a Global Privacy Control signal, it starts off.</p>
   </section>
 
   <section aria-labelledby="p-device">
@@ -57,16 +57,7 @@
     <ul>
       <li>Change your email, name or password, leave the leaderboards, reset your personal bests, or delete your account in <a routerLink="/account">account settings</a>.</li>
       <li>Deleting your account removes it and your saved tests, sessions, daily attempts, achievements, lesson progress, word lists, review keys, follows and blocks. Races you took part in keep an entry that holds only an id, so the other racers' history stays complete. Records of moderation actions that involved your account are kept.</li>
-      <li>Turn usage statistics off in <a routerLink="/settings" fragment="privacy-title">Settings</a>.</li>
+      <li>Turn off "Share anonymous usage data" in <a routerLink="/settings" fragment="privacy-title">Settings</a>.</li>
     </ul>
-  </section>
-
-  <section aria-labelledby="p-contact">
-    <h2 id="p-contact" class="sub">questions</h2>
-    @if (contactEmail()) {
-      <p>Write to <a [href]="'mailto:' + contactEmail()">{{ contactEmail() }}</a> about anything on this page.</p>
-    } @else {
-      <p>Use the contact options on the <a routerLink="/about" fragment="contact-title">about page</a>.</p>
-    }
   </section>
 </article>
