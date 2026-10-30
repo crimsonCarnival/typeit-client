@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ApiResponse, AdminAudit, AdminRoom, AdminUser, AdminUsersPage, PermissionCatalog, Role } from '../models/models';
+import { ApiResponse, AdminAudit, AdminRoom, AdminUser, AdminUsersPage, PermissionCatalog, Role, UsageRange, UsageSeries, UsageSummary, UsageWho } from '../models/models';
 
 /** Admin area endpoints. Every call resolves to `{ success, data, error }`. */
 @Injectable({ providedIn: 'root' })
@@ -20,6 +20,16 @@ export class AdminApiService {
       }
       return { success: false, error: 'Network error' };
     }
+  }
+
+  usageSummary(range: UsageRange, who: UsageWho): Promise<ApiResponse<UsageSummary>> {
+    const params = new HttpParams().set('range', range).set('who', who);
+    return this.call(this.http.get<ApiResponse<UsageSummary>>(`${this.base}/usage/summary`, { params }));
+  }
+
+  usageSeries(keys: string[], range: UsageRange, who: UsageWho): Promise<ApiResponse<UsageSeries>> {
+    const params = new HttpParams().set('keys', keys.join(',')).set('range', range).set('who', who);
+    return this.call(this.http.get<ApiResponse<UsageSeries>>(`${this.base}/usage/series`, { params }));
   }
 
   permissions(): Promise<ApiResponse<PermissionCatalog>> {

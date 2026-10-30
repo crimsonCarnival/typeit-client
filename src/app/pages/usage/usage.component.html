@@ -1,0 +1,157 @@
+<div class="usage">
+  <div class="head">
+    <a class="back" routerLink="/admin">&larr; Admin</a>
+    <h1 class="title">Usage</h1>
+    <p class="subtitle">Different people per feature, counted anonymously. Days are in UTC.</p>
+  </div>
+
+  <nav class="tabs" aria-label="Usage views">
+    <a class="tab" routerLink="/admin/usage/features" queryParamsHandling="preserve" [class.active]="tab() === 'features'" [attr.aria-current]="tab() === 'features' ? 'page' : null">Feature usage</a>
+    <a class="tab" routerLink="/admin/usage/trends" queryParamsHandling="preserve" [class.active]="tab() === 'trends'" [attr.aria-current]="tab() === 'trends' ? 'page' : null">People over time</a>
+  </nav>
+
+  <div class="toolbar">
+    <div class="segmented" role="radiogroup" aria-label="Range">
+      @for (r of ranges; track r) {
+        <button type="button" role="radio" class="seg" [class.on]="range() === r" [attr.aria-checked]="range() === r" (click)="setQuery({ range: r })">{{ r }}d</button>
+      }
+    </div>
+    <div class="segmented" role="radiogroup" aria-label="Who">
+      @for (w of whos; track w.id) {
+        <button type="button" role="radio" class="seg" [class.on]="who() === w.id" [attr.aria-checked]="who() === w.id" (click)="setQuery({ who: w.id })">{{ w.label }}</button>
+      }
+    </div>
+    @if (loading()) {
+      <span class="hint" role="status">Loading&#8230;</span>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="message error" role="alert">{{ error() }}</p>
+  }
+
+  @if (summary(); as s) {
+    @if (tab() === 'features') {
+      <section aria-label="Feature usage">
+        <p class="legend">
+          <span class="sw guest"></span>Guests <span class="sw user"></span>Signed in
+          <span class="dot-sep">&middot;</span> Hover or focus a row for details.
+        </p>
+        <div class="table" role="table" aria-label="Features by people">
+          <div class="row head-row" role="row">
+            <span role="columnheader"></span>
+            <span role="columnheader">Feature</span>
+            <span role="columnheader">People</span>
+            <span role="columnheader" class="num"></span>
+            <span role="columnheader" class="num">vs prev. {{ s.range }}d</span>
+          </div>
+
+          @for (g of groups(); track g.id) {
+            <div class="group" role="row"><span role="cell">{{ g.label }}</span></div>
+            @for (f of g.rows; track f.key) {
+              <ng-container *ngTemplateOutlet="rowTpl; context: { row: f, feature: f, max: maxOf(g.rows), sub: false }" />
+              @if (open().has(f.key)) {
+                @for (c of f.children; track c.dim) {
+                  <div class="subhead" role="row"><span role="cell">{{ c.label }}</span></div>
+                  @for (r of c.rows; track r.key) {
+                    <ng-container *ngTemplateOutlet="rowTpl; context: { row: r, feature: f, max: f.people, sub: true }" />
+                  }
+                }
+                <p class="note" role="note">A person can appear in several of these, so they don't add up to the total.</p>
+              }
+            }
+          }
+        </div>
+      </section>
+    } @else {
+      <section class="trends" aria-label="People over time">
+        <p class="hint">People per {{ range() === 90 ? 'week (Monday to Sunday)' : 'day' }}, last {{ range() }} days. Gaps mean it wasn't tracked yet.</p>
+        <div class="chart-card">
+          @if (picked().length) {
+            <div class="chart-box"><canvas #trend role="img" aria-label="People over time for the selected features"></canvas></div>
+          } @else {
+            <p class="hint empty">Pick a feature below to plot it.</p>
+          }
+        </div>
+        <p class="hint">Pick up to {{ maxLines }} to compare.</p>
+        <div class="picker">
+          @for (g of choices(); track g.id) {
+            <fieldset>
+              <legend>{{ g.label }}</legend>
+              @for (c of g.items; track c.key) {
+                <label class="pick" [class.sub]="c.sub">
+                  <input type="checkbox" [checked]="picked().includes(c.key)" [disabled]="!picked().includes(c.key) && picked().length >= maxLines" (change)="togglePick(c.key)" />
+                  @if (colorOf(c.key); as color) {
+                    <span class="chip" [style.background]="color" aria-hidden="true"></span>
+                  }
+                  {{ c.label }}
+                </label>
+              }
+            </fieldset>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>
+
+<ng-template #rowTpl let-row="row" let-feature="feature" let-max="max" let-sub="sub">
+  <div class="row data-row" [class.sub]="sub" role="row" tabindex="0">
+    <span role="cell">
+      @if (!sub && feature.children.length) {
+        <button type="button" class="twist" [class.open]="open().has(feature.key)" [attr.aria-expanded]="open().has(feature.key)" [attr.aria-label]="'Show details for ' + feature.label" (click)="toggleOpen(feature.key)">&#9656;</button>
+      }
+    </span>
+    <span role="cell" class="name">
+      {{ row.label }}
+      @if (trackedDays(row); as days) {
+        <span class="badge">tracked {{ days }}d</span>
+      }
+    </span>
+    <span role="cell" class="bar" aria-hidden="true">
+      @if (barGuests(row)) {
+        <i class="guest" [style.width.%]="width(barGuests(row), max)"></i>
+      }
+      @if (barUsers(row)) {
+        <i class="user" [style.width.%]="width(barUsers(row), max)"></i>
+      }
+    </span>
+    <span role="cell" class="num">{{ row.people }}</span>
+    <span role="cell" class="num">
+      @if (change(row); as c) {
+        <span [class]="c.dir">{{ c.diff >= 0 ? '▲' : '▼' }} {{ c.pct }}% <span class="diff">({{ c.diff >= 0 ? '+' : '' }}{{ c.diff }})</span></span>
+      } @else {
+        <span class="na" title="Not tracked for the whole previous period">&mdash;</span>
+      }
+    </span>
+
+    <div class="tip" role="tooltip">
+      <b>{{ sub ? feature.label + ' · ' + row.label : row.label }}</b> &middot; last {{ summary()!.range }} days
+      @if (trackedDays(row); as days) {
+        <span class="tip-note">Only {{ days }} of {{ summary()!.range }} days tracked.</span>
+      }
+      <dl>
+        <dt><span class="sw guest"></span>Guests</dt>
+        <dd>{{ feature.account ? 'n/a (sign-in required)' : row.guests + ' people' }}</dd>
+        <dt><span class="sw user"></span>Signed in</dt>
+        <dd>{{ row.signedIn }} people</dd>
+        <dt>Times used</dt>
+        <dd>{{ row.times.toLocaleString() }} ({{ perPerson(row) }} per person)</dd>
+        @if (feature.finish && finishRate(row) !== null) {
+          <dt>Finished</dt>
+          <dd>{{ row.finished.toLocaleString() }} of {{ row.times.toLocaleString() }} ({{ finishRate(row) }}%)</dd>
+        }
+      </dl>
+      @if (change(row); as c) {
+        <hr />
+        <b>Trend</b>
+        <dl>
+          <dt>Previous {{ summary()!.range }} days</dt>
+          <dd>{{ row.prev }} people</dd>
+          <dt>Change</dt>
+          <dd [class]="c.dir">{{ c.diff >= 0 ? '+' : '' }}{{ c.diff }} people ({{ c.diff >= 0 ? '▲' : '▼' }} {{ c.pct }}%)</dd>
+        </dl>
+      }
+    </div>
+  </div>
+</ng-template>

@@ -8,6 +8,9 @@
     @for (t of tabs(); track t.id) {
       <button type="button" role="tab" class="tab" [class.active]="tab() === t.id" [attr.aria-selected]="tab() === t.id" (click)="show(t.id)">{{ t.label }}</button>
     }
+    @if (auth.can('usage.view')) {
+      <a class="tab tab-link" routerLink="/admin/usage">Usage</a>
+    }
   </div>
 
   @if (isFounder()) {

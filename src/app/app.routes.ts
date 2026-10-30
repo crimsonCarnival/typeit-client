@@ -1,5 +1,5 @@
 import { Routes, UrlMatcher, UrlSegment } from '@angular/router';
-import { adminGuard, authGuard } from './core/auth.guard';
+import { adminGuard, authGuard, usageGuard } from './core/auth.guard';
 
 const raceMatcher: UrlMatcher = (segments: UrlSegment[]) =>
   segments[0]?.path === 'race' && segments.length <= 2
@@ -32,6 +32,8 @@ export const routes: Routes = [
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile.component').then((m) => m.ProfileComponent) },
   { path: 'stats', canActivate: [authGuard], loadComponent: () => import('./pages/stats/stats.component').then((m) => m.StatsComponent) },
   { path: 'admin', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/admin.component').then((m) => m.AdminComponent) },
+  { path: 'admin/usage', pathMatch: 'full', redirectTo: 'admin/usage/features' },
+  { path: 'admin/usage/:tab', canActivate: [usageGuard], loadComponent: () => import('./pages/usage/usage.component').then((m) => m.UsageComponent) },
   { path: 'about', loadComponent: () => import('./pages/about/about.component').then((m) => m.AboutComponent) },
   { path: 'privacy', loadComponent: () => import('./pages/privacy/privacy.component').then((m) => m.PrivacyComponent) },
   { path: 'auth/google', loadComponent: () => import('./pages/auth-google/auth-google.component').then((m) => m.AuthGoogleComponent) },

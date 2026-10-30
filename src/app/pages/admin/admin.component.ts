@@ -1,5 +1,5 @@
 import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AdminApiService } from '../../services/admin-api.service';
 import { TimezoneService } from '../../services/timezone.service';
@@ -56,7 +56,7 @@ const ADMINS_ONLY = ['users.role', 'users.permissions', 'users.xp'];
  */
 @Component({
   selector: 'app-admin',
-  imports: [ContextMenuDirective, KebabMenuComponent, StepperComponent],
+  imports: [ContextMenuDirective, KebabMenuComponent, StepperComponent, RouterLink],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.css',
 })

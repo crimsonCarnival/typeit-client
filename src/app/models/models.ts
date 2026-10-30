@@ -862,3 +862,38 @@ export interface Replay {
   dailyDate: string | null;
   createdAt: string;
 }
+
+/** Admin usage statistics (GET /admin/usage/summary). */
+export type UsageRange = 7 | 30 | 90;
+export type UsageWho = 'all' | 'guests' | 'signed-in';
+
+export type UsageRow = {
+  key: string;
+  label: string;
+  /** Distinct people for the chosen audience; guests and signedIn are always both. */
+  people: number;
+  guests: number;
+  signedIn: number;
+  times: number;
+  finished: number;
+  /** People in the previous same-length period, or null when it wasn't fully tracked. */
+  prev: number | null;
+  /** First day this was ever recorded ('YYYY-MM-DD', UTC). */
+  firstSeen: string | null;
+};
+
+export type UsageFeature = UsageRow & {
+  group: 'tests' | 'features' | 'pages';
+  /** Only signed-in players can use it. */
+  account: boolean;
+  /** Starts and finishes are both counted. */
+  finish: boolean;
+  children: { dim: string; label: string; rows: UsageRow[] }[];
+};
+
+export type UsageSummary = { range: UsageRange; who: UsageWho; start: string; end: string; rows: UsageFeature[] };
+
+export type UsageSeries = {
+  buckets: { start: string; end: string }[];
+  lines: { key: string; label: string; data: (number | null)[] }[];
+};
