@@ -9,6 +9,7 @@ import { GameAudioService } from './game/game-audio.service';
 import { NotificationService } from './notification.service';
 import { ApiResponse, OpenRace, RaceChatMessage, RaceEmote, RaceFriend, RaceHistoryEntry, RaceInvite, RaceMistakes, RaceRatingEntry, RaceRoom, RaceSettings } from '../models/models';
 import { ls } from '../utils/storage';
+import { UsageService } from './usage.service';
 
 const SOCKET_PATH = '/ws/race';
 const RECONNECT_BASE_MS = 1000;
@@ -60,6 +61,7 @@ export const EMOTES: Record<RaceEmote, string> = {
 export class RaceService {
   private readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
+  private readonly usage = inject(UsageService);
   private readonly game = inject(GameService);
   private readonly audio = inject(GameAudioService);
   private readonly notifications = inject(NotificationService);
@@ -124,7 +126,7 @@ export class RaceService {
     const ws = new WebSocket(this.url());
     this.ws = ws;
 
-    ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token }));
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token, usageId: this.usage.id() ?? undefined }));
     ws.onmessage = (event) => this.onMessage(event.data);
     ws.onclose = () => {
       this.ws = null;

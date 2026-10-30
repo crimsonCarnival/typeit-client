@@ -82,6 +82,8 @@ export interface User {
   hasPassword?: boolean;
   googleEmail?: string | null;
   leaderboardOptOut?: boolean;
+  /** Turned off anonymous usage statistics (on another device too). */
+  usageOptOut?: boolean;
   streakHourOffset?: number;
   streakOffsetSet?: boolean;
   usernameChangedAt?: string | null;

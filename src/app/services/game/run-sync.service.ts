@@ -28,9 +28,12 @@ export class RunSyncService {
   private inFlight: Promise<void> | null = null;
   private elapsed: () => number = () => 0;
   private leadMs: number | undefined;
+  /** Set when racing a bot, so usage statistics count it as a bot race. */
+  private botWpm: number | null = null;
 
   /** Starts syncing a run whose first `serverKeys` keys the server already has. */
-  begin(log: KeystrokeLog, opts: { sessionId: string | null; serverKeys: number; elapsed: () => number; leadMs?: () => number }): void {
+  begin(log: KeystrokeLog, opts: { sessionId: string | null; serverKeys: number; elapsed: () => number; leadMs?: () => number; botWpm?: number | null }): void {
+    this.botWpm = opts.botWpm ?? null;
     this.log = log;
     this.sessionId = opts.sessionId;
     this.sent = opts.serverKeys;
@@ -59,6 +62,7 @@ export class RunSyncService {
       elapsedMs: Math.round(this.elapsed()),
       ...(this.sessionId ? { sessionId: this.sessionId } : {}),
       ...(from === 0 && this.leadMs !== undefined ? { leadMs: this.leadMs } : {}),
+      ...(from === 0 && this.botWpm ? { botWpm: this.botWpm } : {}),
     };
     this.inFlight = this.api.progress(body).then((res) => {
       if (this.log !== log) return;
@@ -86,6 +90,7 @@ export class RunSyncService {
         keys: log.from(this.sent),
         typedText,
         ...(discard ? { discard: true } : {}),
+        ...(this.botWpm ? { botWpm: this.botWpm } : {}),
         elapsedMs: Math.max(1000, Math.round(this.elapsed())),
         ...(this.sessionId ? { sessionId: this.sessionId } : {}),
       });

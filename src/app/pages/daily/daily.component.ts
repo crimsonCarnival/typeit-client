@@ -6,6 +6,7 @@ import { GameService } from '../../services/game.service';
 import { DISPLAY_LOCALE, TimezoneService } from '../../services/timezone.service';
 import { DailyDayModalComponent } from '../../components/daily-day-modal/daily-day-modal.component';
 import { DailyOverview } from '../../models/models';
+import { UsageService } from '../../services/usage.service';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -23,6 +24,7 @@ export class DailyComponent {
   private readonly game = inject(GameService);
   private readonly router = inject(Router);
   private readonly tz = inject(TimezoneService);
+  private readonly usage = inject(UsageService);
 
   readonly data = signal<DailyOverview | null>(null);
   readonly loading = signal(true);
@@ -113,6 +115,7 @@ export class DailyComponent {
 
   openDay(date: string): void {
     this.openedDay.set(date);
+    this.usage.track('daily:past-day');
   }
 
   readonly startingGhost = signal(false);

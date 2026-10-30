@@ -333,6 +333,7 @@ export class GameService {
       serverKeys: this.log.total,
       elapsed: () => this.getElapsedMs(),
       leadMs: race ? () => Math.max(0, Date.now() - race.startAt) : undefined,
+      botWpm: this.gameState().botWpm,
     });
 
     this.stopTimers();

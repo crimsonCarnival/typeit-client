@@ -269,6 +269,19 @@
     </div>
   </section>
 
+  <section class="group" aria-labelledby="privacy-title">
+    <h2 id="privacy-title" class="group-title">Privacy</h2>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-label" id="usage-label">Usage statistics</span>
+        <span class="row-hint">Anonymously counts which features get used, so we know what's worth keeping. Nothing you type is sent. <a routerLink="/privacy" fragment="usage">How it works</a></span>
+      </div>
+      <button type="button" class="toggle" role="switch" [attr.aria-checked]="usage.enabled()" aria-labelledby="usage-label" (click)="usage.setEnabled(!usage.enabled())">
+        <span class="toggle-knob"></span>
+      </button>
+    </div>
+  </section>
+
   @if (auth.isAuthenticated()) {
     <section class="group" aria-labelledby="notif-title">
       <h2 id="notif-title" class="group-title">Notifications</h2>

@@ -3,12 +3,14 @@ import { StepperComponent } from '../../components/stepper/stepper.component';
 import { ThemePickerComponent } from '../../components/theme-picker/theme-picker.component';
 import { themeById } from '../../utils/themes';
 import { NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { GameService } from '../../services/game.service';
 import { SettingsService } from '../../services/settings.service';
 import { GameAudioService } from '../../services/game/game-audio.service';
 import { TimezoneService } from '../../services/timezone.service';
 import { NotificationService } from '../../services/notification.service';
+import { UsageService } from '../../services/usage.service';
 import { NotificationPrefs } from '../../models/models';
 import { PlayerSettings } from '../../models/models';
 
@@ -20,7 +22,7 @@ type Option<K extends keyof PlayerSettings> = { value: PlayerSettings[K]; label:
  */
 @Component({
   selector: 'app-settings',
-  imports: [NgTemplateOutlet, ThemePickerComponent, StepperComponent],
+  imports: [NgTemplateOutlet, RouterLink, ThemePickerComponent, StepperComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
 })
@@ -30,6 +32,7 @@ export class SettingsComponent {
   private readonly audio = inject(GameAudioService);
   readonly tz = inject(TimezoneService);
   readonly notifications = inject(NotificationService);
+  readonly usage = inject(UsageService);
 
   readonly notificationKinds: { key: keyof NotificationPrefs; label: string; hint: string }[] = [
     { key: 'social', label: 'Followers and invites', hint: 'Someone follows you, or invites you to a race.' },

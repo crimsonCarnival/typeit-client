@@ -41,6 +41,7 @@ export const normalizeUser = (raw: any): User | null => {
     hasPassword: raw.hasPassword !== false,
     googleEmail: raw.googleEmail ?? null,
     leaderboardOptOut: !!raw.leaderboardOptOut,
+    usageOptOut: !!raw.usageOptOut,
     streakHourOffset: raw.streakHourOffset ?? 0,
     streakOffsetSet: !!raw.streakOffsetSet,
     usernameChangedAt: raw.usernameChangedAt ?? null,

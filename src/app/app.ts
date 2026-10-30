@@ -6,6 +6,7 @@ import { AuthService } from './services/auth.service';
 import { RaceService } from './services/race.service';
 import { GameService } from './services/game.service';
 import { SettingsService } from './services/settings.service';
+import { UsageService } from './services/usage.service';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
 import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
@@ -38,6 +39,8 @@ export class App {
 
   // Applies saved settings (theme, typing font) from the first render.
   private readonly settings = inject(SettingsService);
+  // Counts page views from the first navigation (when usage statistics are on).
+  private readonly usage = inject(UsageService);
 
   constructor() {
     // Custom hover tooltips for every element with a title.
