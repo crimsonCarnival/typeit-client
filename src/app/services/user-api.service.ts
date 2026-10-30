@@ -5,6 +5,9 @@ import { environment } from '../../environments/environment';
 import { ApiResponse, FollowListUser, PlayerSearchResult, PlayerSettings, BlockedUser, ProfileOverview, PublicProfile, TestOutcomes, User } from '../models/models';
 import { ls } from '../utils/storage';
 
+/** What proves the owner is present for an irreversible action: the password, or (Google-only accounts) a Google reauth ticket. */
+export type AccountProof = { password?: string; reauth?: string };
+
 /**
  * User + auth + social HTTP service. Mirrors the React auth.api wrapper:
  * every method resolves to `{ success, data, error }`.
@@ -79,14 +82,14 @@ export class UserApiService {
     return this.call(this.http.get<ApiResponse<ProfileOverview>>(`${this.base}/users/${userId}/overview${query}`));
   }
 
-  /** Wipes the player's progress and keeps the account. `confirm` is their username. */
-  resetAccount(confirm: string): Promise<ApiResponse<{ reset: boolean }>> {
-    return this.call(this.http.post<ApiResponse<{ reset: boolean }>>(`${this.base}/users/account/reset`, { confirm }));
+  /** Wipes the player's progress and keeps the account. `confirm` is their username; `proof` the password or a Google reauth ticket. */
+  resetAccount(confirm: string, proof: AccountProof): Promise<ApiResponse<{ reset: boolean }>> {
+    return this.call(this.http.post<ApiResponse<{ reset: boolean }>>(`${this.base}/users/account/reset`, { confirm, ...proof }));
   }
 
-  /** Deletes the account for good. `confirm` is the player's username. */
-  deleteAccount(confirm: string): Promise<ApiResponse<{ deleted: boolean }>> {
-    return this.call(this.http.delete<ApiResponse<{ deleted: boolean }>>(`${this.base}/users/account`, { body: { confirm } }));
+  /** Deletes the account for good. `confirm` is the player's username; `proof` the password or a Google reauth ticket. */
+  deleteAccount(confirm: string, proof: AccountProof): Promise<ApiResponse<{ deleted: boolean }>> {
+    return this.call(this.http.delete<ApiResponse<{ deleted: boolean }>>(`${this.base}/users/account`, { body: { confirm, ...proof } }));
   }
 
   googleEnabled(): Promise<ApiResponse<{ enabled: boolean }>> {
