@@ -46,6 +46,7 @@ export class LearnComponent {
     const [learn, map] = await Promise.all([this.gameApi.getLearn(), this.gameApi.getErrorMap(RECOMMEND_RUNS)]);
     if (learn.success && learn.data) this.overview.set(learn.data);
     else this.error.set(learn.error || 'Could not load lessons');
+    this.resumeAction();
     // The recommendation is optional: no key data simply hides the banner.
     this.weakest.set(map.success ? map.data?.keys.find((k) => k.errors > 0) ?? null : null);
   }
@@ -54,10 +55,22 @@ export class LearnComponent {
     return key === ' ' ? 'Space' : key.toUpperCase();
   }
 
-  private requireAccount(): boolean {
+  /** Asks a guest to sign up; once signed in, `action` runs (see resumeAction) or `returnTo` opens. */
+  private requireAccount(action?: string, returnTo = '/learn'): boolean {
     if (this.auth.isAuthenticated()) return true;
-    this.auth.openAuthModal('register');
+    this.auth.openAuthModal('register', returnTo, action && `learn:${action}`);
     return false;
+  }
+
+  /** Runs what a guest clicked before signing in, once the lessons are loaded. */
+  private resumeAction(): void {
+    const action = this.auth.takeAction('learn:');
+    if (action === 'common') this.startCommonWords();
+    else if (action === 'review') this.startReview();
+    else if (action?.startsWith('lesson:')) {
+      const id = action.slice('lesson:'.length);
+      this.startLesson(this.overview()?.lessons.find((l) => l.id === id) ?? this.nextLesson());
+    }
   }
 
   private async run(id: string, start: () => Promise<{ success: boolean; error?: string }>): Promise<void> {
@@ -70,18 +83,18 @@ export class LearnComponent {
   }
 
   startLesson(lesson: Lesson | null = this.nextLesson()): void {
-    if (!this.requireAccount()) return;
+    if (!this.requireAccount(`lesson:${lesson?.id ?? ''}`)) return;
     const label = lesson ? `Lesson ${lesson.number}/12 · ${lesson.title}` : 'Lesson';
     void this.run(`lesson:${lesson?.id ?? 'next'}`, () => this.game.startPractice('lesson', lesson?.id, label));
   }
 
   startCommonWords(): void {
-    if (!this.requireAccount()) return;
+    if (!this.requireAccount('common')) return;
     void this.run('common', () => this.game.startPractice('common-words', undefined, 'Common words'));
   }
 
   startReview(): void {
-    if (!this.requireAccount()) return;
+    if (!this.requireAccount('review')) return;
     void this.run('review', () => this.game.startPractice('review', undefined));
   }
 
@@ -104,7 +117,7 @@ export class LearnComponent {
   }
 
   openLists(): void {
-    if (!this.requireAccount()) return;
+    if (!this.requireAccount(undefined, '/learn/lists')) return;
     void this.router.navigate(['/learn/lists']);
   }
 }

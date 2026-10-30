@@ -27,11 +27,11 @@ export class AuthModalComponent implements AfterViewInit {
   readonly googleError = signal('');
   private readonly userApi = inject(UserApiService);
 
-  /** Leaves for Google; the player comes back signed in to the page they were on. */
+  /** Leaves for Google; the player comes back signed in to the page they were headed for. */
   async continueWithGoogle(): Promise<void> {
     this.googleError.set('');
     this.isSubmitting.set(true);
-    const error = await this.auth.startGoogle('login', location.pathname + location.search);
+    const error = await this.auth.startGoogle('login', this.auth.returnUrl());
     if (error) {
       this.googleError.set(error);
       this.isSubmitting.set(false);

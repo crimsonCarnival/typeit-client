@@ -83,13 +83,16 @@ export class DailyComponent {
     this.error.set('');
     const res = await this.gameApi.getDaily();
     this.loading.set(false);
-    if (res.success && res.data) this.data.set(res.data);
-    else this.error.set(res.error || 'Could not load the daily challenge');
+    if (res.success && res.data) {
+      this.data.set(res.data);
+      // Signed in from the Start button: start now that we know whether today is still open.
+      if (this.auth.isAuthenticated() && this.auth.takeAction('daily:start') !== null) void this.start();
+    } else this.error.set(res.error || 'Could not load the daily challenge');
   }
 
   async start(): Promise<void> {
     if (this.status() === 'guest') {
-      this.auth.openAuthModal('login');
+      this.auth.openAuthModal('login', '/daily', 'daily:start');
       return;
     }
     if (this.status() !== 'not-played' || this.starting()) return;

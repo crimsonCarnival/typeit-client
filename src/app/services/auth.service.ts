@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { User } from '../models/models';
 import { UserApiService } from './user-api.service';
 
@@ -9,6 +10,7 @@ import { UserApiService } from './user-api.service';
  */
 const GOOGLE_NONCE_KEY = 'google-nonce';
 const GOOGLE_RETURN_KEY = 'google-return';
+const GOOGLE_INTENT_KEY = 'google-intent';
 export const GOOGLE_REAUTH_KEY = 'google-reauth';
 const GOOGLE_ERRORS: Record<string, string> = {
   cancelled: 'Google sign-in was cancelled.',
@@ -60,6 +62,11 @@ export const normalizeUser = (raw: any): User | null => {
 
 export type AuthModalMode = 'login' | 'register';
 
+/** Where a guest was headed when asked to sign in, and what to do once there (e.g. 'daily:start'). */
+type AuthIntent = { url: string; action?: string };
+
+const safePath = (url: string): string => (url.startsWith('/') && !url.startsWith('//') ? url : '/');
+
 /**
  * Auth state service. Mirrors the React AuthContext: verifies the stored
  * token on bootstrap, keeps the user in a signal, and persists the client
@@ -68,6 +75,7 @@ export type AuthModalMode = 'login' | 'register';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(UserApiService);
+  private readonly router = inject(Router);
 
   private readonly userSignal = signal<User | null>(null);
   readonly user = this.userSignal.asReadonly();
@@ -83,16 +91,46 @@ export class AuthService {
   /** Which auth dialog is open (rendered once in the app shell), or null. */
   readonly authModal = signal<AuthModalMode | null>(null);
 
+  // Kept in memory only (plus sessionStorage across the Google round trip),
+  // so an action can't be triggered by a link and doesn't outlive the tab.
+  private intent: AuthIntent | null = null;
+
   constructor() {
     void this.bootstrap();
   }
 
-  openAuthModal(mode: AuthModalMode): void {
+  /**
+   * Opens the auth dialog. After signing in the player is sent to `returnTo`
+   * (default: where they are), and that page can pick up `action` with takeAction().
+   */
+  openAuthModal(mode: AuthModalMode, returnTo?: string, action?: string): void {
+    this.intent = returnTo || action ? { url: safePath(returnTo ?? this.router.url), action } : null;
     this.authModal.set(mode);
   }
 
   closeAuthModal(): void {
     this.authModal.set(null);
+    // Dismissed without signing in: forget where they were going.
+    if (!this.isAuthenticated()) this.intent = null;
+  }
+
+  /** Where the dialog's Google button should come back to. */
+  returnUrl(): string {
+    return this.intent?.url ?? this.router.url;
+  }
+
+  /** Returns the pending action's argument if it starts with `prefix` (e.g. 'learn:'), and clears it. */
+  takeAction(prefix: string): string | null {
+    const action = this.intent?.action;
+    if (!action?.startsWith(prefix)) return null;
+    this.intent = null;
+    return action.slice(prefix.length);
+  }
+
+  private resumeIntent(): void {
+    const intent = this.intent;
+    if (!intent?.action) this.intent = null;
+    if (intent && intent.url !== this.router.url) void this.router.navigateByUrl(intent.url);
   }
 
   private async persistTimezone(user: User | null): Promise<void> {
@@ -138,6 +176,7 @@ export class AuthService {
         this.api.setToken(response.data!.token);
         const user = normalizeUser(response.data!.user);
         this.userSignal.set(user);
+        this.resumeIntent();
         await this.persistTimezone(user);
         return { success: true };
       }
@@ -164,6 +203,7 @@ export class AuthService {
         this.api.setToken(response.data!.token);
         const user = normalizeUser(response.data!.user);
         this.userSignal.set(user);
+        this.resumeIntent();
         await this.persistTimezone(user);
         return { success: true };
       }
@@ -184,7 +224,9 @@ export class AuthService {
   async startGoogle(mode: 'login' | 'link' | 'reauth', returnTo = '/', password?: string): Promise<string | null> {
     const nonce = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
     sessionStorage.setItem(GOOGLE_NONCE_KEY, nonce);
-    sessionStorage.setItem(GOOGLE_RETURN_KEY, returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/');
+    sessionStorage.setItem(GOOGLE_RETURN_KEY, safePath(returnTo));
+    if (mode === 'login' && this.intent?.action) sessionStorage.setItem(GOOGLE_INTENT_KEY, this.intent.action);
+    else sessionStorage.removeItem(GOOGLE_INTENT_KEY);
     const res = await this.api.googleUrl(mode, nonce, password);
     if (!res.success || !res.data) return res.error === 'not-configured' ? 'Google sign-in is not set up on this server.' : res.error || 'Could not reach Google.';
     window.location.assign(res.data.url);
@@ -199,8 +241,10 @@ export class AuthService {
     const params = new URLSearchParams(fragment.replace(/^#/, ''));
     const expected = sessionStorage.getItem(GOOGLE_NONCE_KEY);
     const next = sessionStorage.getItem(GOOGLE_RETURN_KEY) || '/';
+    const action = sessionStorage.getItem(GOOGLE_INTENT_KEY);
     sessionStorage.removeItem(GOOGLE_NONCE_KEY);
     sessionStorage.removeItem(GOOGLE_RETURN_KEY);
+    sessionStorage.removeItem(GOOGLE_INTENT_KEY);
     if (!expected || params.get('nonce') !== expected) return { next: '/', error: 'This sign-in was not started from this browser tab. Please try again.' };
     const error = params.get('error');
     if (error) return { next, error: GOOGLE_ERRORS[error] ?? 'Google sign-in failed.' };
@@ -228,11 +272,14 @@ export class AuthService {
     }
     const user = normalizeUser(res.data.user);
     this.userSignal.set(user);
+    // The callback page navigates to `next`; the page there picks the action up.
+    this.intent = action ? { url: next, action } : null;
     await this.persistTimezone(user);
     return { next };
   }
 
   logout(): void {
+    this.intent = null;
     this.api.clearToken();
     this.userSignal.set(null);
     this.error.set(null);
