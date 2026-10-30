@@ -33,6 +33,7 @@ export const routes: Routes = [
   { path: 'stats', canActivate: [authGuard], loadComponent: () => import('./pages/stats/stats.component').then((m) => m.StatsComponent) },
   { path: 'admin', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/admin.component').then((m) => m.AdminComponent) },
   { path: 'about', loadComponent: () => import('./pages/about/about.component').then((m) => m.AboutComponent) },
+  { path: 'privacy', loadComponent: () => import('./pages/privacy/privacy.component').then((m) => m.PrivacyComponent) },
   { path: 'auth/google', loadComponent: () => import('./pages/auth-google/auth-google.component').then((m) => m.AuthGoogleComponent) },
   { path: 'account', canActivate: [authGuard], loadComponent: () => import('./pages/account/account.component').then((m) => m.AccountComponent) },
   { path: 'settings', loadComponent: () => import('./pages/settings/settings.component').then((m) => m.SettingsComponent) },

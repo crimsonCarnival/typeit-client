@@ -1,0 +1,72 @@
+<article class="privacy">
+  <h1 class="h">privacy</h1>
+  <p class="lead">What TypeIt keeps about you, why, and how to change it. Last updated 30 October 2026.</p>
+
+  <section aria-labelledby="p-short">
+    <h2 id="p-short" class="sub">in short</h2>
+    <ul>
+      <li>Playing as a guest saves nothing about you on the server.</li>
+      <li>With an account, we keep what you need to sign in and your typing history, so you can see yourself improve.</li>
+      <li>We count which features get used, anonymously. You can <a routerLink="/settings" fragment="privacy-title">turn that off</a>.</li>
+      <li>We don't sell your data, show ads, or use third-party trackers.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="p-account">
+    <h2 id="p-account" class="sub">your account</h2>
+    <p>When you sign up we keep your username, display name, email address and password. The password is stored only as a bcrypt hash, never as you typed it. If you sign in with Google, we also keep the email of the Google account you linked. You can add a bio and an avatar, and your settings (theme, sounds, typing options) are saved so they follow you between devices.</p>
+  </section>
+
+  <section aria-labelledby="p-play">
+    <h2 id="p-play" class="sub">what you play</h2>
+    <p>For signed-in players we keep each saved test: its result, the settings it was played with, and the keystroke log of the run (which keys, and the time between them). The log lets the server score the run itself, check it wasn't faked, and replay it. We also keep what grows from your runs: stats, personal bests, achievements, XP, daily challenge attempts, lesson progress, your word lists and the keys you are reviewing. For live races we keep the result and who you raced. Follows, blocks and notifications are kept so those features work.</p>
+    <p>Rankings show your username and results. You can leave every leaderboard in <a routerLink="/account">account settings</a>.</p>
+    <p>A guest's run is held in the server's memory only while it is being played, for at most 30 minutes, so it can be scored or saved if you sign in. Nothing about it is written down.</p>
+  </section>
+
+  <section aria-labelledby="usage">
+    <h2 id="usage" class="sub">usage statistics</h2>
+    <p>To know which features are worth keeping, we count how many people use each one: test modes and their options, the daily challenge, lessons, practice, races, and some pages such as rankings or the error map. We count both how many times and how many different people.</p>
+    <p>To tell people apart, your browser keeps a random id, made up on this device and not linked to your name or account. Before storing anything, the server scrambles that id with a secret key (a keyed hash), so the stored value can't be turned back into the id. We store only which features were used each day, the scrambled ids, and whether the person was signed in. We never store your IP address, account, or anything you typed with these counts.</p>
+    <p>The scrambled ids are kept for 180 days. After that, only the daily totals remain.</p>
+    <p>It is <b>on by default</b>, and you can switch it off at any time in <a routerLink="/settings" fragment="privacy-title">Settings → Privacy</a>. Off removes the id from this device and stops the counting. If you are signed in, turning it off also applies to your account, and the server ignores anything still sent for it. If your browser sends a Global Privacy Control signal, it starts off.</p>
+  </section>
+
+  <section aria-labelledby="p-device">
+    <h2 id="p-device" class="sub">on your device</h2>
+    <p>TypeIt uses your browser's local storage, not cookies, for: your sign-in token, your settings, a game in progress, and (when usage statistics are on) the random id above. Clearing your site data removes them all.</p>
+  </section>
+
+  <section aria-labelledby="p-logs">
+    <h2 id="p-logs" class="sub">server logs</h2>
+    <p>Like most websites, the server writes a log line for each request it receives. The line includes the IP address, the browser's user agent, the address requested and the time. These logs are used to keep the service running and to stop abuse. They are kept by our hosting provider for its usual log retention, and are not combined with the usage statistics. The server also uses your IP address briefly, in memory, to limit how many requests one address can make.</p>
+  </section>
+
+  <section aria-labelledby="p-where">
+    <h2 id="p-where" class="sub">where it lives</h2>
+    <ul>
+      <li><b>Vercel</b> serves the website.</li>
+      <li><b>Render</b> runs the server.</li>
+      <li><b>MongoDB</b> holds the database, hosted on AWS in N. Virginia (us-east-1), in the United States. If you play from another country, your data is stored and handled in the United States.</li>
+      <li><b>Google</b>, only if you choose to sign in with Google. It tells us your Google email and that you signed in.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="p-control">
+    <h2 id="p-control" class="sub">your choices</h2>
+    <ul>
+      <li>Change your email, name or password, leave the leaderboards, reset your personal bests, or delete your account in <a routerLink="/account">account settings</a>.</li>
+      <li>Deleting your account removes it and your saved tests, sessions, daily attempts, achievements, lesson progress, word lists, review keys, follows and blocks. Races you took part in keep an entry that holds only an id, so the other racers' history stays complete. Records of moderation actions that involved your account are kept.</li>
+      <li>Turn usage statistics off in <a routerLink="/settings" fragment="privacy-title">Settings</a>.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="p-contact">
+    <h2 id="p-contact" class="sub">questions</h2>
+    @if (contactEmail()) {
+      <p>Write to <a [href]="'mailto:' + contactEmail()">{{ contactEmail() }}</a> about anything on this page.</p>
+    } @else {
+      <p>Use the contact options on the <a routerLink="/about" fragment="contact-title">about page</a>.</p>
+    }
+  </section>
+</article>
