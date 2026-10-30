@@ -273,8 +273,11 @@
     <h2 id="privacy-title" class="group-title">Privacy</h2>
     <div class="row">
       <div class="row-text">
-        <span class="row-label" id="usage-label">Usage statistics</span>
-        <span class="row-hint">Anonymously counts which features get used, so we know what's worth keeping. Nothing you type is sent. <a routerLink="/privacy" fragment="usage">How it works</a></span>
+        <span class="row-label" id="usage-label">Share anonymous usage data</span>
+        <span class="row-hint">Lets us count how many people use each feature, so we know what's worth keeping. Not linked to your name or account, and nothing you type is sent. <a routerLink="/privacy" fragment="usage">How it works</a></span>
+        @if (usage.offByGpc()) {
+          <span class="row-hint">Off because your browser asks sites not to track you (Global Privacy Control). Turn it on here if you're happy to share.</span>
+        }
       </div>
       <button type="button" class="toggle" role="switch" [attr.aria-checked]="usage.enabled()" aria-labelledby="usage-label" (click)="usage.setEnabled(!usage.enabled())">
         <span class="toggle-knob"></span>

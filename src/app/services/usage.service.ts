@@ -63,6 +63,8 @@ export class UsageService {
   private queue = new Set<UsageEvent>();
 
   readonly enabled = computed(() => (this.choice() ?? (gpc() ? 'off' : 'on')) === 'on');
+  /** Off only because the browser sends Global Privacy Control (the player hasn't chosen). */
+  readonly offByGpc = computed(() => this.choice() === null && gpc());
 
   constructor() {
     effect(() => {

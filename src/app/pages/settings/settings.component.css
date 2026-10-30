@@ -161,6 +161,10 @@
 .theme[data-preview='forest'] i:last-child { background: #5cd65c; }
 .theme[data-preview='light'] i:last-child { background: #d61f35; }
 
+.row-hint a {
+  color: var(--color-accent);
+}
+
 .toggle {
   position: relative;
   width: 46px;
