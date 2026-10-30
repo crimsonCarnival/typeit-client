@@ -212,6 +212,18 @@
   color: var(--color-text-faint);
 }
 
+/* .typing-text brings the game's edge fades (absolutely positioned strips).
+   The preview doesn't scroll, so it needs none; and unpositioned, they would
+   pin to the page and draw a band across the screen. */
+.preview {
+  position: relative;
+}
+
+.preview::before,
+.preview::after {
+  display: none;
+}
+
 .preview span {
   font-family: inherit;
 }
