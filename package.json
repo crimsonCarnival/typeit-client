@@ -12,12 +12,12 @@
   "private": true,
   "packageManager": "npm@11.6.2",
   "dependencies": {
-    "@angular/common": "^21.2.0",
-    "@angular/compiler": "^21.2.0",
-    "@angular/core": "^21.2.0",
-    "@angular/forms": "^21.2.0",
-    "@angular/platform-browser": "^21.2.0",
-    "@angular/router": "^21.2.0",
+    "@angular/common": "^21.2.25",
+    "@angular/compiler": "^21.2.25",
+    "@angular/core": "^21.2.25",
+    "@angular/forms": "^21.2.25",
+    "@angular/platform-browser": "^21.2.25",
+    "@angular/router": "^21.2.25",
     "@material/tooltip": "^14.0.0",
     "chart.js": "^4.4.7",
     "rxjs": "~7.8.0",
@@ -27,7 +27,7 @@
   "devDependencies": {
     "@angular/build": "^21.2.20",
     "@angular/cli": "^21.2.20",
-    "@angular/compiler-cli": "^21.2.0",
+    "@angular/compiler-cli": "^21.2.25",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2"
   }
