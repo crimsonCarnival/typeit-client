@@ -2,12 +2,15 @@ import { Component, ElementRef, computed, effect, inject, signal, viewChild } fr
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService, GOOGLE_REAUTH_KEY } from '../../services/auth.service';
 import { TimezoneService } from '../../services/timezone.service';
-import { UserApiService } from '../../services/user-api.service';
+import { AccountProof, UserApiService } from '../../services/user-api.service';
 import { GameService } from '../../services/game.service';
 import { StepperComponent } from '../../components/stepper/stepper.component';
 import { BlockedUser } from '../../models/models';
 
 type Tab = 'account' | 'authentication' | 'blocked' | 'danger';
+
+/** Which dialog a Google confirmation was started for, so it reopens on the way back. */
+const REAUTH_FOR_KEY = 'google-reauth-for';
 
 /**
  * Every account action: dialogs ask for what each needs. Irreversible ones
@@ -98,7 +101,7 @@ export class AccountComponent {
     const kind = this.dialog();
     const u = this.user();
     if (!kind || !u || this.busy()) return false;
-    if (DIALOGS[kind].typeName) return this.typed() === u.username;
+    if (DIALOGS[kind].typeName) return this.typed() === u.username && (!this.needsPassword(kind) || this.current().length > 0);
     switch (kind) {
       case 'username': return /^[A-Za-z0-9_.-]{3,20}$/.test(this.field()) && this.field() !== u.username;
       case 'streak': return /^-?\d{1,2}$/.test(this.hours()) && Number(this.hours()) >= -11 && Number(this.hours()) <= 12;
@@ -109,6 +112,11 @@ export class AccountComponent {
     }
   });
 
+  /** Reset and delete ask for the password of an account that has one. */
+  needsPassword(kind: DialogKind): boolean {
+    return (kind === 'reset' || kind === 'delete') && !!this.user()?.hasPassword;
+  }
+
   constructor() {
     effect(() => {
       if (!this.auth.loading() && !this.auth.isAuthenticated()) void this.router.navigate(['/']);
@@ -118,8 +126,12 @@ export class AccountComponent {
       if (el) queueMicrotask(() => (el.querySelector<HTMLElement>('input') ?? el).focus());
     });
     void this.api.googleEnabled().then((res) => this.googleEnabled.set(!!res.data?.enabled));
-    // Back from confirming with Google to add a password.
-    if (sessionStorage.getItem(GOOGLE_REAUTH_KEY)) queueMicrotask(() => this.open('password'));
+    // Back from confirming with Google: reopen what it was for (adding a password, resetting or deleting).
+    if (sessionStorage.getItem(GOOGLE_REAUTH_KEY)) {
+      const after = sessionStorage.getItem(REAUTH_FOR_KEY);
+      sessionStorage.removeItem(REAUTH_FOR_KEY);
+      queueMicrotask(() => this.open(after === 'reset' || after === 'delete' ? after : 'password'));
+    }
     if (this.tab() === 'blocked') void this.loadBlocked();
   }
 
@@ -196,8 +208,25 @@ export class AccountComponent {
       this.open('password');
       return;
     }
+    sessionStorage.setItem(REAUTH_FOR_KEY, 'password');
     const error = await this.auth.startGoogle('reauth', '/account?tab=authentication');
     if (error) this.notice.set(error);
+  }
+
+  /** Resetting or deleting needs the password, or for a Google-only account a fresh Google confirmation first. */
+  async openIrreversible(kind: 'reset' | 'delete'): Promise<void> {
+    if (this.user()?.hasPassword || sessionStorage.getItem(GOOGLE_REAUTH_KEY)) {
+      this.open(kind);
+      return;
+    }
+    sessionStorage.setItem(REAUTH_FOR_KEY, kind);
+    const error = await this.auth.startGoogle('reauth', '/account?tab=danger');
+    if (error) this.notice.set(error);
+  }
+
+  /** The password typed in the dialog, or the Google reauth ticket of a Google-only account. */
+  private proof(): AccountProof {
+    return this.user()?.hasPassword ? { password: this.current() } : { reauth: sessionStorage.getItem(GOOGLE_REAUTH_KEY) ?? undefined };
   }
 
   async confirm(): Promise<void> {
@@ -230,14 +259,15 @@ export class AccountComponent {
       case 'email': res = await call('/auth/email', { password: this.current(), email: this.field() }); done = 'Email updated. Other devices were signed out.'; break;
       case 'unlink': res = await call('/auth/google', {}, 'delete'); done = 'Google removed. Other devices were signed out.'; break;
       case 'revoke': res = await call('/auth/revoke-all'); break;
-      case 'reset': res = await this.api.resetAccount(u.username); done = 'Your account was reset.'; break;
-      case 'delete': res = await this.api.deleteAccount(u.username); break;
+      case 'reset': res = await this.api.resetAccount(u.username, this.proof()); done = 'Your account was reset.'; break;
+      case 'delete': res = await this.api.deleteAccount(u.username, this.proof()); break;
     }
     this.busy.set(false);
     if (!res.success) {
       this.error.set(res.error || 'That did not work');
       return;
     }
+    if (kind === 'reset' || kind === 'delete') sessionStorage.removeItem(GOOGLE_REAUTH_KEY);
     this.dialog.set(null);
     if (kind === 'delete' || kind === 'revoke') {
       this.auth.logout();

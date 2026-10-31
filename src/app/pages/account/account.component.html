@@ -135,7 +135,7 @@
               <h2 class="label">Reset account</h2>
               <p>Completely resets your progress to a blank state: results, statistics, level, achievements, streaks, lessons and daily attempts. Your name, avatar, follows, word lists and settings stay. <span class="warn">You can't undo this action!</span></p>
             </div>
-            <button type="button" class="btn danger solid" (click)="open('reset')">Reset account</button>
+            <button type="button" class="btn danger solid" (click)="openIrreversible('reset')">Reset account</button>
           </section>
 
           <section class="row">
@@ -143,7 +143,7 @@
               <h2 class="label">Delete account</h2>
               <p>Deletes your account and all data connected to it. <span class="warn">You can't undo this action!</span></p>
             </div>
-            <button type="button" class="btn danger solid" (click)="open('delete')">Delete account</button>
+            <button type="button" class="btn danger solid" (click)="openIrreversible('delete')">Delete account</button>
           </section>
         }
       }
@@ -190,6 +190,9 @@
       @if (dialogs[kind].typeName) {
         <p class="dialog-text">To confirm, type your username, <b>{{ user()?.username }}</b>.</p>
         <input class="input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Type your username to confirm" [value]="typed()" (input)="typed.set(value($event))" (keydown.enter)="confirm()" />
+      }
+      @if (needsPassword(kind)) {
+        <input class="input" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" [value]="current()" (input)="current.set(value($event))" (keydown.enter)="confirm()" />
       }
 
       @if (error()) {
